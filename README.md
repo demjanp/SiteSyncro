@@ -38,6 +38,12 @@ For Windows users, an executable version of SiteSyncro is available. You can dow
 
 To run SiteSyncro on other platforms, please refer to the [Developer Notes](#developer) section on how to clone SiteSyncro from GitHub and create a virtual environment. See [Usage](#usage) section on how to run the script.
 
+To use SiteSyncro in your Python applications, install the latest version from the Python package index, use the following command:
+```
+pip install SiteSyncro
+```
+See [SiteSyncro Class](#sitesync_class) on how to use the SiteSyncro class.
+
 ## Usage <a name="usage"></a>
 To use SiteSyncro, you need to run the [process.py](bin/process.py) or `sitesyncro.exe` script. This script accepts several command-line arguments. Here's a basic example of how to run the script:
 ```bash
@@ -129,29 +135,31 @@ pyinstaller sitesyncro.spec
 ```
 You will find the executable `sitesyncro.exe` in the `dist` folder.
 
-### SiteSyncro Class
+### SiteSyncro Class <a name="sitesync_class"></a>
 All functions of SiteSyncro are encapsulated in the `SiteSyncro` class. Here is a basic example of how to use it:
 
 ```python
 from sitesyncro import SiteSyncro
 
-# Initialize the SiteSyncro object
-ssync = SiteSyncro(input='data_sample.csv')
-
-# Load the data
-ssync.load_data()
-
-# Process the model
-ssync.process()
-
-# Plot the randomization test result
-ssync.plot_randomized()
-
-# Plot the clustering result
-ssync.plot_clusters()
-
-# Save the results to a CSV file
-ssync.save_results_csv()
+if __name__ == '__main__':
+	
+    # Initialize the SiteSyncro object
+    ssync = SiteSyncro(input='data_sample.csv')
+    
+    # Load the data
+    ssync.load_data()
+    
+    # Process the model
+    ssync.process()
+    
+    # Plot the randomization test result
+    ssync.plot_randomized()
+    
+    # Plot the clustering result
+    ssync.plot_clusters()
+    
+    # Save the results to a CSV file
+    ssync.save_results_csv()
 ```
 
 #### Parameters <a name="parameters"></a>

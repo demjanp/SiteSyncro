@@ -19,11 +19,11 @@ import multiprocessing
 import argparse
 import sys
 
+DESCRIPTION = "SiteSyncro - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)"
+
 def parse_arguments(args):
 	
-	description = "SiteSyncro - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)"
-	
-	parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	
 	parser.add_argument('input', type=str,
 		help="File path to load data in semicolon-separated CSV format (8 columns; see README.md)")
@@ -60,6 +60,12 @@ if __name__ == '__main__':
 	multiprocessing.freeze_support()  # Needed for PyInstaller
 	
 	arguments = parse_arguments(sys.argv[1:])
+	
+	print()
+	print(DESCRIPTION)
+	print()
+	print("Loaded data from:", arguments['input'])
+	print()
 	
 	ssync = SiteSyncro(**arguments)
 	ssync.load_data()

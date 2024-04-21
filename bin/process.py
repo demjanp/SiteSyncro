@@ -2,18 +2,18 @@
 # -*- coding: utf-8 -*-
 
 '''
-**SiteSync**
+**SiteSyncro**
 
 Site-specific chronological modeling and synchronization
 
 Created on 10.4.2024
 
 Author:	Peter Demján, Institute of Archaeology of the Czech Academy of Sciences <peter.demjan@gmail.com>
-Home:	https://github.com/demjanp/sitesync
+Home:	https://github.com/demjanp/SiteSyncro
 
 '''
 
-from sitesync import SiteSync
+from sitesyncro import SiteSyncro
 
 import multiprocessing
 import argparse
@@ -21,7 +21,9 @@ import sys
 
 def parse_arguments(args):
 	
-	parser = argparse.ArgumentParser(description="SiteSync - Modeling", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	description = "SiteSyncro - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)"
+	
+	parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	
 	parser.add_argument('input', type=str,
 		help="File path to load data in semicolon-separated CSV format (8 columns; see README.md)")
@@ -59,31 +61,31 @@ if __name__ == '__main__':
 	
 	arguments = parse_arguments(sys.argv[1:])
 	
-	sitesync = SiteSync(**arguments)
-	sitesync.load_data()
+	ssync = SiteSyncro(**arguments)
+	ssync.load_data()
 	
 	# Report on input data
-	print("Total unique samples:", len(sitesync['samples']))
-	print("Total unique contexts:", len(sitesync['context_samples']))
-	print("Total unique areas:", len(sitesync['areas']))
-	print("Total earlier-than relations:", sum([len(sitesync['earlier_than_rel'][sample]) for sample in sitesync['earlier_than_rel']]))
+	print("Total unique samples:", len(ssync['samples']))
+	print("Total unique contexts:", len(ssync['context_samples']))
+	print("Total unique areas:", len(ssync['areas']))
+	print("Total earlier-than relations:", sum([len(ssync['earlier_than_rel'][sample]) for sample in ssync['earlier_than_rel']]))
 	print()
 	# Report on modeling parameters
-	print("Uniform distribution:", sitesync['uniform'])
-	print("P-value:", sitesync['p_value'])
-	print("Number of clusters:", "all possible" if sitesync['n'] == -1 else sitesync['n'])
-	print("Base uncertainty:", sitesync['uncert_base'])
+	print("Uniform distribution:", ssync['uniform'])
+	print("P-value:", ssync['p_value'])
+	print("Number of clusters:", "all possible" if ssync['n'] == -1 else ssync['n'])
+	print("Base uncertainty:", ssync['uncert_base'])
 	print()
 	# Report on MCMC settings
-	print("Minimum number of passes:", sitesync['npass'])
-	print("Convergence threshold:", sitesync['convergence'])
-	print("Maximum number of CPUs:", "all available" if sitesync['max_cpus'] == -1 else sitesync['max_cpus'])
-	print("Maximum queue size:", sitesync['max_queue_size'])
+	print("Minimum number of passes:", ssync['npass'])
+	print("Convergence threshold:", ssync['convergence'])
+	print("Maximum number of CPUs:", "all available" if ssync['max_cpus'] == -1 else ssync['max_cpus'])
+	print("Maximum queue size:", ssync['max_queue_size'])
 	print()
 	
-	sitesync.process()
+	ssync.process()
 	
-	sitesync.plot_randomized()
-	sitesync.plot_clusters()
-	sitesync.save_results_csv()
+	ssync.plot_randomized()
+	ssync.plot_clusters()
+	ssync.save_results_csv()
 	

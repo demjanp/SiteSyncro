@@ -32,9 +32,7 @@ Demján, P., & Pavúk, P. (2021). CLUSTERING OF CALIBRATED RADIOCARBON DATES: SI
 
 ## Installation <a name="installation"></a>
 
-SiteSyncro requires [OxCal](https://c14.arch.ox.ac.uk/oxcal.html) to be installed in its default location. The OxCal program is used for bayesian modeling of the radiocarbon dates. The OxCal program is not included in the SiteSyncro package and must be installed separately. OxCal should be downloaded and installed automatically when running SiteSyncro for the first time. You can also download OxCal manually from the [OxCal website](https://c14.arch.ox.ac.uk/OxCalDistribution.zip) and unzip it in the SiteSyncro folder.
-
-For Windows users, an executable version of SiteSyncro is available. You can download the `sitesyncro.exe` file from the [latest release on GitHub](https://github.com/demjanp/SiteSyncro/releases/latest). After downloading, you can run SiteSyncro directly without needing to install Python or any dependencies.
+[Windows executable](https://github.com/demjanp/SiteSyncro/releases/latest) is available for users who do not want to install Python and dependencies.
 
 To run SiteSyncro on other platforms, please refer to the [Developer Notes](#developer) section on how to clone SiteSyncro from GitHub and create a virtual environment. See [Usage](#usage) section on how to run the script.
 
@@ -42,17 +40,19 @@ To use SiteSyncro in your Python applications, install the latest version from t
 ```
 pip install SiteSyncro
 ```
-See [SiteSyncro Class](#sitesync_class) on how to use the SiteSyncro class.
+See [SiteSyncro Class](#sitesync_class) on usage tips.
+
+SiteSyncro requires [OxCal](https://c14.arch.ox.ac.uk/oxcal.html) to be installed in its default location. The program is not included in the SiteSyncro package and must be installed separately. OxCal should be downloaded and installed automatically when running SiteSyncro for the first time. You can also download OxCal manually from the [OxCal website](https://c14.arch.ox.ac.uk/OxCalDistribution.zip) and unzip it in the SiteSyncro folder.
 
 ## Usage <a name="usage"></a>
 To use SiteSyncro, you need to run the [process.py](bin/process.py) or `sitesyncro.exe` script. This script accepts several command-line arguments. Here's a basic example of how to run the script:
-```bash
+```
 python process.py data_sample.csv
 ```
 or
-```bash
+```
 sitesyncro.exe data_sample.csv
-```bash
+```
 `process.py` & `sitesyncro.exe` accepts the following command-line arguments:
 
 - `input`: The path to the input file in semicolon-separated CSV format (required).

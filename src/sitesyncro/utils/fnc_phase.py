@@ -141,10 +141,14 @@ def get_groups_and_phases(earlier_than, samples):
 def update_earlier_than_by_clustering(model, earlier_than, samples):
 	# Update earlier_than based on temporal clustering of the samples
 	
-	if model.clusters_opt_n is None:
+	if model.cluster_opt_n is None:
 		raise Exception("No clustering found")
 	
-	clusters = model.clusters[model.clusters_opt_n]
+	clusters = model.clusters[model.cluster_opt_n]
+	means = model.cluster_means[model.cluster_opt_n]
+	
+	if len(clusters) < 2:
+		return earlier_than
 	
 	# Sort clusters from oldest to youngest
 	labels = sorted(clusters.keys(), key=lambda label: means[label], reverse=True)

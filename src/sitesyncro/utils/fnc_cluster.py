@@ -254,5 +254,12 @@ def proc_clustering(model, max_cpus = -1, max_queue_size = 100):
 	else:
 		clusters, means, sils, ps = test_distribution_clustering(model, max_cpus, max_queue_size)
 		opt_n = find_opt_clusters(clusters, ps, sils, model.p_value)
+	if opt_n is None:
+		opt_n = 0
+		clusters[0] = {0: sorted(list(model.samples.keys()))}
+		means[0] = {0: 0}
+		sils[0] = 0
+		ps[0] = 1
+		
 	return clusters, means, sils, ps, opt_n
 

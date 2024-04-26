@@ -19,8 +19,8 @@ from collections import defaultdict
 class Model(object):
 	
 	def __init__(self, 
-			directory,
-			samples = {},
+			directory = 'model',
+			samples = [],
 			curve_name = 'intcal20.14c',
 			phase_model = 'sequence',
 			cluster_n = -1,
@@ -31,6 +31,10 @@ class Model(object):
 			convergence = 0.99,
 			oxcal_url = 'https://c14.arch.ox.ac.uk/OxCalDistribution.zip',
 		):
+		
+		for sample in samples:
+			if not isinstance(sample, Sample):
+				raise Exception("Invalid sample format: %s. Sample expected." % (type(sample).__name__))
 		
 		if phase_model not in ['sequence', 'contiguous', 'overlapping', 'none']:
 			raise Exception("Invalid phase model specified: %s" % (phase_model))
@@ -43,7 +47,7 @@ class Model(object):
 		
 		self._data.update(dict(
 			directory = directory,
-			samples = samples,
+			samples = dict([(sample.name, sample) for sample in samples]),
 			curve_name = curve_name,
 			phase_model = phase_model,
 			cluster_n = cluster_n,
@@ -52,6 +56,7 @@ class Model(object):
 			uncertainty_base = uncertainty_base,
 			npass = npass,
 			convergence = convergence,
+			oxcal_url = oxcal_url,
 		))
 		
 		# Attempt to load model if directory exists, otherwise create it
@@ -68,6 +73,9 @@ class Model(object):
 			uniform = None,
 			p_value = None,
 			uncertainty_base = None,
+			npass = None,
+			convergence = None,
+			oxcal_url = None,
 		)
 	
 	def _calculated(self):
@@ -89,7 +97,6 @@ class Model(object):
 		)
 	
 	def _create_dir(self, directory):
-		
 		if os.path.isdir(directory) and not os.listdir(directory):
 			return directory
 		
@@ -110,6 +117,7 @@ class Model(object):
 			directory = os.path.join(parent_dir, os.path.basename(directory) + "_" + str(n))
 		os.makedirs(directory)
 		return directory	
+	
 	
 	# Assigned properties
 	
@@ -153,6 +161,10 @@ class Model(object):
 	@property
 	def convergence(self):
 		return self._data['convergence']
+	
+	@property
+	def oxcal_url(self):
+		return self._data['oxcal_url']
 	
 	
 	# Calculated properties
@@ -288,11 +300,13 @@ class Model(object):
 		return (len(self.samples) > 0)
 	
 	@property
-	def is_processed(self):
+	def is_modeled(self):
+		if not self.has_data:
+			return False
 		for name in self.samples:
-			if self.samples[name].is_modeled:
-				return True
-		return False
+			if not self.samples[name].is_modeled:
+				return False
+		return True
 	
 	@property
 	def is_randomized(self):
@@ -347,6 +361,8 @@ class Model(object):
 	def reset_model(self):
 		# Reset calculated properties
 		self._data.update(self._calculated())
+		for name in self.samples:
+			self.samples[name].set_posterior(None)
 	
 	def save(self, zipped = False):
 		# Save the model to a JSON file
@@ -362,11 +378,11 @@ class Model(object):
 			with open(fname, 'w') as file:
 				json.dump(data, file)
 	
-	def copy(self, directory, oxcal_url = 'https://c14.arch.ox.ac.uk/OxCalDistribution.zip'):
+	def copy(self, directory):
 		# Create a copy of the model with a new directory
 		samples = dict([(name, self.samples[name].copy()) for name in self.samples])
 		model = Model(directory, samples, self.curve_name, self.phase_model, 
-			self.cluster_n, self.uniform, self.p_value, self.uncertainty_base, oxcal_url
+			self.cluster_n, self.uniform, self.p_value, self.uncertainty_base, self.oxcal_url
 		)
 		for key in self._calculated():
 			model._data[key] = getattr(self, key)
@@ -488,7 +504,7 @@ class Model(object):
 		# Save the results to the CSV file
 		save_results_csv(self, fcsv)
 	
-	def to_oxcal(self, name = 'model'):
+	def to_oxcal(self):
 		# Export the model to an OxCal file
 		
 		# Check if there is any data
@@ -497,13 +513,13 @@ class Model(object):
 			return None
 		
 		txt = gen_oxcal_model(self)
-		fmodel = os.path.join(self.directory, "%s.oxcal" % name)
+		fmodel = os.path.join(self.directory, "model.oxcal")
 		with open(fmodel, "w") as file:
 			file.write(txt)
-		return name
 	
-	def load_oxcal(self, fname):
+	def load_oxcal_data(self):
 		
+		fname = os.path.join(self.directory, "model.js")
 		data = load_oxcal_data(fname)
 		self._data['oxcal_data'] = data
 		
@@ -521,10 +537,28 @@ class Model(object):
 			else:
 				self.samples[name].set_posterior(None)
 	
-	def update_phasing(self, by_clustering = False):
+	def update_params(self, **kwargs):
+		if 'directory' in kwargs:
+			raise Exception("Cannot update directory parameter. Use Model.copy(directory).")
+		if 'samples' in kwargs:
+			raise Exception("Cannot update samples parameter. Use add_sample and del_sample methods.")
+		
+		# Update model parameters
+		for key in self._assigned():
+			if (key in kwargs) and (kwargs[key] is not None):
+				self._data[key] = kwargs[key]
+		
+		self.reset_model()
+		
+		if 'curve_name' in kwargs:
+			for name in self.samples:
+				self.samples[name].calibrate(self.curve)
+	
+	def process_phasing(self, by_clusters = False):
 		# Update groups and phases of samples based on stratigraphic relations
+		# by_clusters: if True, update the phasing by clustering sample dates
 		earlier_than, samples = create_earlier_than_matrix(self)
-		if by_clustering:
+		if by_clusters and self.is_clustered:
 			earlier_than = update_earlier_than_by_clustering(self, earlier_than, samples)
 		groups_phases = get_groups_and_phases(earlier_than, samples)
 		# groups_phases = {sample: [group, phase], ...}
@@ -537,73 +571,35 @@ class Model(object):
 				self.samples[name].set_group(None)
 				self.samples[name].set_phase(None)		
 	
-	def update_phasing_by_clusters(self):
-		# Update groups and phases of samples based on clustering
-		
-		self.update_phasing(by_clustering = True)
-		
-		# Calculate posteriors using bayesian modeling in OxCal
-		name = self.to_oxcal()
-		r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s.oxcal" % (name))
-		self.load_oxcal(os.path.join(self.directory, "%s.js" % (name)))
-		self.save(zipped = True)
+	def process_dates(self):
+		# Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal
+		self.to_oxcal()
+		r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s" % (os.path.join(self.directory, "model.oxcal")))
+		self.load_oxcal_data()
 	
-	def process(self,
-			action = None,
-			
-			npass = None,
-			convergence = None,
-			phase_model = None,
-			cluster_n = None,
-			uniform = None,
-			p_value = None,
-			uncertainty_base = None,
-		):
-		# Update model parameters
-		if phase_model is not None:
-			self._data['phase_model'] = phase_model
-		if cluster_n is not None:
-			self._data['cluster_n'] = cluster_n
-		if uniform is not None:
-			self._data['uniform'] = uniform
-		if p_value is not None:
-			self._data['p_value'] = p_value
-		if uncertainty_base is not None:
-			self._data['uncertainty_base'] = uncertainty_base
-		
-		# Process stratigraphic phasing
-		if (action == 'stratigraphy') or ((not self.is_processed) and (action is None)):
-			print("Modeling C-14 dates based on stratigraphy\n")
-			self.update_phasing()
-			# Calculate posteriors using bayesian modeling in OxCal
-			name = self.to_oxcal()
-			r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s" % (os.path.join(self.directory, "%s.oxcal" % (name))))
-			self.load_oxcal(os.path.join(self.directory, "%s.js" % (name)))
-			self.save(zipped = True)
-		
-		# Run randomization test
-		if (action == 'randomization') or ((not self.is_randomized) and (action is None)):
-			print("Testing the distribution of dates for randomness\n")
-			self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self)
-			self.save(zipped = True)
-		
-		# Cluster dates and test clustering solutions
-		if (action == 'clustering') or ((not self.is_clustered) and (action is None)):
-			print("Clustering temporal distributions\n")
-			self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self)
-			self.save(zipped = True)
+	def process_randomization(self):
+		# Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time
+		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self)
 	
-	def process_stratigraphy(self, **kwargs):
-		
-		kwargs['action'] = 'stratigraphy'
-		self.process(**kwargs)
+	def process_clustering(self):
+		# Cluster dates and using randomization testing find optimal clustering solution
+		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self)
 	
-	def process_randomization(self, **kwargs):
-		
-		kwargs['action'] = 'randomization'
-		self.process(**kwargs)
-	
-	def process_clustering(self, **kwargs):
-		
-		kwargs['action'] = 'clustering'
-		self.process(**kwargs)
+	def process(self, by_clusters = False):
+		# Process the complete model
+		# by_clusters: if True, update the phasing by clustering sample dates
+		self.reset_model()
+		print("Modeling stratigraphy\n")
+		self.process_phasing()
+		print("Modeling C-14 dates\n")
+		self.process_dates()
+		print("Testing the distribution of dates for randomness\n")
+		self.process_randomization()
+		print("Clustering temporal distributions\n")
+		self.process_clustering()
+		if by_clusters:
+			print("Updating phasing by clustering\n")
+			self.process_phasing(by_clusters = True)
+			print("Modeling C-14 dates\n")
+			self.process_dates()
+

@@ -72,6 +72,7 @@ def plot_clusters(model, fplot = None):
 	pyplot.close()
 
 def save_results_csv(model, fcsv):
+	# Save results to a CSV file
 	
 	def _format_year(value):
 		
@@ -87,18 +88,23 @@ def save_results_csv(model, fcsv):
 		sum(model.samples[name].likelihood_range)
 	])
 	
-	# Save results to a CSV file with the follwoing columns:
-	# sample, context, area, age, uncertainty, long_lived, group, phase, phase_clustered, range_min, range_max
+	cluster = dict([(name, None) for name in samples])
+	if model.is_clustered:
+		m_clusters = model.clusters[model.cluster_opt_n]
+		for clu in m_clusters:
+			for name in m_clusters[clu]:
+				cluster[name] = clu
+	
 	with open(fcsv, "w") as file:
-		file.write("Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Group;Phase;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
+		file.write("Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
 		for name in samples:
 			likelihood_min, likelihood_max = model.samples[name].likelihood_range
 			posterior_min, posterior_max = model.samples[name].posterior_range
-			file.write('''"%s";"%s";"%s";%0.2f;%0.2f;%s;%s;%s;%s;%s;%s;%s\n''' % (
+			file.write('''"%s";"%s";"%s";%0.2f;%0.2f;%s;%s;%s;%s;%s;%s;%s;%s\n''' % (
 				name, model.samples[name].context, model.samples[name].area, 
 				model.samples[name].age, model.samples[name].uncertainty, 
 				int(model.samples[name].long_lived), model.samples[name].group, 
-				model.samples[name].phase, _format_year(likelihood_min), _format_year(likelihood_max),
+				model.samples[name].phase, cluster[name], _format_year(likelihood_min), _format_year(likelihood_max),
 				_format_year(posterior_min), _format_year(posterior_max)
 			))
 

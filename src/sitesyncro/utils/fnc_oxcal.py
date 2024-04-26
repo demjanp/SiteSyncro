@@ -49,7 +49,6 @@ def download_oxcal(url = None):
 	return True
 
 def oxcal_date(name, age, uncertainty, date_type):
-	
 	if date_type == 'R':
 		return '''R_Date("%s", %f, %f);''' % (name, age, uncertainty)
 	if date_type == 'U':

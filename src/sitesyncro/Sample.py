@@ -290,4 +290,17 @@ class Sample(object):
 	
 	def copy(self):
 		return Sample(self.to_dict())
+	
+	def __repr__(self):
+		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, context={self.context}, area={self.area}, area_excavation_phase={self.area_excavation_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
 		
+		if self.is_calibrated:
+			repr_str += f", likelihood_range={self.likelihood_range}, likelihood_mean={self.likelihood_mean}"
+		
+		if self.is_modeled:
+			repr_str += f", posterior_range={self.posterior_range}, posterior_mean={self.posterior_mean}, posterior_agreement={self.posterior_agreement}"
+		
+		repr_str += ">"
+		
+		return repr_str
+

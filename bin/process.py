@@ -14,13 +14,14 @@ Home:	https://github.com/demjanp/SiteSyncro
 '''
 
 from sitesyncro import Model
+from sitesyncro import __version__
 
 import multiprocessing
 import argparse
 import sys
 import os
 
-DESCRIPTION = "SiteSyncro - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)"
+DESCRIPTION = "SiteSyncro v%s- Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)" % (__version__)
 
 def parse_arguments(args):
 	
@@ -48,6 +49,10 @@ def parse_arguments(args):
 		help="Minimum number of passes for the randomization test")
 	parser.add_argument('-convergence', type=float, default=0.99, required=False,
 		help="Convergence threshold for the randomization test")
+	parser.add_argument('-max_cpus', type=int, default=-1, required=False,
+		help="Maximum number of CPUs to use for parallel processing (-1 = all available)")
+	parser.add_argument('-max_queue_size', type=int, default=100, required=False,
+		help="Maximum queue size for parallel processing")
 	
 	parsed_args = parser.parse_args(args)
 	return vars(parsed_args)  # Directly return parsed arguments as a dictionary
@@ -57,9 +62,12 @@ if __name__ == '__main__':
 	
 	arguments = parse_arguments(sys.argv[1:])
 	
+	arguments['uniform'] = bool(arguments['uniform'])
+	
 	finput = arguments.pop('input', None)
 	by_clusters = bool(arguments.pop('by_clusters', False))
-	arguments['uniform'] = bool(arguments['uniform'])
+	max_cpus = arguments.pop('max_cpus')
+	max_queue_size = arguments.pop('max_queue_size')
 	
 	print()
 	print(DESCRIPTION)
@@ -86,7 +94,7 @@ if __name__ == '__main__':
 	print("Convergence threshold:", model.convergence)
 	print()
 	
-	model.process(by_clusters = by_clusters)
+	model.process(by_clusters = by_clusters, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	model.save(zipped = True)
 	model.plot_randomized()
 	model.plot_clusters()

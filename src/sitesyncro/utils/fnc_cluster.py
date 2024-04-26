@@ -1,7 +1,7 @@
+from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std)
 from sitesyncro.utils.fnc_simulate import (calculate_parameters, generate_random_distributions)
 
-import ray
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import norm
@@ -129,14 +129,19 @@ def cluster_distributions(model):
 	
 	return clusters, means, sil
 
-@ray.remote
-def test_distribution_clustering_worker(cluster_n, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
+def worker_fnc(params, cluster_n, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
 	
 	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform)
 	D = calc_distance_matrix(distributions)
 	sil = calc_silhouette(D, calc_clusters_hca(D, cluster_n))
 	
 	return sil
+
+def collect_fnc(data, results, pbar):
+	
+	# data = sil
+	pbar.update(1)
+	results.append(data)
 
 def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 	# Test the clustering of distributions for randomness
@@ -193,18 +198,14 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 		sils_prev = None
 		c = 0
 		todo = model.npass
-		if not ray.is_initialized():
-			ray.init()
+		params_list = list(range(model.npass))
 		with tqdm(total=todo) as pbar:
 			pbar.total = model.npass*2
 			pbar.set_description("Clusters: %d/%d, Conv.: %0.3f" % (cluster_n, clu_max, c))
 			while True:
-				results = [test_distribution_clustering_worker.remote(cluster_n, dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform) for i in range(model.npass)]
-				while len(results) > 0:
-					ready, results = ray.wait(results)
-					for res in ready:
-						sils_rnd.append(ray.get(res))
-						pbar.update(1)
+				process_mp(worker_fnc, params_list, [cluster_n, dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform],
+		           collect_fnc = collect_fnc, collect_args = [sils_rnd, pbar],
+		           max_cpus = max_cpus, max_queue_size = max_queue_size)
 				if len(sils_rnd) >= todo:
 					sils_m = np.array(sils_rnd).mean()
 					if sils_prev is not None:

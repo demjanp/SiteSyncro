@@ -1,7 +1,7 @@
 from sitesyncro.utils.fnc_radiocarbon import (calibrate)
 from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_percentiles)
+from sitesyncro.utils.fnc_mp import (process_mp)
 
-import ray
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import norm
@@ -112,12 +112,24 @@ def calculate_parameters(years, distribution, uniform):
 
 	return t_param1, t_param2
 
-@ray.remote
-def test_distributions_worker(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
+
+def worker_fnc(params, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
 	
 	return generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform)
 
-def test_distributions(model):
+def collect_fnc(data, results, pbar):
+	
+	# data = distributions
+	# distributions = [[p, ...], ...]
+	
+	pbar.update(1)
+	results.append(data)
+
+def progress_fnc(done, todo, all_done, all_todo, c, pbar):
+	
+	print("\rIteration: %d/%d, Conv: %0.4f         " % (all_done + done, all_todo, c), end = '')
+
+def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 	
 	distributions = []
 	for name in model.samples:
@@ -142,18 +154,14 @@ def test_distributions(model):
 	sums_prev = None
 	c = 0
 	todo = model.npass
-	if not ray.is_initialized():
-		ray.init()
+	params_list = list(range(model.npass))
 	with tqdm(total=todo) as pbar:
 		pbar.total = model.npass*2
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
-			results = [test_distributions_worker.remote(dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform) for i in range(model.npass)]
-			while len(results) > 0:
-				ready, results = ray.wait(results)
-				for res in ready:
-					distributions_rnd.append(ray.get(res))
-					pbar.update(1)
+			process_mp(worker_fnc, params_list, [dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform],
+		           collect_fnc = collect_fnc, collect_args = [distributions_rnd, pbar],
+		           max_cpus = max_cpus, max_queue_size = max_queue_size)
 			if len(distributions_rnd) >= todo:
 				sums += [calc_sum(dists) for dists in distributions_rnd[-(len(distributions_rnd) - len(sums)):]]
 				sums_m = np.array(sums).mean(axis = 0)

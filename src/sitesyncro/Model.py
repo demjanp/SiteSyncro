@@ -577,15 +577,15 @@ class Model(object):
 		r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s" % (os.path.join(self.directory, "model.oxcal")))
 		self.load_oxcal_data()
 	
-	def process_randomization(self):
+	def process_randomization(self, max_cpus = -1, max_queue_size = 100):
 		# Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time
-		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self)
+		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process_clustering(self):
+	def process_clustering(self, max_cpus = -1, max_queue_size = 100):
 		# Cluster dates and using randomization testing find optimal clustering solution
-		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self)
+		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process(self, by_clusters = False):
+	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = 100):
 		# Process the complete model
 		# by_clusters: if True, update the phasing by clustering sample dates
 		self.reset_model()
@@ -594,9 +594,9 @@ class Model(object):
 		print("Modeling C-14 dates\n")
 		self.process_dates()
 		print("Testing the distribution of dates for randomness\n")
-		self.process_randomization()
+		self.process_randomization(max_cpus = max_cpus, max_queue_size = max_queue_size)
 		print("Clustering temporal distributions\n")
-		self.process_clustering()
+		self.process_clustering(max_cpus = max_cpus, max_queue_size = max_queue_size)
 		if by_clusters:
 			print("Updating phasing by clustering\n")
 			self.process_phasing(by_clusters = True)

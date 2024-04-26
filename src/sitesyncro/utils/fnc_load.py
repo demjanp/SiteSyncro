@@ -1,9 +1,9 @@
 from collections import defaultdict
 import os
 
-def load_input(input_path):
+def load_input(fname):
 	data = []
-	with open(input_path, "r") as file:
+	with open(fname, "r") as file:
 		next(file)  # Skip header
 		for line in file:
 			line = line.strip()
@@ -120,8 +120,8 @@ def create_result_path(result_path, existing = False):
 	os.makedirs(result_path)
 	return result_path
 
-def load_data(input_path):
-	data = load_input(input_path)
+def load_data(fname):
+	data = load_input(fname)
 	samples, context_samples, context_area, areas = get_samples_contexts_and_areas(data)
 	long_lived = get_long_lived(data)
 	r_dates = get_c14_dates(data)
@@ -129,12 +129,30 @@ def load_data(input_path):
 	earlier_than_rel = get_earlier_than_relations(data, context_samples)
 	
 	# samples = [sample, ...]
-	# context_samples = {context: [sample, ...], ...}
+	# contexts = {sample: context, ...}
 	# context_area = {context: area, ...}
-	# areas = [area, ...]
 	# long_lived = {sample: True/False, ...}
 	# r_dates = {sample: (age, uncertainty), ...}
 	# context_phase = {context: phase, ...}
 	# earlier_than_rel = {sample: [sample, ...], ...}
 	
-	return samples, context_samples, context_area, areas, long_lived, r_dates, context_phase, earlier_than_rel
+	contexts = {}
+	for context in context_samples:
+		for sample in context_samples[context]:
+			contexts[sample] = context
+		if context not in context_area:
+			context_area[context] = None
+		if context not in context_phase:
+			context_phase[context] = None
+		
+	for sample in samples:
+		if sample not in contexts:
+			contexts[sample] = None
+		if sample not in long_lived:
+			long_lived[sample] = False
+		if sample not in r_dates:
+			r_dates[sample] = (None, None)
+		if sample not in earlier_than_rel:
+			earlier_than_rel[sample] = {}
+	
+	return samples, contexts, context_area, long_lived, r_dates, context_phase, earlier_than_rel

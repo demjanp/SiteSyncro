@@ -21,7 +21,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="sitesyncro",
-    version="0.9",
+    version="0.9.1",
     description="SiteSyncro - Site-specific chronological modeling and synchronization",
     long_description=long_description,
     long_description_content_type="text/markdown",

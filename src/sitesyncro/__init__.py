@@ -1,7 +1,8 @@
-version_info = (0, 9, 0)
+version_info = (0, 9, 1)
 
 __version__ = '.'.join(map(str, version_info))
 __title__ = 'SiteSyncro'
-__date__ = "21.4.2024"
+__date__ = "22.4.2024"
 
-from sitesyncro.SiteSyncro import SiteSyncro
+from sitesyncro.Model import Model
+from sitesyncro.Sample import Sample

@@ -47,31 +47,26 @@ def find_groups(earlier_than):
 	# groups = {group: [idx, ...], ...}; idx = index in earlier_than
 	return dict(enumerate(sorted(groups, key = lambda group: len(group), reverse = True), start = 1))
 
-def create_earlier_than_matrix(context_phase, earlier_than_rel, samples, context_samples, context_area):
+def create_earlier_than_matrix(model):
+	
+	samples = sorted(list(model.samples.keys()))
 	
 	# Create a matrix of earlier-than relationships
 	earlier_than = np.zeros((len(samples), len(samples)), dtype=bool)
-	for s1 in earlier_than_rel:
-		i = samples.index(s1)
-		for s2 in earlier_than_rel[s1]:
+	for i, s1 in enumerate(samples):
+		for s2 in model.samples[s1].earlier_than:
 			j = samples.index(s2)
 			earlier_than[i][j] = True
 	
 	# Update earlier-than relationships based on phases
-	for c1 in context_samples:
-		a1 = context_area[c1]
-		for c2 in context_samples:
-			a2 = context_area[c2]
-			if (a1 != a2):
+	for i, s1 in enumerate(samples):
+		for j, s2 in enumerate(samples):
+			if s2 == s1:
 				continue
-			for sample1 in context_samples[c1]:
-				i = samples.index(sample1)
-				for sample2 in context_samples[c2]:
-					j = samples.index(sample2)
-					if (context_phase[c1] < context_phase[c2]):
-						earlier_than[i][j] = True
-					elif (context_phase[c2] < context_phase[c1]):
-						earlier_than[j][i] = True
+			if model.samples[s1].area != model.samples[s2].area:
+				continue
+			if model.samples[s1].area_excavation_phase < model.samples[s2].area_excavation_phase:
+				earlier_than[i][j] = True
 	
 	# Check if earlier_than has circular relationships
 	if not check_circular_relationships(earlier_than, samples):
@@ -84,44 +79,7 @@ def create_earlier_than_matrix(context_phase, earlier_than_rel, samples, context
 	
 	# earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
 	
-	return earlier_than
-
-def update_earlier_than_matrix(earlier_than, samples, clusters, means):
-	# Update earlier_than based on temporal clustering of the samples
-	#
-	# clusters = {label: [sample, ...], ...}
-	# means = {label: mean, ...}
-	
-	# Sort clusters from oldest to youngest
-	labels = sorted(clusters.keys(), key=lambda label: means[label], reverse=True)
-	
-	phases_clu = dict((label, idx + 1) for idx, label in enumerate(labels))
-	# phases_clu = {label: phase, ...}; lower phase = earlier
-	
-	phases = {}
-	for label in phases_clu:
-		for sample in clusters[label]:
-			phases[sample] = phases_clu[label]
-	# phases = {sample: phase, ...}
-	
-	# Update earlier-than relationships based on phases derived from clustering
-	for i, s1 in enumerate(samples):
-		for j, s2 in enumerate(samples):
-			if phases[s1] < phases[s2]:
-				earlier_than[i][j] = True
-			elif phases[s2] < phases[s1]:
-				earlier_than[j][i] = True
-	
-	# Check if earlier_than has circular relationships
-	if not check_circular_relationships(earlier_than, samples):
-		# Visualize earlier_than as a DAG
-		visualize_earlier_than(earlier_than, samples)
-		raise Exception("Circular relationships detected")
-	
-	# Extend the earlier_than matrix to include computed relations
-	earlier_than = extend_earlier_than(earlier_than)
-	
-	return earlier_than
+	return earlier_than, samples
 
 def get_phases_gr(earlier_than):
 	n_samples = earlier_than.shape[0]
@@ -160,20 +118,69 @@ def get_phases_gr(earlier_than):
 	return phasing
 
 def get_groups_and_phases(earlier_than, samples):
+	# returns groups_phases = {sample: [group, phase], ...}
 	
 	groups = find_groups(earlier_than)
 	# groups = {group: [idx, ...], ...}; idx = index in earlier_than
 	
+	groups_phases = dict([(name, [None, None]) for name in samples])
+	for gi in groups:
+		for i in groups[gi]:
+			groups_phases[samples[i]][0] = gi
+	
 	# Calculate phasing for each group
-	phases = {}
 	for gi in groups:
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
 		phases_gr = get_phases_gr(earlier_than_gr)
-		phases[gi] = dict([(samples_gr[i], int(phases_gr[i]) + 1) for i in range(len(groups[gi]))])
-	groups = dict([(gi, [samples[i] for i in groups[gi]]) for gi in groups])
+		for i in range(len(groups[gi])):
+			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
 	
-	# groups = {group: [sample, ...], ...}
-	# phases = {group: {sample: phase, ...}, ...}
-	return groups, phases
+	return groups_phases
+
+def update_earlier_than_by_clustering(model, earlier_than, samples):
+	# Update earlier_than based on temporal clustering of the samples
+	
+	if model.clusters_opt_n is None:
+		raise Exception("No clustering found")
+	
+	clusters = model.clusters[model.clusters_opt_n]
+	
+	# Sort clusters from oldest to youngest
+	labels = sorted(clusters.keys(), key=lambda label: means[label], reverse=True)
+	
+	phases_clu = dict((label, idx + 1) for idx, label in enumerate(labels))
+	# phases_clu = {label: phase, ...}; lower phase = earlier
+	
+	collect = {}
+	for label in phases_clu:
+		for sample in clusters[label]:
+			collect[sample] = phases_clu[label]
+	phases_clu = collect
+	# phases_clu = {sample: phase, ...}
+	
+	# Update earlier-than relationships based on phases derived from clustering
+	errors = []
+	for i, s1 in enumerate(samples):
+		for j, s2 in enumerate(samples):
+			if phases_clu[s1] < phases_clu[s2]:
+				earlier_than[i][j] = True
+				if (model.samples[s1].group == model.samples[s2].group) and (model.samples[s1].phase > model.samples[s2].phase):
+					errors.append([s1, s2, phases_clu[s1], phases_clu[s2], model.samples[s1].phase, model.samples[s2].phase])
+	if errors:
+		print("Warning, collisions detected between stratigraphic phasing and clustering:")
+		for s1, s2, clu1, clu2, ph1, ph2 in errors:
+			print("%s (Strat. phase %s, Clu. phase %s), %s (Strat. phase %s, Clu. phase %s)" % (s1, ph1, clu1, s2, ph2, clu2))
+		print()
+	
+	# Check if earlier_than has circular relationships
+	if not check_circular_relationships(earlier_than, samples):
+		# Visualize earlier_than as a DAG
+		visualize_earlier_than(earlier_than, samples)
+		raise Exception("Circular relationships detected")
+	
+	# Extend the earlier_than matrix to include computed relations
+	earlier_than = extend_earlier_than(earlier_than)
+	
+	return earlier_than
 

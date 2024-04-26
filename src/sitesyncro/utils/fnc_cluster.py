@@ -1,8 +1,9 @@
-from sitesyncro.lib.fnc_sum import (sum_distributions, calc_mean_std)
-from sitesyncro.lib.fnc_simulate import (calculate_parameters, generate_random_distributions)
-from sitesyncro.lib.fnc_mp import (process_mp)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std)
+from sitesyncro.utils.fnc_simulate import (calculate_parameters, generate_random_distributions)
 
+import ray
 import numpy as np
+from tqdm import tqdm
 from scipy.stats import norm
 from itertools import combinations
 from sklearn.decomposition import PCA
@@ -93,56 +94,52 @@ def calc_silhouette(D, clusters):
 	
 	return silhouette_score(D, clusters_l, metric = "precomputed")
 
-def cluster_distributions(distributions, years, clusters_n):
+def cluster_distributions(model):
 	# Cluster distributions into n clusters using Hierarchical Cluster Analysis
-	# distributions = {sample: [p, ...], ...}
 	#
 	# Returns clusters, means, silhouette
 	# 	clusters = {label: [sample, ...], ...}
 	#   means = {label: mean, ...}
+	#	silhouette = mean value for all clusters
 	
-	samples = sorted(list(distributions.keys()))
-	distributions = [distributions[sample] for sample in samples]
+	if model.cluster_n < 2:
+		raise Exception("Number of clusters must be >1")
+	
+	samples = []
+	distributions = []
+	for name in model.samples:
+		if model.samples[name].is_modeled:
+			samples.append(name)
+			distributions.append(model.samples[name].posterior)
+	# distributions = [[p, ...], ...]; in order of samples
+	
+	if not samples:
+		raise Exception("No modeled samples found")
 	
 	D = calc_distance_matrix(distributions)
-	clusters = calc_clusters_hca(D, clusters_n)
+	clusters = calc_clusters_hca(D, model.cluster_n)
 	means = {}
 	for label in clusters:
 		means[label] = np.average(
-			years,
-			weights=sum_distributions([distributions[idx] for idx in clusters[label]])
+			model.years,
+			weights=calc_sum([distributions[idx] for idx in clusters[label]])
 		)
 	sil = calc_silhouette(D, clusters)
 	clusters = dict([(label, [samples[idx] for idx in clusters[label]]) for label in clusters])
 	
 	return clusters, means, sil
 
-def worker_fnc(params, clusters_n, dates_n, t_param1, t_param2, uncert_base, curve, uniform):
+@ray.remote
+def test_distribution_clustering_worker(cluster_n, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
 	
-	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncert_base, curve, uniform)
+	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform)
 	D = calc_distance_matrix(distributions)
-	sil = calc_silhouette(D, calc_clusters_hca(D, clusters_n))
+	sil = calc_silhouette(D, calc_clusters_hca(D, cluster_n))
 	
 	return sil
 
-def collect_fnc(data, results):
-	
-	# data = sil
-	results.append(data)
-
-def progress_fnc(done, todo, clusters_n, clu_max, all_done, all_todo, c):
-	
-	print("\rClusters: %d/%d, Iteration: %d/%d, Conv: %0.4f         " % (clusters_n, clu_max, all_done + done, all_todo, c), end = "")
-
-def test_distribution_clustering(distributions, curve, 
-		uncert_base = 15, uniform = False,
-		npass = 100, convergence = 0.99, max_cpus = -1, max_queue_size = 100):
+def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 	# Test the clustering of distributions for randomness
-	#
-	# distributions = {sample: [p, ...], ...}
-	# curve: [[CalBP, ConvBP, CalSigma], ...]
-	# uncert_base: base uncertainty to simulate the radiocarbon dates
-	# uniform: flag indicating whether to use a uniform distribution for the calendar ages
 	#
 	# returns clusters, means, sils, ps
 	# 	clusters = {n: {label: [sample, ...], ...}, ...}; n = number of clusters
@@ -151,60 +148,80 @@ def test_distribution_clustering(distributions, curve,
 	#	ps = {n: p-value, ...}; p-value of the null hypothesis that the 
 	#		Silhouette for n clusters is the product of randomly distributed dates
 	
-	samples = sorted(list(distributions.keys()))
-	distributions = [distributions[sample] for sample in samples]
-	dates_n = len(distributions)
+	samples = []
+	distributions = []
+	for name in model.samples:
+		if model.samples[name].is_modeled:
+			samples.append(name)
+			distributions.append(model.samples[name].posterior)
+		elif model.samples[name].is_calibrated and not model.samples[name].long_lived:
+			samples.append(name)
+			distributions.append(model.samples[name].likelihood)
+	# distributions = [[p, ...], ...]; in order of samples
 	
-	years = curve[:, 0]
-	sum_obs = sum_distributions(distributions)
-	t_param1, t_param2 = calculate_parameters(years, sum_obs, uniform)
+	dates_n = len(samples)
 	
-	clusters = {}  # {clusters_n: {label: [idx, ...], ...}, ...}; idx = index in samples
-	sils = {} # {clusters_n: silhouette_score, ...}
-	means = {} # {clusters_n: {label: mean, ...}, ...}
+	if dates_n < 3:
+		raise Exception("Insufficient number samples for testing of clustering.")
+	
+	print("Testing clustering of %d distributions" % dates_n)
+	
+	sum_obs = calc_sum(distributions)
+	t_param1, t_param2 = calculate_parameters(model.years, sum_obs, model.uniform)
+	
+	clusters = {}  # {cluster_n: {label: [idx, ...], ...}, ...}; idx = index in samples
+	sils = {} # {cluster_n: silhouette_score, ...}
+	means = {} # {cluster_n: {label: mean, ...}, ...}
 	D = calc_distance_matrix(distributions)
-	for clusters_n in range(2, dates_n - 1):
-		clusters[clusters_n] = calc_clusters_hca(D, clusters_n)
-		sils[clusters_n] = calc_silhouette(D, clusters[clusters_n])
-		means[clusters_n] = {}
-		for label in clusters[clusters_n]:
-			means[clusters_n][label] = np.average(
-				years,
-				weights=sum_distributions([distributions[idx] for idx in clusters[clusters_n][label]])
+	for cluster_n in range(2, dates_n - 1):
+		clusters[cluster_n] = calc_clusters_hca(D, cluster_n)
+		sils[cluster_n] = calc_silhouette(D, clusters[cluster_n])
+		means[cluster_n] = {}
+		for label in clusters[cluster_n]:
+			means[cluster_n][label] = np.average(
+				model.years,
+				weights=calc_sum([distributions[idx] for idx in clusters[cluster_n][label]])
 			)
-		clusters[clusters_n] = dict([(label, [samples[idx] for idx in clusters[clusters_n][label]]) for label in clusters[clusters_n]])
+		clusters[cluster_n] = dict([(label, [samples[idx] for idx in clusters[cluster_n][label]]) for label in clusters[cluster_n]])
 	
 	clu_max = dates_n - 1
 	
 	# Calculate the mean or median and standard deviation or range of the summed distribution
 	ps = {}
-	for clusters_n in clusters:
+	for cluster_n in clusters:
 		sils_rnd = []
 		sils_prev = None
 		c = 0
-		params_list = list(range(npass))
-		todo = npass
-		while True:
-			process_mp(worker_fnc, params_list, [clusters_n, dates_n, t_param1, t_param2, uncert_base, curve, uniform],
-				collect_fnc = collect_fnc, collect_args = [sils_rnd],
-				progress_fnc = progress_fnc, progress_args = [clusters_n, clu_max, len(sils_rnd), npass*2, c],
-				max_cpus = max_cpus, max_queue_size = max_queue_size)
-			if len(sils_rnd) >= todo:
-				sils_m = np.array(sils_rnd).mean()
-				if sils_prev is not None:
-					c = 1 - np.abs(sils_prev - sils_m) / sils_prev
-				sils_prev = sils_m
-				if c >= convergence:
-					print("\nConverged at:", c)
-					break
-				todo *= 2
+		todo = model.npass
+		if not ray.is_initialized():
+			ray.init()
+		with tqdm(total=todo) as pbar:
+			pbar.total = model.npass*2
+			pbar.set_description("Clusters: %d/%d, Conv.: %0.3f" % (cluster_n, clu_max, c))
+			while True:
+				results = [test_distribution_clustering_worker.remote(cluster_n, dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform) for i in range(model.npass)]
+				while len(results) > 0:
+					ready, results = ray.wait(results)
+					for res in ready:
+						sils_rnd.append(ray.get(res))
+						pbar.update(1)
+				if len(sils_rnd) >= todo:
+					sils_m = np.array(sils_rnd).mean()
+					if sils_prev is not None:
+						c = 1 - np.abs(sils_prev - sils_m) / sils_prev
+						pbar.set_description("Clusters: %d/%d, Conv.: %0.3f" % (cluster_n, clu_max, c))
+					sils_prev = sils_m
+					if c >= model.convergence:
+						break
+					todo *= 2
+					pbar.total = max(todo, model.npass*2)
 		sils_rnd = np.array(sils_rnd)
 		s = sils_rnd.std()
 		if s == 0:
 			p = 0
 		else:
-			p = 1 - float(norm(sils_rnd.mean(), s).cdf(sils[clusters_n]))
-		ps[clusters_n] = p				
+			p = 1 - float(norm(sils_rnd.mean(), s).cdf(sils[cluster_n]))
+		ps[cluster_n] = p
 	
 	return clusters, means, sils, ps
 
@@ -225,4 +242,17 @@ def find_opt_clusters(clusters, ps, sils, p_value = 0.05):
 		return None
 	
 	return int(clu_ns[idxs[np.argmax(sils[idxs])]])
+
+def proc_clustering(model, max_cpus = -1, max_queue_size = 100):
+	if model.cluster_n > -1:
+		clusters, means, sil = cluster_distributions(model)
+		clusters = {model.cluster_n: clusters}
+		means = {model.cluster_n: means}
+		sils = {model.cluster_n: sil}
+		ps = {model.cluster_n: 1}
+		opt_n = model.cluster_n
+	else:
+		clusters, means, sils, ps = test_distribution_clustering(model, max_cpus, max_queue_size)
+		opt_n = find_opt_clusters(clusters, ps, sils, model.p_value)
+	return clusters, means, sils, ps, opt_n
 

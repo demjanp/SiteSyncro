@@ -1,18 +1,19 @@
 from sitesyncro.utils.fnc_radiocarbon import (calibrate)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_percentiles)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_percentiles, samples_to_distributions)
 from sitesyncro.utils.fnc_mp import (process_mp)
 
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import norm
 
-def generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
+def generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
 	# Generate sets of randomized distributions based on observed distributions
 	#
 	# dates_n: number of dates to generate
 	# t_param1: mean or median of the calendar ages
 	# t_param2: standard deviation or range of the calendar ages
-	# uncertainty_base: base uncertainty to simulate radiocarbon dates
+	# uncertainties: [uncertainty, ...] pool of uncertainties to simulate C-14 dates
+	# uncertainty_base: base uncertainty to calculate uncertainty based on C-14 age if pool is not available
 	# curve: [[CalBP, ConvBP, CalSigma], ...]
 	# uniform: flag indicating whether to use a uniform distribution for the calendar ages
 	
@@ -34,7 +35,10 @@ def generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base,
 		# Generate a random calendar age
 		age = _sim_age()
 		# Calculate the standard deviation for the date
-		stdev = uncertainty_base * np.exp(age / (2 * 8033))
+		if uncertainties:
+			stdev = np.random.choice(uncertainties)
+		else:
+			stdev = uncertainty_base * np.exp(age / (2 * 8033))
 		# Append the date and its standard deviation to the dates list
 		dates.append([age, stdev])
 		# Calibrate the date and append the distribution to the distributions list
@@ -113,9 +117,9 @@ def calculate_parameters(years, distribution, uniform):
 	return t_param1, t_param2
 
 
-def worker_fnc(params, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
+def worker_fnc(params, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
 	
-	return generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform)
+	return generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform)
 
 def collect_fnc(data, results, pbar):
 	
@@ -131,12 +135,7 @@ def progress_fnc(done, todo, all_done, all_todo, c, pbar):
 
 def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 	
-	distributions = []
-	for name in model.samples:
-		if model.samples[name].is_modeled:
-			distributions.append(model.samples[name].posterior)
-		elif model.samples[name].is_calibrated and not model.samples[name].long_lived:
-			distributions.append(model.samples[name].likelihood)
+	distributions, _, _ = samples_to_distributions(model.samples.values())
 	
 	dates_n = len(distributions)
 	
@@ -159,7 +158,7 @@ def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 		pbar.total = model.npass*2
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
-			process_mp(worker_fnc, params_list, [dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform],
+			process_mp(worker_fnc, params_list, [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
 		           collect_fnc = collect_fnc, collect_args = [distributions_rnd, pbar],
 		           max_cpus = max_cpus, max_queue_size = max_queue_size)
 			if len(distributions_rnd) >= todo:

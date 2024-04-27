@@ -1,4 +1,5 @@
 import numpy as np
+from collections import defaultdict
 
 def calc_sum(distributions):
 	# distributions = [[p, ...], ...]
@@ -77,3 +78,37 @@ def calc_percentiles(distributions, perc_lower, perc_upper):
 	combined = np.array(distributions, dtype=np.float64)
 	percentiles = np.percentile(combined, [perc_lower, perc_upper], axis=0)
 	return percentiles
+
+def samples_to_distributions(samples):
+	# Get a list of probability distributions from samples
+	# Combine samples from the same context by summation
+	# Use only posterior (modeled) distributions for long-lived samples
+	# samples = [Sample, ...]
+	#
+	# returns distributions, samples_collected, joined
+	#	distributions = [[p, ...], ...]
+	#	samples_collected = [sample name, ...] ordered by distributions
+	#	joined = {combined_name: [sample name, ...], ...}
+	distributions_dict = {}  # {name: np.array([p, ...]), ...}
+	contexts = defaultdict(list)
+	for sample in samples:
+		if sample.is_modeled:
+			distributions_dict[sample.name] = sample.posterior
+			contexts[sample.context].append(sample.name)
+		elif sample.is_calibrated and not sample.long_lived:
+			distributions_dict[sample.name] = sample.likelihood
+			contexts[sample.context].append(sample.name)
+	joined = {}  # {combined_sample: [sample_name, ...], ...}
+	samples_collected = []
+	distributions = []
+	for context, sample_names in contexts.items():
+		if len(sample_names) > 1:
+			combined_sample = '+'.join(sample_names)
+			joined[combined_sample] = sample_names
+			distributions.append(calc_sum([distributions_dict[name] for name in sample_names]))
+			samples_collected.append(combined_sample)
+		else:
+			distributions.append(distributions_dict[sample_names[0]])
+			samples_collected.append(sample_names[0])
+	
+	return distributions, samples_collected, joined

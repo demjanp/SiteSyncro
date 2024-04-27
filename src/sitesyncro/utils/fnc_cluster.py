@@ -1,5 +1,5 @@
 from sitesyncro.utils.fnc_mp import (process_mp)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, samples_to_distributions)
 from sitesyncro.utils.fnc_simulate import (calculate_parameters, generate_random_distributions)
 
 import numpy as np
@@ -111,7 +111,7 @@ def cluster_distributions(model):
 		if model.samples[name].is_modeled:
 			samples.append(name)
 			distributions.append(model.samples[name].posterior)
-	# distributions = [[p, ...], ...]; in order of samples
+	# distributions = [[p, ...], ...]; ordered by samples
 	
 	if not samples:
 		raise Exception("No modeled samples found")
@@ -129,9 +129,9 @@ def cluster_distributions(model):
 	
 	return clusters, means, sil
 
-def worker_fnc(params, cluster_n, dates_n, t_param1, t_param2, uncertainty_base, curve, uniform):
+def worker_fnc(params, cluster_n, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
 	
-	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainty_base, curve, uniform)
+	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform)
 	D = calc_distance_matrix(distributions)
 	sil = calc_silhouette(D, calc_clusters_hca(D, cluster_n))
 	
@@ -153,16 +153,10 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 	#	ps = {n: p-value, ...}; p-value of the null hypothesis that the 
 	#		Silhouette for n clusters is the product of randomly distributed dates
 	
-	samples = []
-	distributions = []
-	for name in model.samples:
-		if model.samples[name].is_modeled:
-			samples.append(name)
-			distributions.append(model.samples[name].posterior)
-		elif model.samples[name].is_calibrated and not model.samples[name].long_lived:
-			samples.append(name)
-			distributions.append(model.samples[name].likelihood)
-	# distributions = [[p, ...], ...]; in order of samples
+	distributions, samples, joined = samples_to_distributions(model.samples.values())
+	# distributions = [[p, ...], ...]
+	# samples = [sample name, ...] ordered by distributions
+	# joined = {combined_name: [sample name, ...], ...}
 	
 	dates_n = len(samples)
 	
@@ -187,6 +181,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 				model.years,
 				weights=calc_sum([distributions[idx] for idx in clusters[cluster_n][label]])
 			)
+		# convert clusters to {cluster_n: {label: [sample name, ...], ...}, ...}
 		clusters[cluster_n] = dict([(label, [samples[idx] for idx in clusters[cluster_n][label]]) for label in clusters[cluster_n]])
 	
 	clu_max = dates_n - 1
@@ -203,7 +198,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 			pbar.total = model.npass*2
 			pbar.set_description("Clusters: %d/%d, Conv.: %0.3f" % (cluster_n, clu_max, c))
 			while True:
-				process_mp(worker_fnc, params_list, [cluster_n, dates_n, t_param1, t_param2, model.uncertainty_base, model.curve, model.uniform],
+				process_mp(worker_fnc, params_list, [cluster_n, dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
 		           collect_fnc = collect_fnc, collect_args = [sils_rnd, pbar],
 		           max_cpus = max_cpus, max_queue_size = max_queue_size)
 				if len(sils_rnd) >= todo:
@@ -223,6 +218,15 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
 		else:
 			p = 1 - float(norm(sils_rnd.mean(), s).cdf(sils[cluster_n]))
 		ps[cluster_n] = p
+	
+	# Split joined samples
+	if joined:
+		for cluster_n in clusters:
+			for label in clusters[cluster_n]:
+				for name in joined:
+					if name in clusters[cluster_n][label]:
+						clusters[cluster_n][label].remove(name)
+						clusters[cluster_n][label] += joined[name]
 	
 	return clusters, means, sils, ps
 

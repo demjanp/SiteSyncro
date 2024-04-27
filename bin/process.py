@@ -21,7 +21,7 @@ import argparse
 import sys
 import os
 
-DESCRIPTION = "SiteSyncro v%s- Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)" % (__version__)
+DESCRIPTION = "SiteSyncro v%s - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)" % (__version__)
 
 def parse_arguments(args):
 	
@@ -30,7 +30,7 @@ def parse_arguments(args):
 	parser.add_argument('-input', type=str, required=False,
 		help="File path to load data in semicolon-separated CSV format (8 columns; see README.md)")
 	parser.add_argument('-directory', type=str, default="model", required=False, 
-		help="Directory for model data")
+		help="Working directory for model data")
 	parser.add_argument('-curve_name', type=str, default="intcal20.14c", required=False,
 		help="File name of the radiocarbon age calibration curve (see OxCal/bin directory)")
 	parser.add_argument('-phase_model', type=str, default="sequence", required=False, 
@@ -81,6 +81,8 @@ if __name__ == '__main__':
 		print("Loaded data from:", finput)
 		print()
 	
+	print("Working directory:", model.directory)
+	print()
 	print("Total unique samples:", len(model.samples))
 	print("Total unique contexts:", len(model.contexts))
 	print("Total unique areas:", len(model.areas))

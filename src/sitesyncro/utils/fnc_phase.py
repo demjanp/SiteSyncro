@@ -3,7 +3,6 @@ import networkx as nx
 import numpy as np
 
 def check_circular_relationships(earlier_than, samples):
-	
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	cycles = list(nx.simple_cycles(G))
 	if cycles:
@@ -12,12 +11,9 @@ def check_circular_relationships(earlier_than, samples):
 			cycle_samples = [samples[i] for i in cycle]
 			print(" -> ".join(cycle_samples))
 		return False
-	
-	print("No circular relationships detected.")
 	return True
 
 def visualize_earlier_than(earlier_than, samples):
-	
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	labels = {i: sample for i, sample in enumerate(samples)}
 	pos = nx.spring_layout(G)
@@ -37,7 +33,6 @@ def extend_earlier_than(earlier_than):
 	return extended_earlier_than.astype(bool)
 
 def find_groups(earlier_than):
-	
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using = nx.Graph)
 	groups = []
 	for c in nx.connected_components(G):
@@ -48,7 +43,6 @@ def find_groups(earlier_than):
 	return dict(enumerate(sorted(groups, key = lambda group: len(group), reverse = True), start = 1))
 
 def create_earlier_than_matrix(model):
-	
 	samples = sorted(list(model.samples.keys()))
 	
 	# Create a matrix of earlier-than relationships
@@ -73,12 +67,10 @@ def create_earlier_than_matrix(model):
 		# Visualize earlier_than as a DAG
 		visualize_earlier_than(earlier_than, samples)
 		raise Exception("Circular relationships detected")
-		
+	
 	# Extend the earlier_than matrix to include computed relations
 	earlier_than = extend_earlier_than(earlier_than)
-	
 	# earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
-	
 	return earlier_than, samples
 
 def get_phases_gr(earlier_than):

@@ -192,6 +192,15 @@ class Model(object):
 		return self._data['curve'].copy()
 	
 	@property
+	def uncertainties(self):
+		# List of uncertainties from C-14 dates of samples
+		uncertainties = []
+		for name in self.samples:
+			if self.samples[name].date_type == 'R':
+				uncertainties.append(self.samples[name].uncertainty)
+		return uncertainties
+	
+	@property
 	def oxcal_data(self):
 		# OxCal data
 		# oxcal_data = {key: data, ...}
@@ -419,6 +428,18 @@ class Model(object):
 			if key not in data:
 				return False
 		
+		# Check if model parameters have changed
+		changed = False
+		for key in self._assigned():
+			if key == 'samples':
+				continue
+			if data[key] != self._data[key]:
+				changed = True
+				break
+		if changed:
+			self.reset_model()
+			print("\nModel parameters have changed. Resetting model.")
+		
 		# Initialize samples
 		for name in data['samples']:
 			data['samples'][name] = Sample(data['samples'][name])
@@ -428,7 +449,11 @@ class Model(object):
 			if data[key] is not None:
 				data[key] = np.array(data[key], dtype = np.float64)
 		
+		# Don't load oxcal url
+		oxcal_url = self.oxcal_url
+		
 		self._data = data
+		self._data['oxcal_url'] = oxcal_url
 		return True
 	
 	def import_csv(self, fname):

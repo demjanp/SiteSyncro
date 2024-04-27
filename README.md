@@ -62,7 +62,7 @@ sitesyncro.exe -input data_sample.csv
 ```
 `process.py` & `sitesyncro.exe` accepts the following command-line arguments:
 - `-h`, `--help`: Show help message and exit.
-- `-directory`: Directory for model data (default is "model").
+- `-directory`: Working directory for model data (default is "model").
 - `-input`: The path to the input file in semicolon-separated CSV format.
 - `-curve_name`: File name of the radiocarbon age calibration curve (default is "intcal20.14c").
 - `-phase_model`: OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none'; default is "sequence").
@@ -134,7 +134,7 @@ This will create the default directory `model` and generate the following files:
 #### Parameters <a name="model_parameters"></a>
 
 The `Model` class constructor accepts the following parameters:
-- `directory`: Directory for model data (default is "model").
+- `directory`: Working directory for model data (default is "model").
 - `samples`: List of samples as instances of the class [Sample](#sample_class)
 - `curve_name`: The name of the calibration curve to use (default is "intcal20.14c").
 - `phase_model`: OxCal phase model type. Can be 'sequence', 'contiguous', 'overlapping', or 'none' (default is "sequence").
@@ -150,36 +150,36 @@ The `Model` class constructor accepts the following parameters:
 
 The `Model` class provides the following methods:
 - `add_sample(sample)` or `add_sample(name, age, uncertainty, **kwargs)`: Add a sample to the model.
-	For arguments see [Sample parameters](#sample_parameters).
+	- For arguments see [Sample parameters](#sample_parameters).
 - `del_sample(name)`: Delete a sample from the model.
 - `reset_model()`: Reset the model to the initial state.
 - `save(zipped = False)`: Save the model to a file.
-	zipped: if True, save the model as a zipped JSON file
+	- `zipped`; if True, save the model as a zipped JSON file
 - `copy(directory)`: Copy the model to a new directory.
-    directory`: Directory for the new model
-- `import_csv(fname)`: Import sample data from a CSV file with the following columns: Context, Excavation Area, C-14 Age, Uncertainty, Phase (lower = older), Earlier-Than, Long-Lived / Redeposited. See [Input File Format](#input_file) for details.
+	- `directory`: Directory for the new model
+- `import_csv(fname)`: Import sample data from a CSV file. See [Input File Format](#input_file) for details.
 - `plot_randomized(show = False)`: Plot the randomization test results. If `show` is True, the plot is shown, otherwise it is saved as `randomized.pdf`.
 - `plot_clusters(show = False)`: Plot the clustering results. If `show` is True, the plot is shown, otherwise it is saved as `silhouette.pdf`.
 - `save_csv(fcsv = None)`: Save the results to a CSV file.
-	fcsv: File path for the CSV file. If None, `results.csv` is saved in the model directory.
+	- `fcsv`: File path for the CSV file. If None, `results.csv` is saved in the model directory.
 - `to_oxcal()`: Save the phasing model in OxCal format as `model.oxcal`.
 - `load_oxcal_data()`: Load results of OxCal modeling from `model.js`.
 - `update_params(**kwargs)`: Update model parameters.
-	For keyword arguments see [Parameters](#model_parameters)
+	- For keyword arguments see [Parameters](#model_parameters)
 - `process_phasing(by_clusters = False)`: Update groups and phases of samples based on stratigraphic relations.
-	by_clusters: if True, update the phasing by clustering sample dates
+	- `by_clusters`: if True, update the phasing by clustering sample dates
 - `process_dates()`: Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal.
 - `process_randomization(max_cpus = -1, max_queue_size = 100)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
 - `process_clustering(max_cpus = -1, max_queue_size = 100)`: Cluster dates and using randomization testing find optimal clustering solution
 - `process(by_clusters = False, max_cpus = -1, max_queue_size = 100)`: Process the complete model
-	by_clusters: if True, update the phasing by clustering sample dates
-	max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available)
-	max_queue_size`: Maximum queue size for parallel processing
+	- `by_clusters`: if True, update the phasing by clustering sample dates
+	- `max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available)
+	- `max_queue_size`: Maximum queue size for parallel processing
 
 #### Attributes
 
 The `Model` class has the following attributes:
-- `directory`: Directory for model data
+- `directory`: Working directory for model data
 - `samples`: Dictionary of samples in format `{name: Sample, ...}`
 - `curve_name`: The name of the calibration curve
 - `phase_model`: OxCal phase model type
@@ -192,6 +192,7 @@ The `Model` class has the following attributes:
 - `oxcal_url`: Url to download the OxCal program
 - `years`: Calendar years BP corresponding to the probability distributions in format `np.array([year, ...])`
 - `curve`: Calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`, sorted by calendar years
+- `uncertainties`: List of uncertainties from C-14 dates of samples
 - `oxcal_data`: Results of OxCal modeling from `model.js` in format `{key: data, ...}`
 - `summed`: Summed probability distribution of the dating of all samples in format `np.array([p, ...])`, where p is the probability of the calendar year
 - `random_p`: Calculated p-value for the randomization test
@@ -243,16 +244,16 @@ The 'Sample' class constructor accepts the following parameters:
 
 The `Sample` class provides the following methods:
 - `calibrate(curve)`: Calibrate the sample using the provided calibration curve.
-	curve: `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
+	- `curve = np.array([[calendar year BP, C-14 year, uncertainty], ...])`
 - `set_group(group)`: Set the group number for the sample.
 - `set_phase(phase)`: Set the phase number for the sample.
 - `set_likelihood(distribution, mean = None, rng = None)`: Set the likelihood for the sample.
-	distribution: `np.array([p, ...])`
-	rng: `[from, to]` 2-sigma (95.45%) range in calendar years BP
+	- `distribution = np.array([p, ...])`
+	- `rng = [from, to]`; 2-sigma (95.45%) range in calendar years BP
 - `set_posterior(distribution, mean = None, rng = None, agreement = 0)`: Set the posterior for the sample.
-	distribution: `np.array([p, ...])`
-	rng: `[from, to]` 2-sigma (95.45%) range in calendar years BP
-	agreement: agreement index generated by OxCal modeling
+	- `distribution = np.array([p, ...])`
+	- `rng = [from, to]`; 2-sigma (95.45%) range in calendar years BP
+	- `agreement`: agreement index generated by OxCal modeling
 - `to_oxcal()`: Convert the sample to OxCal model format (str).
 - `to_dict()`: Convert the sample data to a JSON dictionary.
 - `from_dict(data)`: Load the sample data from a JSON dictionary.
@@ -291,15 +292,10 @@ To prepare a Python virtual environment open a terminal or command prompt window
 
 ```
 git clone https://github.com/demjanp/SiteSyncro.git
-
 cd sitesyncro
-
 python -m venv .venv
-
 .venv\Scripts\activate.bat
-
 python.exe -m pip install --upgrade pip
-
 pip install -e .
 ```
 
@@ -316,7 +312,7 @@ Activate the virtual environment:
 ```
 Then type the following commands (this only has to be done once per virtual environment):
 ```
-python.exe -m pip install --upgrade pip
+python -m pip install --upgrade pip
 python -m pip install --upgrade build
 pip install twine
 pip install pyinstaller==6.6.0
@@ -327,7 +323,7 @@ pip install -e .
 python -m build
 pyinstaller sitesyncro.spec
 ```
-You will find the executable `sitesyncro.exe` in the `dist` folder.
+The executable `sitesyncro.exe` will be created in the `dist` folder.
 
 ## Contact: <a name="contact"></a>
 Peter Demján (peter.demjan@gmail.com)
@@ -344,7 +340,6 @@ This software uses the following open source packages:
 * [Matplotlib](https://matplotlib.org/)
 * [NetworkX](https://networkx.org/)
 * [NumPy](https://www.numpy.org/)
-* [Ray](https://ray.io/)
 * [Requests](https://requests.readthedocs.io/)
 * [Scikit-learn](https://scikit-learn.org/)
 * [SciPy](https://scipy.org/)

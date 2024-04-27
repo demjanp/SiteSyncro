@@ -627,7 +627,7 @@ class Model(object):
 				self.samples[name].set_phase(None)
 	
 	def process_outliers(self, max_cpus = -1, max_queue_size = 10000):
-		outliers, self._data['outlier_candidates'] = find_dating_outliers(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
+		outliers, self._data['outlier_candidates'] = find_dating_outliers(self)
 		for name in outliers:
 			self.samples[name].set_outlier(True)
 		

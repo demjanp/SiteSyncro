@@ -28,7 +28,7 @@ def parse_arguments(args):
 	parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	
 	parser.add_argument('-input', type=str, required=False,
-		help="File path to load data in semicolon-separated CSV format (8 columns; see README.md)")
+		help="File path to load data in semicolon-separated CSV format (10 columns; see README.md)")
 	parser.add_argument('-directory', type=str, default="model", required=False, 
 		help="Working directory for model data")
 	parser.add_argument('-curve_name', type=str, default="intcal20.14c", required=False,

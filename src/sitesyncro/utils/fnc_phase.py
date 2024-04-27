@@ -1,5 +1,3 @@
-from sitesyncro.utils.fnc_mp import (process_mp)
-
 from itertools import combinations
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -185,45 +183,18 @@ def update_earlier_than_by_clustering(model, earlier_than, samples):
 	
 	return earlier_than
 
-
-def find_outliers_idxs(idxs, earlier_than, samples, ranges, check_only = False):
-	found = set()
-	for i in idxs:
-		for j in np.where(earlier_than[i])[0]:
-			if ranges[samples[i]][0] < ranges[samples[j]][1]:
-				if check_only:
-					return True
-				found.add(i)
-				found.add(j)
-	return list(found)
-
-def worker_fnc(params, base, earlier_than, samples, ranges):
+def find_dating_outliers(model):
 	
-	return params, find_outliers_idxs(base.union(params), earlier_than, samples, ranges, check_only = True)
-
-def collect_fnc(data, picked, pbar):
-	
-	added, found = data
-	pbar.update(1)
-	if not found:
-		picked.append(added)
-
-def pick_sp(removed, n, base, earlier_than, samples, ranges, pbar):
-	picked = []
-	for added in combinations(removed, n):
-		pbar.update(1)
-		if not find_outliers_idxs(base.union(added), earlier_than, samples, ranges, check_only = True):
-			picked.append(added)
-	return picked
-
-def pick_mp(removed, n, base, earlier_than, samples, ranges, pbar, max_cpus, max_queue_size):
-	picked = []
-	process_mp(worker_fnc, combinations(removed, n), [base, earlier_than, samples, ranges],
-		collect_fnc = collect_fnc, collect_args = [picked, pbar], 
-		max_cpus = max_cpus, max_queue_size = max_queue_size)
-	return picked
-
-def find_dating_outliers(model, max_cpus = -1, max_queue_size = 10000):
+	def _find_outliers_idxs(idxs, earlier_than, samples, ranges, check_only = False):
+		found = set()
+		for i in idxs:
+			for j in np.where(earlier_than[i])[0]:
+				if ranges[samples[i]][0] < ranges[samples[j]][1]:
+					if check_only:
+						return True
+					found.add(i)
+					found.add(j)
+		return list(found)
 	
 	def _pick_outliers(candidates, sample_idxs, earlier_than, samples, ranges):
 		removed = set(candidates)
@@ -237,10 +208,11 @@ def find_dating_outliers(model, max_cpus = -1, max_queue_size = 10000):
 				pbar.reset()
 				pbar.total = n_combs
 				pbar.set_description("Returning %d/%d" % (n, len(removed)))
-				if n_combs > 1000000:
-					picked = pick_mp(removed, n, base, earlier_than, samples, ranges, pbar, max_cpus, max_queue_size)
-				else:
-					picked = pick_sp(removed, n, base, earlier_than, samples, ranges, pbar)
+				picked = []
+				for added in combinations(removed, n):
+					pbar.update(1)
+					if not _find_outliers_idxs(base.union(added), earlier_than, samples, ranges, check_only = True):
+						picked.append(added)
 				for added in picked:
 					found = True
 					if n > added_n:
@@ -253,7 +225,7 @@ def find_dating_outliers(model, max_cpus = -1, max_queue_size = 10000):
 	
 	earlier_than, samples = create_earlier_than_matrix(model)
 	if not earlier_than.sum():
-		return []
+		return [], []
 	ranges = {}
 	for name in model.samples:
 		if model.samples[name].is_calibrated and not model.samples[name].outlier:
@@ -262,10 +234,10 @@ def find_dating_outliers(model, max_cpus = -1, max_queue_size = 10000):
 				ranges[name] = rng
 	sample_idxs = [idx for idx, name in enumerate(samples) if name in ranges]
 	if not sample_idxs:
-		return []
-	candidates = find_outliers_idxs(sample_idxs, earlier_than, samples, ranges)
+		return [], []
+	candidates = _find_outliers_idxs(sample_idxs, earlier_than, samples, ranges)
 	if not candidates:
-		return []
+		return [], []
 	print("Found %d candidates for outliers" % (len(candidates)))
 	outliers = _pick_outliers(candidates, sample_idxs, earlier_than, samples, ranges)
 	if outliers:

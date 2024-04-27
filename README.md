@@ -172,7 +172,7 @@ The `Model` class provides the following methods:
 	- For keyword arguments see [Parameters](#model_parameters)
 - `process_phasing(by_clusters = False)`: Update groups and phases of samples based on stratigraphic relations.
 	- `by_clusters`: if True, update the phasing by clustering sample dates
-- `process_outliers(max_cpus = -1, max_queue_size = 10000)`: Find dating outliers among samples which need to be removed for the model to be valid
+- `process_outliers()`: Find dating outliers among samples which need to be removed for the model to be valid
 - `process_dates()`: Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal.
 - `process_randomization(max_cpus = -1, max_queue_size = 10000)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
 - `process_clustering(max_cpus = -1, max_queue_size = 10000)`: Cluster dates and using randomization testing find optimal clustering solution

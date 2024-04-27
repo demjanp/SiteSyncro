@@ -48,12 +48,19 @@ def download_oxcal(url = None):
 	
 	return True
 
-def oxcal_date(name, age, uncertainty, date_type):
+def oxcal_date(name, age, uncertainty, date_type, outlier):
+	txt = None
 	if date_type == 'R':
-		return '''R_Date("%s", %f, %f);''' % (name, age, uncertainty)
-	if date_type == 'U':
-		return '''Date("%s", U(CE(%f), CE(%f)));''' % (name, -(age + uncertainty - 1950), -(age - uncertainty - 1950))
-	raise Exception("Invalid date type specified: %s (must be 'R' or 'U')" % (date_type))
+		txt = '''R_Date("%s", %f, %f)''' % (name, age, uncertainty)
+	elif date_type == 'U':
+		txt = '''Date("%s", U(CE(%f), CE(%f)))''' % (name, -(age + uncertainty - 1950), -(age - uncertainty - 1950))
+	if txt is None:
+		raise Exception("Invalid date type specified: %s (must be 'R' or 'U')" % (date_type))
+	if outlier:
+		txt += "{Outlier(1);};"
+	else:
+		txt += ";"
+	return txt
 
 def gen_sequence(name, data):
 	
@@ -154,16 +161,14 @@ def gen_oxcal_model(model):
 	for group in groups:
 		data = defaultdict(list)
 		for name in groups[group]:
+			if model.samples[name].outlier:
+				continue
 			data[model.samples[name].phase].append(model.samples[name])
 		data = dict(data)
 		for phase in data:
 			data[phase] = sorted(data[phase], key = lambda sample: sum(sample.likelihood_range))
 			data[phase] = "\n".join([sample.to_oxcal() for sample in data[phase]])
-			
-		if len(data) > 1:
-			txt += model_fncs[model.phase_model]("Gr.%d" % (group), data)
-		else:
-			txt += model_fncs['none']("Gr.%d" % (group), data)
+		txt += model_fncs[model.phase_model]("Gr.%d" % (group), data)
 	
 	return '''
 Curve("%s","%s");

@@ -83,6 +83,7 @@ def samples_to_distributions(samples):
 	# Get a list of probability distributions from samples
 	# Combine samples from the same context by summation
 	# Use only posterior (modeled) distributions for long-lived samples
+	# Do not use distributions from outliers
 	# samples = [Sample, ...]
 	#
 	# returns distributions, samples_collected, joined
@@ -92,6 +93,8 @@ def samples_to_distributions(samples):
 	distributions_dict = {}  # {name: np.array([p, ...]), ...}
 	contexts = defaultdict(list)
 	for sample in samples:
+		if sample.outlier:
+			continue
 		if sample.is_modeled:
 			distributions_dict[sample.name] = sample.posterior
 			contexts[sample.context].append(sample.name)

@@ -143,7 +143,7 @@ def collect_fnc(data, results, pbar):
 	pbar.update(1)
 	results.append(data)
 
-def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 100):
+def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 10000):
 	# Test the clustering of distributions for randomness
 	#
 	# returns clusters, means, sils, ps
@@ -248,7 +248,7 @@ def find_opt_clusters(clusters, ps, sils, p_value = 0.05):
 	
 	return int(clu_ns[idxs[np.argmax(sils[idxs])]])
 
-def proc_clustering(model, max_cpus = -1, max_queue_size = 100):
+def proc_clustering(model, max_cpus = -1, max_queue_size = 10000):
 	if model.cluster_n > -1:
 		clusters, means, sil = cluster_distributions(model)
 		clusters = {model.cluster_n: clusters}

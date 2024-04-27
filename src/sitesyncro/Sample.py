@@ -15,7 +15,9 @@ class Sample(object):
 		# 	uncertainty: uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U'
 		# keyword arguments:
 		# 	date_type: 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
-		# 	long_lived: True if sample is older than the examined deposition event due to e.g. old wood effect or redeposition from older strata
+		# 	long_lived: True if sample could be older than the examined deposition event due to e.g. old wood effect
+		#	redeposited: True if sample could be redeposited from a different context
+		#	outlier: True if sample is an outlier and should not be used for modeling
 		# 	context: name of the context where sample was found
 		# 	area: excavation area
 		# 	area_excavation_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
@@ -27,6 +29,8 @@ class Sample(object):
 		def _from_arguments(name, age, uncertainty,
 				date_type = 'R',
 				long_lived = False,
+				redeposited = False,
+				outlier = False,
 				context = None,
 				area = None,
 				area_excavation_phase = None,
@@ -43,6 +47,8 @@ class Sample(object):
 				uncertainty = uncertainty,
 				date_type = date_type,
 				long_lived = long_lived,
+				redeposited = redeposited,
+				outlier = outlier,
 				context = context,
 				area = area,
 				area_excavation_phase = area_excavation_phase,
@@ -106,6 +112,14 @@ class Sample(object):
 	@property
 	def long_lived(self):
 		return self._data['long_lived']
+	
+	@property
+	def redeposited(self):
+		return self._data['redeposited']
+	
+	@property
+	def outlier(self):
+		return self._data['outlier']
 	
 	@property
 	def context(self):
@@ -216,12 +230,15 @@ class Sample(object):
 		self._data['years'] = curve[:,0].copy()
 		self._data['likelihood'] = calibrate(self.age, self.uncertainty, curve, self.date_type)
 	
+	def set_outlier(self, state):
+		if not isinstance(state, bool):
+			raise Exception("Outlier state must be a boolean value")
+		self._data['outlier'] = state
+	
 	def set_group(self, group):
-		
 		self._data['group'] = group
 	
 	def set_phase(self, phase):
-		
 		self._data['phase'] = phase
 	
 	def set_likelihood(self, distribution, mean = None, rng = None):
@@ -246,15 +263,23 @@ class Sample(object):
 		else:
 			self._data['posterior_range'] = copy.copy(rng)
 	
-	def to_oxcal(self):
+	def get_range(self):
 		if not self.is_calibrated:
-			raise Exception("Sample must be calibrated to generate OxCal definition")
+			return [None, None]
 		if self.long_lived and (self.date_type == 'R'):
 			# If the sample is long-lived, change it to a uniform distribution
 			# Use the oldest date in the 2-sigma range as lower boundary and 0 BP as upper boundary
 			lower = self.likelihood_range[0]
-			return oxcal_date(self.name, lower / 2, lower / 2, 'U')
-		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type)
+			return [lower, 0]
+		return self.likelihood_range
+	
+	def to_oxcal(self):
+		if not self.is_calibrated:
+			raise Exception("Sample must be calibrated to generate OxCal definition")
+		if self.long_lived and (self.date_type == 'R'):
+			lower, upper = self.get_range()
+			return oxcal_date(self.name, (lower + upper) / 2, abs(upper - lower) / 2, 'U', self.outlier)
+		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type, self.outlier)
 	
 	def to_dict(self):
 		data = copy.deepcopy(self._data)
@@ -267,6 +292,8 @@ class Sample(object):
 			uncertainty = None,
 			date_type = None,
 			long_lived = None,
+			redeposited = None,
+			outlier = None,
 			context = None,
 			area = None,
 			area_excavation_phase = None,
@@ -292,7 +319,7 @@ class Sample(object):
 		return Sample(self.to_dict())
 	
 	def __repr__(self):
-		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, context={self.context}, area={self.area}, area_excavation_phase={self.area_excavation_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
+		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, redeposited={self.redeposited}, outlier={self.outlier}, context={self.context}, area={self.area}, area_excavation_phase={self.area_excavation_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
 		
 		if self.is_calibrated:
 			repr_str += f", likelihood_range={self.likelihood_range}, likelihood_mean={self.likelihood_mean}"

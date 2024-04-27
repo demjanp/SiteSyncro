@@ -9,14 +9,16 @@ def load_input(fname):
 			line = line.strip()
 			if line:
 				elements = line.split(";")
-				if len(elements) != 8:
+				if len(elements) != 10:
 					raise Exception(f"Incorrect data format in line: {line}")
-				sample, context, area, age, uncertainty, phase, earlier_than, long_lived = elements
+				sample, context, area, age, uncertainty, phase, earlier_than, long_lived, redeposited, outlier = elements
 				try:
 					age = float(age.strip())
 					uncertainty = float(uncertainty.strip())
 					phase = float(phase.strip())
 					long_lived = int(long_lived.strip())
+					redeposited = int(redeposited.strip())
+					outlier = int(outlier.strip())
 				except ValueError:
 					raise Exception(f"Incorrect data format in line: {line}")
 				# split comma-separated values from earlier_than
@@ -29,7 +31,9 @@ def load_input(fname):
 					"Uncertainty": uncertainty,
 					"Phase": phase,
 					"Earlier-Than": earlier_than,
-					"Long-Lived": long_lived
+					"Long-Lived": long_lived,
+					"Redeposited": redeposited,
+					"Outlier": outlier,
 				})
 	return data
 
@@ -64,15 +68,27 @@ def get_samples_contexts_and_areas(data):
 	return samples, context_samples, context_area, areas
 
 def get_long_lived(data):
-	
-	# Create a list of long-lived or redeposited contexts
+	# Create a list of long-lived contexts
 	long_lived = {}
 	for line in data:
 		long_lived[line["Sample"]] = bool(line["Long-Lived"])
 	return long_lived
 
+def get_redeposited(data):
+	# Create a list of redeposited contexts
+	redeposited = {}
+	for line in data:
+		redeposited[line["Sample"]] = bool(line["Redeposited"])
+	return redeposited
+
+def get_outlier(data):
+	# Create a list of outliers
+	outlier = {}
+	for line in data:
+		outlier[line["Sample"]] = bool(line["Outlier"])
+	return outlier
+
 def get_c14_dates(data):
-	
 	r_dates = {}
 	for line in data:
 		r_dates[line["Sample"]] = (line["C14 Age"], line["Uncertainty"])
@@ -124,6 +140,8 @@ def load_data(fname):
 	data = load_input(fname)
 	samples, context_samples, context_area, areas = get_samples_contexts_and_areas(data)
 	long_lived = get_long_lived(data)
+	redeposited = get_redeposited(data)
+	outlier = get_outlier(data)
 	r_dates = get_c14_dates(data)
 	context_phase = get_context_phase(data)
 	earlier_than_rel = get_earlier_than_relations(data, context_samples)
@@ -132,6 +150,8 @@ def load_data(fname):
 	# contexts = {sample: context, ...}
 	# context_area = {context: area, ...}
 	# long_lived = {sample: True/False, ...}
+	# redeposited = {sample: True/False, ...}
+	# outlier = {sample: True/False, ...}
 	# r_dates = {sample: (age, uncertainty), ...}
 	# context_phase = {context: phase, ...}
 	# earlier_than_rel = {sample: [sample, ...], ...}
@@ -144,15 +164,19 @@ def load_data(fname):
 			context_area[context] = None
 		if context not in context_phase:
 			context_phase[context] = None
-		
+	
 	for sample in samples:
 		if sample not in contexts:
 			contexts[sample] = None
 		if sample not in long_lived:
 			long_lived[sample] = False
+		if sample not in redeposited:
+			redeposited[sample] = False
+		if sample not in outlier:
+			outlier[sample] = False
 		if sample not in r_dates:
 			r_dates[sample] = (None, None)
 		if sample not in earlier_than_rel:
 			earlier_than_rel[sample] = {}
 	
-	return samples, contexts, context_area, long_lived, r_dates, context_phase, earlier_than_rel
+	return samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than_rel

@@ -71,6 +71,21 @@ def plot_clusters(model, fplot = None):
 		pyplot.savefig(fplot)
 	pyplot.close()
 
+def save_outliers(model, fname):
+	
+	txt = ""
+	outliers = model.outliers
+	if outliers:
+		txt += "Eliminated outliers:\n"
+		txt += "%s\n" % (", ".join(outliers))
+	candidates = model.outlier_candidates
+	if candidates:
+		txt += "\nOutlier candidates:\n"
+		txt += "%s\n" % (", ".join(candidates))
+	
+	with open(fname, "w") as file:
+		file.write(txt)
+
 def save_results_csv(model, fcsv):
 	# Save results to a CSV file
 	
@@ -82,10 +97,15 @@ def save_results_csv(model, fcsv):
 	
 	samples = list(model.samples.keys())
 	
+	def _sum_range(rng):
+		if None in rng:
+			return -1
+		return sum(rng)
+	
 	samples = sorted(samples, key = lambda name: [
 		model.samples[name].group, 
 		model.samples[name].phase, 
-		sum(model.samples[name].likelihood_range)
+		_sum_range(model.samples[name].likelihood_range)
 	])
 	
 	cluster = dict([(name, None) for name in samples])
@@ -96,15 +116,16 @@ def save_results_csv(model, fcsv):
 				cluster[name] = clu
 	
 	with open(fcsv, "w") as file:
-		file.write("Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
+		file.write("Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Redeposited;Outlier;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
 		for name in samples:
 			likelihood_min, likelihood_max = model.samples[name].likelihood_range
 			posterior_min, posterior_max = model.samples[name].posterior_range
-			file.write('''"%s";"%s";"%s";%0.2f;%0.2f;%s;%s;%s;%s;%s;%s;%s;%s\n''' % (
+			file.write('''"%s";"%s";"%s";%0.2f;%0.2f;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n''' % (
 				name, model.samples[name].context, model.samples[name].area, 
 				model.samples[name].age, model.samples[name].uncertainty, 
-				int(model.samples[name].long_lived), model.samples[name].group, 
-				model.samples[name].phase, cluster[name], _format_year(likelihood_min), _format_year(likelihood_max),
+				int(model.samples[name].long_lived), int(model.samples[name].redeposited), int(model.samples[name].outlier), 
+				model.samples[name].group, model.samples[name].phase, cluster[name], 
+				_format_year(likelihood_min), _format_year(likelihood_max),
 				_format_year(posterior_min), _format_year(posterior_max)
 			))
 

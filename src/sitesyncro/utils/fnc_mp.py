@@ -25,9 +25,10 @@ def process_mp(worker_fnc, params_list, worker_args = [], collect_fnc = None, co
 			progress_fnc(done, todo, *progress_args)
 	
 	params_mp = mp.Queue()
+	todo = 0
 	for params in params_list:
 		params_mp.put(params)
-	todo = len(params_list)
+		todo += 1
 	done = 0
 	collect_mp = mp.Queue(todo)
 	if max_cpus > 0:

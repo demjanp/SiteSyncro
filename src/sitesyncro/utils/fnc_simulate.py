@@ -129,10 +129,6 @@ def collect_fnc(data, results, pbar):
 	pbar.update(1)
 	results.append(data)
 
-def progress_fnc(done, todo, all_done, all_todo, c, pbar):
-	
-	print("\rIteration: %d/%d, Conv: %0.4f         " % (all_done + done, all_todo, c), end = '')
-
 def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 	
 	distributions, _, _ = samples_to_distributions(model.samples.values())

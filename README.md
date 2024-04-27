@@ -74,7 +74,7 @@ sitesyncro.exe -input data_sample.csv
 - `-npass`: Minimum number of passes for the randomization tests (default is 100).
 - `-convergence`: Convergence threshold for the randomization tests (default is 0.99).
 - `-max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available; default is -1).
-- `-max_queue_size`: Maximum queue size for parallel processing (default is 100)
+- `-max_queue_size`: Maximum queue size for parallel processing (default is 10000)
 
 For example, if you want to run the script with a specific calibration curve, using uniform distributions for randomization testing and a P-value threshold of 0.01, you can do so like this:
 
@@ -85,7 +85,7 @@ python process.py -input data_sample.csv -curve intcal20.14c -uniform 1 -p_value
 This will run the script with input data from data_sample.csv and use the IntCal20 calibration curve, a uniform distribution for the calendar ages, and a P-value of 0.01 for the randomization tests.
 
 ### Input File Format <a name="input_file"></a>
-The input file name must be a semicolon-separated CSV file with the following 8 columns: 
+The input file name must be a semicolon-separated CSV file with the following 10 columns: 
 1. Sample: Sample ID (required, unique identifier)
 2. Context: Context ID (required)
 3. Excavation Area: Excavation area ID (required)
@@ -93,7 +93,9 @@ The input file name must be a semicolon-separated CSV file with the following 8 
 5. Uncertainty: Uncertainty of the radiocarbon age in C-14 years (required)
 6. Phase: Phase of the sample (lower = older) (optional)
 7. Earlier-Than: List of contexts that the sample is earlier (older) than (optional)
-8. Long-Lived / Redeposited: Flag indicating whether the sample is long-lived (e.g. old wood) or redeposited (e.g. from an older context) (required, 1 or 0)
+8. Long-Lived: Flag indicating whether the sample is long-lived (e.g. old wood)(required, 1 or 0)
+9. Redeposited: Flag indicating whether the sample could be redeposited from a different context (required, 1 or 0)
+10. Outlier: Flag indicating whether the sample is an outlier and should not be used for modeling (required, 1 or 0)
 
 See [data_sample.csv](data_sample.csv) for an example of the input file format.
 
@@ -162,16 +164,19 @@ The `Model` class provides the following methods:
 - `plot_clusters(show = False)`: Plot the clustering results. If `show` is True, the plot is shown, otherwise it is saved as `silhouette.pdf`.
 - `save_csv(fcsv = None)`: Save the results to a CSV file.
 	- `fcsv`: File path for the CSV file. If None, `results.csv` is saved in the model directory.
+- `save_outliers(fname = None)`: Saves a list of outliers to a text file
+	- `fname`: File path for the text file. If None, `outliers.txt` is saved in the model directory.
 - `to_oxcal()`: Save the phasing model in OxCal format as `model.oxcal`.
 - `load_oxcal_data()`: Load results of OxCal modeling from `model.js`.
 - `update_params(**kwargs)`: Update model parameters.
 	- For keyword arguments see [Parameters](#model_parameters)
 - `process_phasing(by_clusters = False)`: Update groups and phases of samples based on stratigraphic relations.
 	- `by_clusters`: if True, update the phasing by clustering sample dates
+- `process_outliers(max_cpus = -1, max_queue_size = 10000)`: Find dating outliers among samples which need to be removed for the model to be valid
 - `process_dates()`: Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal.
-- `process_randomization(max_cpus = -1, max_queue_size = 100)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
-- `process_clustering(max_cpus = -1, max_queue_size = 100)`: Cluster dates and using randomization testing find optimal clustering solution
-- `process(by_clusters = False, max_cpus = -1, max_queue_size = 100)`: Process the complete model
+- `process_randomization(max_cpus = -1, max_queue_size = 10000)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
+- `process_clustering(max_cpus = -1, max_queue_size = 10000)`: Cluster dates and using randomization testing find optimal clustering solution
+- `process(by_clusters = False, max_cpus = -1, max_queue_size = 10000)`: Process the complete model
 	- `by_clusters`: if True, update the phasing by clustering sample dates
 	- `max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available)
 	- `max_queue_size`: Maximum queue size for parallel processing
@@ -194,6 +199,9 @@ The `Model` class has the following attributes:
 - `curve`: Calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`, sorted by calendar years
 - `uncertainties`: List of uncertainties from C-14 dates of samples
 - `oxcal_data`: Results of OxCal modeling from `model.js` in format `{key: data, ...}`
+- `outliers`: Returns dating outliers among samples which need to be removed for the model to be valid
+- `outlier_candidates`: Returns a candidates for outliers, from which the final outliers to be eliminated were picked
+	- These samples have conflicts between dating ranges and stratigraphic relationships with other samples
 - `summed`: Summed probability distribution of the dating of all samples in format `np.array([p, ...])`, where p is the probability of the calendar year
 - `random_p`: Calculated p-value for the randomization test
 - `random_lower`: Lower bound of the randomization test in format `np.array([p, ...])`, where p is the probability of the calendar year
@@ -220,7 +228,7 @@ from sitesyncro import Sample
 if __name__ == '__main__':
 	
 	# Initialize the Sample object
-	sample = Sample('Sample1', 1000, 50, phase = 1, earlier_than = ['Sample2'], long_lived = 0)
+	sample = Sample('Sample1', 1000, 50, phase = 1, earlier_than = ['Sample2'], long_lived = 1)
 	
 	# Print the sample data
 	print(sample)
@@ -233,7 +241,9 @@ The 'Sample' class constructor accepts the following parameters:
 - `age`: C-14 age (years BP) for date_type 'R'; mean calendar age (years BP) for date_type 'U' (required)
 - `uncertainty`: Uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U' (required)
 - `date_type`: 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
-- `long_lived`: True if sample is older than the examined deposition event due to e.g. old wood effect or redeposition from older strata
+- `long_lived`: True if sample could be older than the examined deposition event due to e.g. old wood effect
+- `redeposited`: True if sample could be redeposited from a different context
+- `outlier`: True if sample is an outlier and should not be used for modeling
 - `context`: Name of the context where sample was found
 - `area`: Excavation area
 - `area_excavation_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
@@ -245,6 +255,7 @@ The 'Sample' class constructor accepts the following parameters:
 The `Sample` class provides the following methods:
 - `calibrate(curve)`: Calibrate the sample using the provided calibration curve.
 	- `curve = np.array([[calendar year BP, C-14 year, uncertainty], ...])`
+- `set_outlier(state)`: Set True if sample is an outlier and should not be used for modeling
 - `set_group(group)`: Set the group number for the sample.
 - `set_phase(phase)`: Set the phase number for the sample.
 - `set_likelihood(distribution, mean = None, rng = None)`: Set the likelihood for the sample.
@@ -266,7 +277,9 @@ The `Sample` class has the following attributes:
 - `age`: C-14 age (years BP) for date_type 'R'; mean calendar age (years BP) for date_type 'U'
 - `uncertainty`: Uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U'
 - `date_type`: 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
-- `long_lived`: True if sample is older than the examined deposition event due to e.g. old wood effect or redeposition from older strata
+- `long_lived`: True if sample could be older than the examined deposition event due to e.g. old wood effect
+- `redeposited`: True if sample could be redeposited from a different context
+- `outlier`: True if sample is an outlier and should not be used for modeling
 - `context`: Name of the context where sample was found
 - `area`: Excavation area
 - `area_excavation_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)

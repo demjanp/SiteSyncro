@@ -2,8 +2,8 @@ from sitesyncro.utils.fnc_oxcal import (download_oxcal, gen_oxcal_model, load_ox
 from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 from sitesyncro.utils.fnc_data import (dict_keys_to_int, dict_np_to_list)
 from sitesyncro.utils.fnc_load import (load_data)
-from sitesyncro.utils.fnc_plot import (plot_randomized, plot_clusters, save_results_csv)
-from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, update_earlier_than_by_clustering)
+from sitesyncro.utils.fnc_plot import (plot_randomized, plot_clusters, save_results_csv, save_outliers)
+from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, find_dating_outliers, update_earlier_than_by_clustering)
 from sitesyncro.utils.fnc_simulate import (test_distributions)
 from sitesyncro.utils.fnc_cluster import (proc_clustering)
 from sitesyncro.Sample import Sample
@@ -83,6 +83,8 @@ class Model(object):
 			years = None,
 			curve = None,
 			oxcal_data = None,
+			
+			outlier_candidates = None,
 			
 			summed = None,
 			random_p = None,
@@ -207,6 +209,21 @@ class Model(object):
 		if self._data['oxcal_data'] is None:
 			return None
 		return copy.deepcopy(self._data['oxcal_data'])
+	
+	@property
+	def outliers(self):
+		# Returns dating outliers among samples which need to be removed for the model to be valid
+		# outliers = [sample name, ...]
+		return [name for name in self.samples if self.samples[name].outlier]
+	
+	@property
+	def outlier_candidates(self):
+		# Returns a candidates for outliers, from which the final outliers to be eliminated were picked
+		# These samples have conflicts between dating ranges and stratigraphic relationships with other samples
+		# outlier_candidates = [sample name, ...]
+		if self._data['outlier_candidates'] is None:
+			return []
+		return copy.deepcopy(self._data['outlier_candidates'])
 	
 	@property
 	def summed(self):
@@ -337,20 +354,22 @@ class Model(object):
 		# 	uncertainty: uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U'
 		# keyword arguments:
 		# 	date_type: 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
-		# 	long_lived: True if sample is older than the examined deposition event due to e.g. old wood effect or redeposition from older strata
+		# 	long_lived: True if sample could be older than the examined deposition event due to e.g. old wood effect
+		# 	redeposited: True if sample could be redeposited from a different context
+		#	outlier: True if sample is an outlier and should not be used for modeling
 		# 	context: name of the context where sample was found
 		# 	area: excavation area
 		# 	area_excavation_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
 		# 	earlier_than: list of names of samples which are stratigraphically later (younger) than this sample
 		
 		def _from_arguments(name, age, uncertainty, 
-				date_type='R', long_lived=False, context=None,
+				date_type='R', long_lived=False, redeposited=False, outlier=False, context=None,
 				area = None,
 				area_excavation_phase = None,
 				earlier_than = [],
 			):
 			self._data['samples'][name] = Sample(
-				name, age, uncertainty, date_type, long_lived,
+				name, age, uncertainty, date_type, long_lived, redeposited, outlier,
 				context, area, area_excavation_phase, earlier_than, self.curve
 			)
 			self._data['samples'][name].calibrate(self.curve)
@@ -463,11 +482,13 @@ class Model(object):
 		if not os.path.isfile(fname):
 			raise ValueError("Input file %s not found" % fname)
 		
-		samples, contexts, context_area, long_lived, r_dates, context_phase, earlier_than = load_data(fname)
+		samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than = load_data(fname)
 		# samples = [sample, ...]
 		# contexts = {sample: context, ...}
 		# context_area = {context: area, ...}
 		# long_lived = {sample: True/False, ...}
+		# redeposited = {sample: True/False, ...}
+		# outlier = {sample: True/False, ...}
 		# r_dates = {sample: (age, uncertainty), ...}
 		# context_phase = {context: phase, ...}
 		# earlier_than = {sample: [sample, ...], ...}
@@ -477,7 +498,7 @@ class Model(object):
 		for name in samples:
 			age, uncertainty = r_dates[name]
 			self.add_sample(
-				name, age, uncertainty, 'R', long_lived[name], contexts[name], 
+				name, age, uncertainty, 'R', long_lived[name], redeposited[name], outlier[name], contexts[name], 
 				context_area[contexts[name]], context_phase[contexts[name]], earlier_than[name]
 			)
 	
@@ -515,7 +536,7 @@ class Model(object):
 	
 	def save_csv(self, fcsv = None):
 		# Saves the results to a CSV file
-		# If `fcsv` is None, a default file path is used.
+		# If fcsv is None, a default file path and name is used
 		
 		# Check if there are any results
 		if not self.has_data:
@@ -528,6 +549,15 @@ class Model(object):
 		
 		# Save the results to the CSV file
 		save_results_csv(self, fcsv)
+	
+	def save_outliers(self, fname = None):
+		# Saves a list of outliers to fname
+		# If fname is None, a default file path and name is used
+		
+		if fname is None:
+			fname = os.path.join(self.directory, "outliers.txt")
+		
+		save_outliers(self, fname)
 	
 	def to_oxcal(self):
 		# Export the model to an OxCal file
@@ -594,37 +624,44 @@ class Model(object):
 				self.samples[name].set_phase(phase)
 			else:
 				self.samples[name].set_group(None)
-				self.samples[name].set_phase(None)		
+				self.samples[name].set_phase(None)
 	
+	def process_outliers(self, max_cpus = -1, max_queue_size = 10000):
+		outliers, self._data['outlier_candidates'] = find_dating_outliers(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
+		for name in outliers:
+			self.samples[name].set_outlier(True)
+		
 	def process_dates(self):
 		# Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal
 		self.to_oxcal()
 		r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s" % (os.path.join(self.directory, "model.oxcal")))
 		self.load_oxcal_data()
 	
-	def process_randomization(self, max_cpus = -1, max_queue_size = 100):
+	def process_randomization(self, max_cpus = -1, max_queue_size = 10000):
 		# Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process_clustering(self, max_cpus = -1, max_queue_size = 100):
+	def process_clustering(self, max_cpus = -1, max_queue_size = 10000):
 		# Cluster dates and using randomization testing find optimal clustering solution
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = 100):
+	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = 10000):
 		# Process the complete model
 		# by_clusters: if True, update the phasing by clustering sample dates
 		self.reset_model()
-		print("Modeling stratigraphy\n")
+		print("\nModeling stratigraphy\n")
 		self.process_phasing()
-		print("Modeling C-14 dates\n")
+		print("\nFinding outliers\n")
+		self.process_outliers(max_cpus = max_cpus, max_queue_size = max_queue_size)
+		print("\nModeling C-14 dates\n")
 		self.process_dates()
-		print("Testing the distribution of dates for randomness\n")
+		print("\nTesting the distribution of dates for randomness\n")
 		self.process_randomization(max_cpus = max_cpus, max_queue_size = max_queue_size)
-		print("Clustering temporal distributions\n")
+		print("\nClustering temporal distributions\n")
 		self.process_clustering(max_cpus = max_cpus, max_queue_size = max_queue_size)
 		if by_clusters:
-			print("Updating phasing by clustering\n")
+			print("\nUpdating phasing by clustering\n")
 			self.process_phasing(by_clusters = True)
-			print("Modeling C-14 dates\n")
+			print("\nModeling C-14 dates\n")
 			self.process_dates()
 

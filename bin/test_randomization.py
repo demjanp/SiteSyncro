@@ -1,6 +1,7 @@
 from sitesyncro import Model
-from sitesyncro.utils.fnc_radiocarbon import (get_curve, calibrate)
+from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 
+import json
 import numpy as np
 
 uncertainty_base = 30
@@ -8,6 +9,8 @@ gap = 300
 center_date = 3500
 dates_n = {'small': 10, 'large': 50}
 iterations = 10
+
+fresults = "test_results.json"
 
 def sim_event(cal_age_bp, n_dates, curve):
 	
@@ -60,20 +63,47 @@ if __name__ == '__main__':
 	
 	curve = get_curve()
 	
+	results = {}
 	for clusters_n in [0, 1, 4]:
+		results[clusters_n] = {}
 		for sample_size in dates_n:
-			print("\nClusters: %d, Sample size: %s\n" % (clusters_n, sample_size))
+			results[clusters_n][sample_size] = []
 			directory = "sim_%d_%s" % (clusters_n, sample_size)
-			dates = sim_clustered(center_date, gap, clusters_n, dates_n[sample_size], uncertainty_base, curve)
-			model = Model(directory = directory, uniform = (clusters_n == 0), overwrite = True)
-			n = 1
-			for phase, age, uncert in dates:
-				name = "%d_%d" % (phase, n)
-				n += 1
-				model.add_sample(name, age, uncert, context = "A.%d" % (n), area = "A", area_excavation_phase = 1)
-			model.process_phasing()
-			model.process_randomization()
-			model.process_clustering()
-			model.plot_randomized()
-			model.plot_clusters()
-			model.save_csv()
+			for iter in range(iterations):
+				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, iter + 1, iterations))
+				dates = sim_clustered(center_date, gap, clusters_n, dates_n[sample_size], uncertainty_base, curve)
+				model = Model(directory = directory, uniform = (clusters_n == 0), overwrite = True)
+				n = 1
+				for phase, age, uncert in dates:
+					name = "%d_%d" % (phase, n)
+					n += 1
+					model.add_sample(name, age, uncert, context = "A.%d" % (n), area = "A", area_excavation_phase = 1)
+				model.process_phasing()
+				model.process_randomization()
+				model.process_clustering()
+				distr_check = None
+				clustering_check = None
+				if clusters_n == 0:
+					# uniform distribution of events
+					distr_check = float(model.random_p >= model.p_value)
+					# no clustering of events
+					clustering_check = float(model.cluster_opt_n < 2)
+				elif clusters_n == 1:
+					# normal distribution of events
+					distr_check = float(model.random_p >= model.p_value)
+					# no clustering of events
+					clustering_check = float(model.cluster_opt_n < 2)
+				else:
+					# non-normal distribution of events
+					distr_check = float(model.random_p < model.p_value)
+					# 4 clusters
+					if model.cluster_opt_n <= 0:
+						clustering_check = 0
+					elif model.cluster_opt_n == clusters_n:
+						clustering_check = 1.0
+					else:
+						clustering_check = max(0, 1 - abs(model.cluster_opt_n - clusters_n) / clusters_n)
+				
+				results[clusters_n][sample_size].append([distr_check, clustering_check, model.random_p, model.cluster_opt_n])
+				with open(fresults, 'w') as file:
+					json.dump(results, file)

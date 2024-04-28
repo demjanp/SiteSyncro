@@ -12,6 +12,7 @@ import os
 import copy
 import gzip
 import json
+import shutil
 import subprocess
 import numpy as np
 from collections import defaultdict
@@ -30,6 +31,7 @@ class Model(object):
 			npass = 100,
 			convergence = 0.99,
 			oxcal_url = 'https://c14.arch.ox.ac.uk/OxCalDistribution.zip',
+			overwrite = False,
 		):
 		
 		for sample in samples:
@@ -58,6 +60,9 @@ class Model(object):
 			convergence = convergence,
 			oxcal_url = oxcal_url,
 		))
+		
+		if overwrite and os.path.isdir(self._data['directory']):
+			shutil.rmtree(self._data['directory'], ignore_errors = True)
 		
 		# Attempt to load model if directory exists, otherwise create it
 		if not self.load():
@@ -438,8 +443,6 @@ class Model(object):
 		data = dict_keys_to_int(data)
 		
 		# Check data structure
-		if data['directory'] != self.directory:
-			return False
 		for key in self._assigned():
 			if key not in data:
 				return False
@@ -450,7 +453,7 @@ class Model(object):
 		# Check if model parameters have changed
 		changed = False
 		for key in self._assigned():
-			if key == 'samples':
+			if key in ['directory','samples']:
 				continue
 			if data[key] != self._data[key]:
 				changed = True
@@ -470,11 +473,12 @@ class Model(object):
 			if data[key] is not None:
 				data[key] = np.array(data[key], dtype = np.float64)
 		
-		# Don't load oxcal url
 		oxcal_url = self.oxcal_url
+		directory = self.directory
 		
 		self._data = data
 		self._data['oxcal_url'] = oxcal_url
+		self._data['directory'] = directory
 		return True
 	
 	def import_csv(self, fname):

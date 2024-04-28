@@ -36,11 +36,15 @@ def extend_earlier_than(earlier_than):
 	return extended_earlier_than.astype(bool)
 
 def find_groups(earlier_than):
-	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using = nx.Graph)
-	groups = []
-	for c in nx.connected_components(G):
-		G_sub = G.subgraph(c)
-		groups.append(list(G_sub.nodes))
+	
+	if earlier_than.sum():
+		G = nx.convert_matrix.from_numpy_array(earlier_than, create_using = nx.Graph)
+		groups = []
+		for c in nx.connected_components(G):
+			G_sub = G.subgraph(c)
+			groups.append(list(G_sub.nodes))
+	else:
+		groups = [np.arange(earlier_than.shape[0], dtype = int)]
 	
 	# groups = {group: [idx, ...], ...}; idx = index in earlier_than
 	return dict(enumerate(sorted(groups, key = lambda group: len(group), reverse = True), start = 1))

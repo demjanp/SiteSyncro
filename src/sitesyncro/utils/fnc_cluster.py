@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import norm
 from itertools import combinations
+from collections import defaultdict
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import squareform
@@ -172,7 +173,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 10000):
 	sils = {} # {cluster_n: silhouette_score, ...}
 	means = {} # {cluster_n: {label: mean, ...}, ...}
 	D = calc_distance_matrix(distributions)
-	for cluster_n in range(2, dates_n - 1):
+	for cluster_n in range(2, dates_n):
 		clusters[cluster_n] = calc_clusters_hca(D, cluster_n)
 		sils[cluster_n] = calc_silhouette(D, clusters[cluster_n])
 		means[cluster_n] = {}
@@ -184,9 +185,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 10000):
 		# convert clusters to {cluster_n: {label: [sample name, ...], ...}, ...}
 		clusters[cluster_n] = dict([(label, [samples[idx] for idx in clusters[cluster_n][label]]) for label in clusters[cluster_n]])
 	
-	clu_max = dates_n - 1
-	
-	# Calculate the mean or median and standard deviation or range of the summed distribution
+	clu_max = dates_n - 1	
 	ps = {}
 	for cluster_n in clusters:
 		sils_rnd = []
@@ -239,7 +238,7 @@ def find_opt_clusters(clusters, ps, sils, p_value = 0.05):
 	#
 	# Returns number of clusters
 	
-	clu_ns = np.array(sorted([n for n in clusters]), dtype = int)
+	clu_ns = np.array(sorted(list(clusters.keys())), dtype = int)
 	ps = np.array([ps[clu_n] for clu_n in clu_ns])
 	sils = np.array([sils[clu_n] for clu_n in clu_ns])
 	idxs = np.where(ps < p_value)[0]

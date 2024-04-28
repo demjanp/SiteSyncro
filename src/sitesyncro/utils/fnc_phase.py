@@ -203,17 +203,23 @@ def find_dating_outliers(model):
 	def _pick_outliers(candidates, sample_idxs, earlier_than, samples, ranges):
 		removed = set(candidates)
 		base = set(sample_idxs).difference(removed)
+		# Try adding back individual outliers first
+		addable = set()
+		for idx in removed:
+			if not _find_outliers_idxs(base.union({idx}), earlier_than, samples, ranges, check_only = True):
+				addable.add(idx)
+		# Try adding back increasingly larger groups of outliers
 		outliers = []
 		added_n = -1
 		with tqdm() as pbar:
-			for n in range(1, len(removed) + 1):
+			for n in range(1, len(addable) + 1):
 				found = False
-				n_combs = math.comb(len(removed), n)
+				n_combs = math.comb(len(addable), n)
 				pbar.reset()
 				pbar.total = n_combs
-				pbar.set_description("Returning %d/%d" % (n, len(removed)))
+				pbar.set_description("Returning %d/%d" % (n, len(addable)))
 				picked = []
-				for added in combinations(removed, n):
+				for added in combinations(addable, n):
 					pbar.update(1)
 					if not _find_outliers_idxs(base.union(added), earlier_than, samples, ranges, check_only = True):
 						picked.append(added)
@@ -256,6 +262,7 @@ def find_dating_outliers(model):
 	for name in model.outliers:
 		if name not in candidates:
 			candidates.append(name)
+	print("Found %d outliers" % (len(outliers)))
 	
 	return outliers, candidates
 	

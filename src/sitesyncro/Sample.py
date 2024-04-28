@@ -267,19 +267,17 @@ class Sample(object):
 		if not self.is_calibrated:
 			return [None, None]
 		if self.long_lived and (self.date_type == 'R'):
-			# If the sample is long-lived, change it to a uniform distribution
-			# Use the oldest date in the 2-sigma range as lower boundary and 0 BP as upper boundary
-			lower = self.likelihood_range[0]
-			return [lower, 0]
+			# If the sample is long-lived, keep the lower boundary and double the range
+			lower, upper = self.likelihood_range
+			if lower is None:
+				return [None, None]
+			return [lower, lower + 2*(lower - upper)]
 		return self.likelihood_range
 	
 	def to_oxcal(self):
 		if not self.is_calibrated:
 			raise Exception("Sample must be calibrated to generate OxCal definition")
-		if self.long_lived and (self.date_type == 'R'):
-			lower, upper = self.get_range()
-			return oxcal_date(self.name, (lower + upper) / 2, abs(upper - lower) / 2, 'U', self.outlier)
-		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type, self.outlier)
+		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type, self.long_lived, self.outlier)	
 	
 	def to_dict(self):
 		data = copy.deepcopy(self._data)

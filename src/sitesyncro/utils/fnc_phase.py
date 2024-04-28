@@ -241,6 +241,10 @@ def find_dating_outliers(model):
 	print("Found %d candidates for outliers" % (len(candidates)))
 	outliers = _pick_outliers(candidates, sample_idxs, earlier_than, samples, ranges)
 	if outliers:
+		candidates = set()
+		for row in outliers:
+			candidates.update(row)
+		candidates = list(candidates)
 		outliers = max(outliers, key = lambda row: sum([int(model.samples[samples[i]].redeposited) for i in row]))
 	outliers = sorted([samples[i] for i in outliers])
 	candidates = sorted([samples[i] for i in candidates])

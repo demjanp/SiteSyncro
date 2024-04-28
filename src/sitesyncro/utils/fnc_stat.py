@@ -82,8 +82,7 @@ def calc_percentiles(distributions, perc_lower, perc_upper):
 def samples_to_distributions(samples):
 	# Get a list of probability distributions from samples
 	# Combine samples from the same context by summation
-	# Use only posterior (modeled) distributions for long-lived samples
-	# Do not use distributions from outliers
+	# Use only posterior (modeled) distributions for long-lived samples and outliers
 	# samples = [Sample, ...]
 	#
 	# returns distributions, samples_collected, joined
@@ -93,12 +92,12 @@ def samples_to_distributions(samples):
 	distributions_dict = {}  # {name: np.array([p, ...]), ...}
 	contexts = defaultdict(list)
 	for sample in samples:
-		if sample.outlier:
-			continue
 		if sample.is_modeled:
 			distributions_dict[sample.name] = sample.posterior
 			contexts[sample.context].append(sample.name)
-		elif sample.is_calibrated and not sample.long_lived:
+		elif sample.outlier:
+			continue
+		elif sample.is_calibrated and not (sample.long_lived or sample.outlier):
 			distributions_dict[sample.name] = sample.likelihood
 			contexts[sample.context].append(sample.name)
 	joined = {}  # {combined_sample: [sample_name, ...], ...}

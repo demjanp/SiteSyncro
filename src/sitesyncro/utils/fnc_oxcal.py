@@ -48,7 +48,7 @@ def download_oxcal(url = None):
 	
 	return True
 
-def oxcal_date(name, age, uncertainty, date_type, outlier):
+def oxcal_date(name, age, uncertainty, date_type, long_lived, outlier):
 	txt = None
 	if date_type == 'R':
 		txt = '''R_Date("%s", %f, %f)''' % (name, age, uncertainty)
@@ -57,7 +57,9 @@ def oxcal_date(name, age, uncertainty, date_type, outlier):
 	if txt is None:
 		raise Exception("Invalid date type specified: %s (must be 'R' or 'U')" % (date_type))
 	if outlier:
-		txt += "{Outlier(1);};"
+		txt += '''{Outlier("General", 1);};'''
+	elif long_lived:
+		txt += '''{Outlier("Charcoal", 1);};'''
 	else:
 		txt += ";"
 	return txt
@@ -161,8 +163,6 @@ def gen_oxcal_model(model):
 	for group in groups:
 		data = defaultdict(list)
 		for name in groups[group]:
-			if model.samples[name].outlier:
-				continue
 			data[model.samples[name].phase].append(model.samples[name])
 		data = dict(data)
 		for phase in data:
@@ -174,6 +174,8 @@ def gen_oxcal_model(model):
 Curve("%s","%s");
 Plot()
 {
+	Outlier_Model("Charcoal",Exp(1,-10,0),U(0,3),"t");
+	Outlier_Model("General",T(5),U(0,4),"t");
 	%s
 };
 	''' % (model.curve_name, model.curve_name, txt)
@@ -219,7 +221,7 @@ def load_oxcal_data(fname):
 				value = re.sub(r'\bNaN\b', 'None', value)
 				
 				# Parse value using python eval
-				value = eval(value)
+				value = eval(value, dict(true = True, false = False))
 				if value == []:
 					value = {}
 				

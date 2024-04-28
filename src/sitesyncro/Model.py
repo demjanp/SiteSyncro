@@ -462,6 +462,8 @@ class Model(object):
 		# Initialize samples
 		for name in data['samples']:
 			data['samples'][name] = Sample(data['samples'][name])
+			if not data['samples'][name].is_calibrated:
+				data['samples'][name].calibrate(self.curve)
 		
 		# Convert lists to numpy arrays
 		for key in ['years', 'curve', 'summed', 'random_lower', 'random_upper']:

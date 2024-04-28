@@ -228,10 +228,11 @@ def find_dating_outliers(model):
 		return [], []
 	ranges = {}
 	for name in model.samples:
-		if model.samples[name].is_calibrated and not model.samples[name].outlier:
-			rng = model.samples[name].get_range()
-			if rng[0] is not None:
-				ranges[name] = rng
+		if model.samples[name].outlier:
+			continue
+		rng = model.samples[name].get_range()
+		if None not in rng:
+			ranges[name] = rng
 	sample_idxs = [idx for idx, name in enumerate(samples) if name in ranges]
 	if not sample_idxs:
 		return [], []

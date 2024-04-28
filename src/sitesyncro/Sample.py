@@ -264,6 +264,8 @@ class Sample(object):
 			self._data['posterior_range'] = copy.copy(rng)
 	
 	def get_range(self):
+		if self.is_modeled:
+			return self.posterior_range
 		if not self.is_calibrated:
 			return [None, None]
 		if self.long_lived and (self.date_type == 'R'):
@@ -275,8 +277,6 @@ class Sample(object):
 		return self.likelihood_range
 	
 	def to_oxcal(self):
-		if not self.is_calibrated:
-			raise Exception("Sample must be calibrated to generate OxCal definition")
 		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type, self.long_lived, self.outlier)	
 	
 	def to_dict(self):

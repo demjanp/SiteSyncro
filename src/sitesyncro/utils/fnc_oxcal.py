@@ -2,7 +2,7 @@ import os
 import re
 import zipfile
 import requests
-import subprocess
+import unicodedata
 import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
@@ -166,11 +166,11 @@ def gen_oxcal_model(model):
 			data[model.samples[name].phase].append(model.samples[name])
 		data = dict(data)
 		for phase in data:
-			data[phase] = sorted(data[phase], key = lambda sample: sum(sample.likelihood_range))
+			data[phase] = sorted(data[phase], key = lambda sample: sum(sample.get_range()))
 			data[phase] = "\n".join([sample.to_oxcal() for sample in data[phase]])
 		txt += model_fncs[model.phase_model]("Gr.%d" % (group), data)
 	
-	return '''
+	txt = '''
 Curve("%s","%s");
 Plot()
 {
@@ -179,6 +179,10 @@ Plot()
 	%s
 };
 	''' % (model.curve_name, model.curve_name, txt)
+	
+	# Replace non-ASCII characters with their closest ASCII equivalent
+	txt = ''.join(c for c in unicodedata.normalize('NFKD', txt) if unicodedata.category(c) != 'Mn')
+	return txt
 
 def load_oxcal_data(fname):
 	

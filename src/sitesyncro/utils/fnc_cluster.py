@@ -198,7 +198,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = -1):
 			while True:
 				iter += 1
 				while iter >= len(D_pool):
-					process_mp(worker_fnc, range(model.npass), [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
+					process_mp(worker_fnc, range(max(4, (iter - len(D_pool)) + 1)), [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
 						collect_fnc = collect_fnc, collect_args = [D_pool],
 						max_cpus = max_cpus, max_queue_size = max_queue_size)
 				D = squareform(D_pool[iter])
@@ -214,6 +214,7 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = -1):
 						break
 					todo *= 2
 					pbar.total = max(todo, model.npass*2)
+					pbar.refresh()
 		sils_rnd = np.array(sils_rnd)
 		s = sils_rnd.std()
 		if s == 0:

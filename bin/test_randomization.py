@@ -4,13 +4,13 @@ from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 import json
 import numpy as np
 
-uncertainty_base = 30
-gap = 300
-center_date = 3500
-dates_n = {'small': 10, 'large': 50}
-iterations = 10
+UNCERTAINTY_BASE = 30
+GAP = 300
+CENTER_DATE = 3500
+DATES_N = {'small': 10, 'large': 50}
+ITERATIONS = 10
 
-fresults = "test_results.json"
+FRESULTS = "test_results.json"
 
 def sim_event(cal_age_bp, n_dates, curve):
 	
@@ -32,8 +32,12 @@ def sim_clustered(cal_bp_mean, gap, clusters_n, dates_n, uncertainty_base, curve
 		return dates
 	
 	if clusters_n == 1:
+		# Generate normally distributed events around cal_bp_mean +-gap
+		means = np.random.normal(cal_bp_mean, gap / 2, dates_n)
+		means.sort()
 		dates = []
-		for c14age in sim_event(cal_bp_mean, dates_n, curve):
+		for cal_age in means:
+			c14age = sim_event(cal_age, 1, curve)[0]
 			dates.append([1, c14age, np.random.normal(uncertainty_base, 5)])
 		return dates
 	
@@ -66,33 +70,42 @@ if __name__ == '__main__':
 	results = {}
 	for clusters_n in [0, 1, 4]:
 		results[clusters_n] = {}
-		for sample_size in dates_n:
+		for sample_size in DATES_N:
 			results[clusters_n][sample_size] = []
-			directory = "sim_%d_%s" % (clusters_n, sample_size)
-			for iter in range(iterations):
-				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, iter + 1, iterations))
-				dates = sim_clustered(center_date, gap, clusters_n, dates_n[sample_size], uncertainty_base, curve)
-				model = Model(directory = directory, uniform = (clusters_n == 0), overwrite = True)
+			for iter in range(ITERATIONS):
+				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, iter + 1, ITERATIONS))
+				dates = sim_clustered(CENTER_DATE, GAP, clusters_n, DATES_N[sample_size], UNCERTAINTY_BASE, curve)
+				model = Model(directory = "test_rnd", uniform = (clusters_n == 0), overwrite = True)
 				n = 1
 				for phase, age, uncert in dates:
 					name = "%d_%d" % (phase, n)
 					n += 1
-					model.add_sample(name, age, uncert, context = "A.%d" % (n), area = "A", area_excavation_phase = 1)
-				model.process_phasing()
+					model.add_sample(name, age, uncert)
 				model.process_randomization()
+				model.plot_randomized(fname = "rnd_%d_%s.pdf" % (clusters_n, sample_size))
 				model.process_clustering()
+				model.plot_clusters(fname = "clu_%d_%s.pdf" % (clusters_n, sample_size))
+				model.process_phasing(by_clusters = True)
 				distr_check = None
 				clustering_check = None
+				phasing_check = None
+				
 				if clusters_n == 0:
 					# uniform distribution of events
 					distr_check = float(model.random_p >= model.p_value)
 					# no clustering of events
 					clustering_check = float(model.cluster_opt_n < 2)
+					# no phasing
+					phasing_check = 1 / len(set([model.samples[name].phase for name in model.samples]))
+				
 				elif clusters_n == 1:
 					# normal distribution of events
 					distr_check = float(model.random_p >= model.p_value)
 					# no clustering of events
 					clustering_check = float(model.cluster_opt_n < 2)
+					# no phasing
+					phasing_check = 1 / len(set([model.samples[name].phase for name in model.samples]))
+				
 				else:
 					# non-normal distribution of events
 					distr_check = float(model.random_p < model.p_value)
@@ -103,7 +116,15 @@ if __name__ == '__main__':
 						clustering_check = 1.0
 					else:
 						clustering_check = max(0, 1 - abs(model.cluster_opt_n - clusters_n) / clusters_n)
+					# phasing present
+					ph_good = 0
+					for name in model.samples:
+						if model.samples[name].phase == int(name.split("_")[0]):
+							ph_good += 1
+					phasing_check = ph_good / len(model.samples)
 				
-				results[clusters_n][sample_size].append([distr_check, clustering_check, model.random_p, model.cluster_opt_n])
-				with open(fresults, 'w') as file:
+				results[clusters_n][sample_size].append([distr_check, clustering_check, phasing_check, model.random_p, model.cluster_opt_n])
+				with open(FRESULTS, 'w') as file:
 					json.dump(results, file)
+				
+				print("Distr: %0.2f, Clust: %0.2f, Phasing: %0.2f" % (distr_check, clustering_check, phasing_check))

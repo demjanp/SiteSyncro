@@ -92,14 +92,17 @@ def samples_to_distributions(samples):
 	distributions_dict = {}  # {name: np.array([p, ...]), ...}
 	contexts = defaultdict(list)
 	for sample in samples:
+		context = sample.context
+		if context is None:
+			context = sample.name
 		if sample.is_modeled:
 			distributions_dict[sample.name] = sample.posterior
-			contexts[sample.context].append(sample.name)
+			contexts[context].append(sample.name)
 		elif sample.outlier:
 			continue
 		elif sample.is_calibrated and not (sample.long_lived or sample.outlier):
 			distributions_dict[sample.name] = sample.likelihood
-			contexts[sample.context].append(sample.name)
+			contexts[context].append(sample.name)
 	joined = {}  # {combined_sample: [sample_name, ...], ...}
 	samples_collected = []
 	distributions = []

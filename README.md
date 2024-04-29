@@ -246,7 +246,7 @@ The 'Sample' class constructor accepts the following parameters:
 - `outlier`: True if sample is an outlier and should not be used for modeling
 - `context`: Name of the context where sample was found
 - `area`: Excavation area
-- `area_excavation_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+- `excavation_area_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
 - `earlier_than`: List of names of samples which are stratigraphically later (younger) than this sample
 - `curve`: Radiocarbon calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
 
@@ -282,7 +282,7 @@ The `Sample` class has the following attributes:
 - `outlier`: True if sample is an outlier and should not be used for modeling
 - `context`: Name of the context where sample was found
 - `area`: Excavation area
-- `area_excavation_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+- `excavation_area_phase`: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
 - `earlier_than`: List of names of samples which are stratigraphically later (younger) than this sample
 - `group`: Group that the sample belongs to based on stratigraphic interconnection with other samples
 - `phase`: Stratigraphic phase of the sample within the group (lower = earlier (older) phase)

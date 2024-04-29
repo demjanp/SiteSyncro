@@ -2,7 +2,7 @@ from matplotlib import pyplot
 import numpy as np
 import os
 
-def plot_randomized(model, fplot = None):
+def plot_randomized(model, fname = None, show = False):
 	# Plot the randomization test results
 	
 	if model.random_p < model.p_value:
@@ -25,13 +25,12 @@ def plot_randomized(model, fplot = None):
 	pyplot.annotate("p: %0.5f\n%s" % (model.random_p, null_hypothesis_txt), xy = (0.05, 0.95), xycoords = "axes fraction", fontsize = 12, horizontalalignment = "left", verticalalignment = "top")
 	pyplot.legend()
 	pyplot.tight_layout()
-	if fplot is None:
+	pyplot.savefig(fname)
+	if show:
 		pyplot.show()
-	else:
-		pyplot.savefig(fplot)
 	pyplot.close()
 
-def plot_clusters(model, fplot = None):
+def plot_clusters(model, fname = None, show = False):
 	# Plot Silhouette and p-value for solutions with different numbers of clusters
 	
 	clu_ns = np.array(sorted(list(model.clusters.keys())), dtype = int)
@@ -65,10 +64,9 @@ def plot_clusters(model, fplot = None):
 	pyplot.legend()
 	
 	fig.tight_layout()
-	if fplot is None:
+	pyplot.savefig(fname)
+	if show:
 		pyplot.show()
-	else:
-		pyplot.savefig(fplot)
 	pyplot.close()
 
 def save_outliers(model, fname):

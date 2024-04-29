@@ -20,7 +20,7 @@ class Sample(object):
 		#	outlier: True if sample is an outlier and should not be used for modeling
 		# 	context: name of the context where sample was found
 		# 	area: excavation area
-		# 	area_excavation_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+		# 	excavation_area_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
 		# 	earlier_than: list of names of samples which are stratigraphically later (younger) than this sample
 		# 	curve: [[calendar year BP, C-14 year, uncertainty], ...]; Radiocarbon calibration curve
 		#
@@ -33,7 +33,7 @@ class Sample(object):
 				outlier = False,
 				context = None,
 				area = None,
-				area_excavation_phase = None,
+				excavation_area_phase = None,
 				earlier_than = [],
 				curve = None,
 			):
@@ -51,7 +51,7 @@ class Sample(object):
 				outlier = outlier,
 				context = context,
 				area = area,
-				area_excavation_phase = area_excavation_phase,
+				excavation_area_phase = excavation_area_phase,
 				earlier_than = earlier_than,
 				
 				group = None,
@@ -130,8 +130,8 @@ class Sample(object):
 		return self._data['area']
 	
 	@property
-	def area_excavation_phase(self):
-		return self._data['area_excavation_phase']
+	def excavation_area_phase(self):
+		return self._data['excavation_area_phase']
 	
 	@property
 	def earlier_than(self):
@@ -294,7 +294,7 @@ class Sample(object):
 			outlier = None,
 			context = None,
 			area = None,
-			area_excavation_phase = None,
+			excavation_area_phase = None,
 			earlier_than = [],
 			
 			group = None,
@@ -317,7 +317,7 @@ class Sample(object):
 		return Sample(self.to_dict())
 	
 	def __repr__(self):
-		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, redeposited={self.redeposited}, outlier={self.outlier}, context={self.context}, area={self.area}, area_excavation_phase={self.area_excavation_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
+		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, redeposited={self.redeposited}, outlier={self.outlier}, context={self.context}, area={self.area}, excavation_area_phase={self.excavation_area_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
 		
 		if self.is_calibrated:
 			repr_str += f", likelihood_range={self.likelihood_range}, likelihood_mean={self.likelihood_mean}"

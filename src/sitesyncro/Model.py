@@ -364,18 +364,18 @@ class Model(object):
 		#	outlier: True if sample is an outlier and should not be used for modeling
 		# 	context: name of the context where sample was found
 		# 	area: excavation area
-		# 	area_excavation_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+		# 	excavation_area_phase: chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
 		# 	earlier_than: list of names of samples which are stratigraphically later (younger) than this sample
 		
 		def _from_arguments(name, age, uncertainty, 
 				date_type='R', long_lived=False, redeposited=False, outlier=False, context=None,
 				area = None,
-				area_excavation_phase = None,
+				excavation_area_phase = None,
 				earlier_than = [],
 			):
 			self._data['samples'][name] = Sample(
 				name, age, uncertainty, date_type, long_lived, redeposited, outlier,
-				context, area, area_excavation_phase, earlier_than, self.curve
+				context, area, excavation_area_phase, earlier_than, self.curve
 			)
 			self._data['samples'][name].calibrate(self.curve)
 		
@@ -508,37 +508,37 @@ class Model(object):
 				context_area[contexts[name]], context_phase[contexts[name]], earlier_than[name]
 			)
 	
-	def plot_randomized(self, show = False):
+	def plot_randomized(self, fname = None, show = False):
 		# Plot the randomization test results
-		# If `show` is True, the plot is shown. If False, the plot is saved to a file.
+		# If fname is None, a default file path and name is used
+		# If show is True, the plot is shown
 		
 		if not self.is_randomized:
 			print("\nNo randomization data to plot")
 			return False
 		
 		# Determine the file path for the plot
-		fplot = None
-		if not show:
-			fplot = os.path.join(self.directory, "randomized.pdf")
+		if fname is None:
+			fname = os.path.join(self.directory, "randomized.pdf")
 		
-		plot_randomized(self, fplot)
+		plot_randomized(self, fname, show)
 		return True
 	
-	def plot_clusters(self, show = False):
+	def plot_clusters(self, fname = None, show = False):
 		# Plot the clustering results
-		# If `show` is True, the plot is shown. If False, the plot is saved to a file.
+		# If fname is None, a default file path and name is used
+		# If show is True, the plot is shown
 		
 		if not self.is_clustered:
 			print("\nNo clustering data to plot")
 			return False
 		
 		# Determine the file path for the plot
-		fplot = None
-		if not show:
-			fplot = os.path.join(self.directory, "silhouette.pdf")
+		if fname is None:
+			fname = os.path.join(self.directory, "silhouette.pdf")
 
 		# Plot the clustering data
-		plot_clusters(self, fplot)
+		plot_clusters(self, fname, show)
 	
 	def save_csv(self, fcsv = None):
 		# Saves the results to a CSV file

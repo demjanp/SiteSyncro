@@ -61,12 +61,16 @@ def create_earlier_than_matrix(model):
 	
 	# Update earlier-than relationships based on phases
 	for i, s1 in enumerate(samples):
+		if model.samples[s1].excavation_area_phase is None:
+			continue
 		for j, s2 in enumerate(samples):
 			if s2 == s1:
 				continue
+			if model.samples[s2].excavation_area_phase is None:
+				continue
 			if model.samples[s1].area != model.samples[s2].area:
 				continue
-			if model.samples[s1].area_excavation_phase < model.samples[s2].area_excavation_phase:
+			if model.samples[s1].excavation_area_phase < model.samples[s2].excavation_area_phase:
 				earlier_than[i][j] = True
 	
 	# Check if earlier_than has circular relationships
@@ -168,7 +172,7 @@ def update_earlier_than_by_clustering(model, earlier_than, samples):
 		for j, s2 in enumerate(samples):
 			if phases_clu[s1] < phases_clu[s2]:
 				earlier_than[i][j] = True
-				if (model.samples[s1].group == model.samples[s2].group) and (model.samples[s1].phase > model.samples[s2].phase):
+				if (model.samples[s1].group == model.samples[s2].group) and (model.samples[s1].phase is not None) and (model.samples[s2].phase is not None) and (model.samples[s1].phase > model.samples[s2].phase):
 					errors.append([s1, s2, phases_clu[s1], phases_clu[s2], model.samples[s1].phase, model.samples[s2].phase])
 	if errors:
 		print("Warning, collisions detected between stratigraphic phasing and clustering:")
@@ -217,6 +221,7 @@ def find_dating_outliers(model):
 				n_combs = math.comb(len(addable), n)
 				pbar.reset()
 				pbar.total = n_combs
+				pbar.refresh()
 				pbar.set_description("Returning %d/%d" % (n, len(addable)))
 				picked = []
 				for added in combinations(addable, n):

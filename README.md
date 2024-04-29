@@ -74,7 +74,7 @@ sitesyncro.exe -input data_sample.csv
 - `-npass`: Minimum number of passes for the randomization tests (default is 100).
 - `-convergence`: Convergence threshold for the randomization tests (default is 0.99).
 - `-max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available; default is -1).
-- `-max_queue_size`: Maximum queue size for parallel processing (default is 10000)
+- `-max_queue_size`: Maximum queue size for parallel processing (-1 = automatic; default is -1)
 
 For example, if you want to run the script with a specific calibration curve, using uniform distributions for randomization testing and a P-value threshold of 0.01, you can do so like this:
 
@@ -174,9 +174,9 @@ The `Model` class provides the following methods:
 	- `by_clusters`: if True, update the phasing by clustering sample dates
 - `process_outliers()`: Find dating outliers among samples which need to be removed for the model to be valid
 - `process_dates()`: Calculate posteriors of sample dates based on phasing using bayesian modeling in OxCal.
-- `process_randomization(max_cpus = -1, max_queue_size = 10000)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
-- `process_clustering(max_cpus = -1, max_queue_size = 10000)`: Cluster dates and using randomization testing find optimal clustering solution
-- `process(by_clusters = False, max_cpus = -1, max_queue_size = 10000)`: Process the complete model
+- `process_randomization(max_cpus = -1, max_queue_size = -1)`: Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time.
+- `process_clustering(max_cpus = -1, max_queue_size = -1)`: Cluster dates and using randomization testing find optimal clustering solution
+- `process(by_clusters = False, max_cpus = -1, max_queue_size = -1)`: Process the complete model
 	- `by_clusters`: if True, update the phasing by clustering sample dates
 	- `max_cpus`: Maximum number of CPUs to use for parallel processing (-1 = all available)
 	- `max_queue_size`: Maximum queue size for parallel processing

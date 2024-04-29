@@ -632,7 +632,7 @@ class Model(object):
 				self.samples[name].set_group(None)
 				self.samples[name].set_phase(None)
 	
-	def process_outliers(self, max_cpus = -1, max_queue_size = 10000):
+	def process_outliers(self, max_cpus = -1, max_queue_size = -1):
 		outliers, self._data['outlier_candidates'] = find_dating_outliers(self)
 		for name in outliers:
 			self.samples[name].set_outlier(True)
@@ -643,15 +643,15 @@ class Model(object):
 		r = subprocess.call("OxCal\\bin\\OxCalWin.exe %s" % (os.path.join(self.directory, "model.oxcal")))
 		self.load_oxcal_data()
 	
-	def process_randomization(self, max_cpus = -1, max_queue_size = 10000):
+	def process_randomization(self, max_cpus = -1, max_queue_size = -1):
 		# Test if sample dates represent a uniform / normal (depending on Model.uniform parameter) distribution in time
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data['random_p'] = test_distributions(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process_clustering(self, max_cpus = -1, max_queue_size = 10000):
+	def process_clustering(self, max_cpus = -1, max_queue_size = -1):
 		# Cluster dates and using randomization testing find optimal clustering solution
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = 10000):
+	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = -1):
 		# Process the complete model
 		# by_clusters: if True, update the phasing by clustering sample dates
 		self.reset_model()

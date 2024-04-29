@@ -51,8 +51,8 @@ def parse_arguments(args):
 		help="Convergence threshold for the randomization test")
 	parser.add_argument('-max_cpus', type=int, default=-1, required=False,
 		help="Maximum number of CPUs to use for parallel processing (-1 = all available)")
-	parser.add_argument('-max_queue_size', type=int, default=10000, required=False,
-		help="Maximum queue size for parallel processing")
+	parser.add_argument('-max_queue_size', type=int, default=-1, required=False,
+		help="Maximum queue size for parallel processing (-1 = automatic)")
 	
 	parsed_args = parser.parse_args(args)
 	return vars(parsed_args)  # Directly return parsed arguments as a dictionary

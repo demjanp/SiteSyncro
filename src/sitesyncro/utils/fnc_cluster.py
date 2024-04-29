@@ -23,18 +23,17 @@ def calc_distance_matrix(distributions):
 	# Calculate a distance matrix of distributions of calibrated C-14 dates based on probabilities that they represent the same event
 	# distributions = [[p, ...], ...]
 	#
-	# Returns D[i,j] = d; i,j = index in distributions; d = inverse probability that distributions i and j represent the same event
+	# Returns a 1-d condensed distance matrix D
+	# squareform(D)[i,j] = d; i,j = index in distributions; d = inverse probability that distributions i and j represent the same event
 	
 	dists_n = len(distributions)
-	PS = np.zeros((dists_n, dists_n), dtype = float)
+	PS = np.zeros((dists_n * (dists_n - 1)) // 2, dtype=float)
+	k = 0
 	for d1, d2 in combinations(range(dists_n), 2):
-		p = p_same_event(distributions[d1], distributions[d2])
-		PS[d1,d2] = p
-		PS[d2,d1] = p
+		PS[k] = p_same_event(distributions[d1], distributions[d2])
+		k += 1
 	D = 1 - PS
 	D = D - D.min()
-	for i in range(D.shape[0]):
-		D[i, i] = 0
 	
 	return D
 
@@ -45,6 +44,8 @@ def calc_distances_pca(D, n_components = None):
 	#
 	# Returns S[i,k] = PCA score; i = index in distributions; k = index of PCA component
 	
+	if D.ndim == 1:
+		D = squareform(D)
 	if n_components is None:
 		pca = PCA(n_components = None)
 		try:
@@ -68,6 +69,8 @@ def calc_clusters_hca(D, n, method = "average"):
 	#
 	# Returns clusters = {label: [idx, ...], ...}; idx = index D
 	
+	if D.ndim == 1:
+		D = squareform(D)
 	d = calc_distances_pca(D)
 	if d.shape[0] == d.shape[1]:
 		d = squareform(d)
@@ -88,7 +91,8 @@ def calc_silhouette(D, clusters):
 	
 	if len(clusters) < 2:
 		return -1
-	
+	if D.ndim == 1:
+		D = squareform(D)
 	clusters_l = np.zeros(D.shape[0], dtype = int)
 	for li, label in enumerate(list(clusters.keys())):
 		clusters_l[clusters[label]] = li + 1
@@ -130,21 +134,16 @@ def cluster_distributions(model):
 	
 	return clusters, means, sil
 
-def worker_fnc(params, cluster_n, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
-	
+def worker_fnc(params, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
 	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform)
 	D = calc_distance_matrix(distributions)
-	sil = calc_silhouette(D, calc_clusters_hca(D, cluster_n))
-	
-	return sil
+	return D
 
-def collect_fnc(data, results, pbar):
-	
-	# data = sil
-	pbar.update(1)
-	results.append(data)
+def collect_fnc(data, D_pool):
+	# data = D
+	D_pool.append(data)
 
-def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 10000):
+def test_distribution_clustering(model, max_cpus = -1, max_queue_size = -1):
 	# Test the clustering of distributions for randomness
 	#
 	# returns clusters, means, sils, ps
@@ -183,23 +182,28 @@ def test_distribution_clustering(model, max_cpus = -1, max_queue_size = 10000):
 				weights=calc_sum([distributions[idx] for idx in clusters[cluster_n][label]])
 			)
 		# convert clusters to {cluster_n: {label: [sample name, ...], ...}, ...}
-		clusters[cluster_n] = dict([(label, [samples[idx] for idx in clusters[cluster_n][label]]) for label in clusters[cluster_n]])
+		clusters[cluster_n] = dict([(label, [samples[idx] for idx in clusters[cluster_n][label]]) for label in clusters[cluster_n]])	
 	
-	clu_max = dates_n - 1	
+	clu_max = dates_n - 1
 	ps = {}
+	D_pool = []
 	for cluster_n in clusters:
 		sils_rnd = []
 		sils_prev = None
 		c = 0
 		todo = model.npass
-		params_list = list(range(model.npass))
-		with tqdm(total=todo) as pbar:
-			pbar.total = model.npass*2
+		with tqdm(total=todo*2) as pbar:
 			pbar.set_description("Clusters: %d/%d, Conv.: %0.3f" % (cluster_n, clu_max, c))
+			iter = -1
 			while True:
-				process_mp(worker_fnc, params_list, [cluster_n, dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
-		           collect_fnc = collect_fnc, collect_args = [sils_rnd, pbar],
-		           max_cpus = max_cpus, max_queue_size = max_queue_size)
+				iter += 1
+				while iter >= len(D_pool):
+					process_mp(worker_fnc, range(model.npass), [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
+						collect_fnc = collect_fnc, collect_args = [D_pool],
+						max_cpus = max_cpus, max_queue_size = max_queue_size)
+				D = squareform(D_pool[iter])
+				sils_rnd.append(calc_silhouette(D, calc_clusters_hca(D, cluster_n)))
+				pbar.update(1)
 				if len(sils_rnd) >= todo:
 					sils_m = np.array(sils_rnd).mean()
 					if sils_prev is not None:
@@ -247,7 +251,7 @@ def find_opt_clusters(clusters, ps, sils, p_value = 0.05):
 	
 	return int(clu_ns[idxs[np.argmax(sils[idxs])]])
 
-def proc_clustering(model, max_cpus = -1, max_queue_size = 10000):
+def proc_clustering(model, max_cpus = -1, max_queue_size = -1):
 	if model.cluster_n > -1:
 		clusters, means, sil = cluster_distributions(model)
 		clusters = {model.cluster_n: clusters}

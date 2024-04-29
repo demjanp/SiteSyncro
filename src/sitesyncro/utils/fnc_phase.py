@@ -205,9 +205,9 @@ def find_dating_outliers(model):
 		base = set(sample_idxs).difference(removed)
 		# Try adding back individual outliers first
 		addable = set()
-		for idx in removed:
-			if not _find_outliers_idxs(base.union({idx}), earlier_than, samples, ranges, check_only = True):
-				addable.add(idx)
+		for i in removed:
+			if not _find_outliers_idxs(base.union({i}), earlier_than, samples, ranges, check_only = True):
+				addable.add(i)
 		# Try adding back increasingly larger groups of outliers
 		outliers = []
 		added_n = -1

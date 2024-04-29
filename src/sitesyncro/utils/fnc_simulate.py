@@ -116,20 +116,18 @@ def calculate_parameters(years, distribution, uniform):
 
 	return t_param1, t_param2
 
-
 def worker_fnc(params, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
 	
-	return generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform)
+	return calc_sum(generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform))
 
 def collect_fnc(data, results, pbar):
 	
-	# data = distributions
-	# distributions = [[p, ...], ...]
-	
+	# data = dist_sum
+	# dist_sum = [p, ...]
 	pbar.update(1)
 	results.append(data)
 
-def test_distributions(model, max_cpus = -1, max_queue_size = 100):
+def test_distributions(model, max_cpus = -1, max_queue_size = -1):
 	
 	distributions, _, _ = samples_to_distributions(model.samples.values())
 	
@@ -144,7 +142,6 @@ def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 	years = model.curve[:, 0]
 	t_param1, t_param2 = calculate_parameters(years, sum_obs, model.uniform)
 	
-	distributions_rnd = []
 	sums = []
 	sums_prev = None
 	c = 0
@@ -155,10 +152,9 @@ def test_distributions(model, max_cpus = -1, max_queue_size = 100):
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
 			process_mp(worker_fnc, params_list, [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
-		           collect_fnc = collect_fnc, collect_args = [distributions_rnd, pbar],
+		           collect_fnc = collect_fnc, collect_args = [sums, pbar],
 		           max_cpus = max_cpus, max_queue_size = max_queue_size)
-			if len(distributions_rnd) >= todo:
-				sums += [calc_sum(dists) for dists in distributions_rnd[-(len(distributions_rnd) - len(sums)):]]
+			if len(sums) >= todo:
 				sums_m = np.array(sums).mean(axis = 0)
 				if sums_prev is not None:
 					c = ((sums_prev * sums_m).sum()**2) / ((sums_prev**2).sum() * (sums_m**2).sum())

@@ -273,7 +273,7 @@ class Sample(object):
 			lower, upper = self.likelihood_range
 			if lower is None:
 				return [None, None]
-			return [lower, lower + 2*(lower - upper)]
+			return [lower, lower - 2*(lower - upper)]
 		return self.likelihood_range
 	
 	def to_oxcal(self):

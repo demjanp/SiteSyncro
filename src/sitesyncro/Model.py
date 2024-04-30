@@ -625,6 +625,7 @@ class Model(object):
 	def process_phasing(self, by_clusters = False, by_dates = False):
 		# Update groups and phases of samples based on stratigraphic relations
 		# by_clusters: if True, update the phasing by clustering sample dates
+		# by_dates: if True, update the phasing by comparing sample dates
 		earlier_than, samples = create_earlier_than_matrix(self)
 		if by_clusters and self.is_clustered:
 			earlier_than = update_earlier_than_by_clustering(self, earlier_than, samples)
@@ -662,9 +663,10 @@ class Model(object):
 		# Cluster dates and using randomization testing find optimal clustering solution
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], self._data['cluster_opt_n'] = proc_clustering(self, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	
-	def process(self, by_clusters = False, max_cpus = -1, max_queue_size = -1):
+	def process(self, by_clusters = False, by_dates = False, max_cpus = -1, max_queue_size = -1):
 		# Process the complete model
 		# by_clusters: if True, update the phasing by clustering sample dates
+		# by_dates: if True, update the phasing by comparing sample dates
 		self.reset_model()
 		print("\nModeling stratigraphy\n")
 		self.process_phasing()
@@ -672,6 +674,11 @@ class Model(object):
 		self.process_outliers(max_cpus = max_cpus, max_queue_size = max_queue_size)
 		print("\nModeling C-14 dates\n")
 		self.process_dates()
+		if by_dates:
+			print("\nUpdating phasing by comparing sample dates\n")
+			self.process_phasing(by_dates = True)
+			print("\nModeling C-14 dates\n")
+			self.process_dates()
 		print("\nTesting the distribution of dates for randomness\n")
 		self.process_randomization(max_cpus = max_cpus, max_queue_size = max_queue_size)
 		print("\nClustering temporal distributions\n")

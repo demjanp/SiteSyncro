@@ -145,38 +145,51 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str]) -> Dict[
 	
 	return groups_phases
 
-
 def prob_earlier_than(dist1: np.ndarray, dist2: np.ndarray):
 	# Calculate the probability that dist1 is earlier than dist2
 	#
 	# Returns p
 	
-	p = 1 - np.sum(np.cumsum(dist2[::-1])[::-1] * np.cumsum(dist1))
+	p = max(0, 1 - np.sum(np.cumsum(dist2[::-1])[::-1] * np.cumsum(dist1)))
 	return p
 
 def update_earlier_than_by_dating(model: object, earlier_than: np.ndarray, samples: List[str]) -> np.ndarray:
 	# Update earlier_than based on probability distributions of the samples
 	
-	distributions, samples_d, joined = samples_to_distributions(model.samples.values())
+	distributions, names_dist, joined = samples_to_distributions(model.samples.values())
 	# distributions = [[p, ...], ...]
-	# samples = [combined_name, ...] ordered by distributions
+	# names_dist = [combined_name, ...] ordered by distributions
 	# joined = {combined_name: [sample name, ...], ...}
 	
-	sample_lookup = {}
-	for combined_name in joined:
-		for sample in joined[combined_name]:
-			sample_lookup[combined_name] = sample
-	for sample in samples_d:
-		if sample not in sample_lookup:
-			sample_lookup[sample] = sample
+	def _get_combined(name, joined):
+		for combined_name in joined:
+			if name in joined[combined_name]:
+				return combined_name
+		return None
+	
+	idx_lookup = {}
+	for name in samples:
+		idx_lookup[name] = None
+		if name in names_dist:
+			idx_lookup[name] = names_dist.index(name)
+		else:
+			combined_name = _get_combined(name, joined)
+			if combined_name is not None:
+				idx_lookup[name] = names_dist.index(combined_name)
 	
 	# Update earlier_than based on probability distributions
-	for i, s1 in enumerate(samples_d):
-		for j, s2 in enumerate(samples_d):
+	for i, s1 in enumerate(samples):
+		d_i = idx_lookup[s1]
+		if d_i is None:
+			continue
+		for j, s2 in enumerate(samples):
 			if i == j:
 				continue
-			if prob_earlier_than(distributions[i], distributions[j]) >= (1 - model.p_value):
-				earlier_than[samples.index(sample_lookup[s1])][samples.index(sample_lookup[s2])] = True
+			d_j = idx_lookup[s2]
+			if d_j is None:
+				continue
+			if prob_earlier_than(distributions[d_i], distributions[d_j]) >= (1 - model.p_value):
+				earlier_than[i][j] = True
 	
 	# Extend the earlier_than matrix to include computed relations
 	earlier_than = extend_earlier_than(earlier_than)

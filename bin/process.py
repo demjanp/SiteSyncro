@@ -39,6 +39,8 @@ def parse_arguments(args):
 		help="Number of clusters to form (-1 = automatic)")
 	parser.add_argument('-by_clusters', type=int, default=0, required=False,
 		help="Flag indicating whether to update the phasing by clustering sample dates")
+	parser.add_argument('-by_dates', type=int, default=0, required=False,
+		help="Flag indicating whether to update the phasing by comparing sample dates")
 	parser.add_argument('-uniform', type=int, default=0, required=False,
 		help="Flag indicating whether to use a uniform distribution for the calendar ages")
 	parser.add_argument('-p_value', type=float, default=0.05, required=False,
@@ -66,6 +68,7 @@ if __name__ == '__main__':
 	
 	finput = arguments.pop('input', None)
 	by_clusters = bool(arguments.pop('by_clusters', False))
+	by_dates = bool(arguments.pop('by_dates', False))
 	max_cpus = arguments.pop('max_cpus')
 	max_queue_size = arguments.pop('max_queue_size')
 	
@@ -96,7 +99,7 @@ if __name__ == '__main__':
 	print("Convergence threshold:", model.convergence)
 	print()
 	
-	model.process(by_clusters = by_clusters, max_cpus = max_cpus, max_queue_size = max_queue_size)
+	model.process(by_clusters = by_clusters, by_dates = by_dates, max_cpus = max_cpus, max_queue_size = max_queue_size)
 	model.save(zipped = True)
 	model.plot_randomized()
 	model.plot_clusters()

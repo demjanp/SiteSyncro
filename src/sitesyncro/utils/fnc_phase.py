@@ -1,3 +1,5 @@
+from sitesyncro.utils.fnc_stat import (calc_sum, samples_to_distributions)
+
 from itertools import combinations
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -5,7 +7,9 @@ from tqdm import tqdm
 import numpy as np
 import math
 
-def check_circular_relationships(earlier_than, samples):
+from typing import List, Dict
+
+def check_circular_relationships(earlier_than: np.ndarray, samples: List[str]) -> bool:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	cycles = list(nx.simple_cycles(G))
 	if cycles:
@@ -16,14 +20,14 @@ def check_circular_relationships(earlier_than, samples):
 		return False
 	return True
 
-def visualize_earlier_than(earlier_than, samples):
+def visualize_earlier_than(earlier_than: np.ndarray, samples: List[str]):
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	labels = {i: sample for i, sample in enumerate(samples)}
 	pos = nx.spring_layout(G)
 	nx.draw(G, pos, labels=labels, with_labels=True)
 	plt.show()
 
-def extend_earlier_than(earlier_than):
+def extend_earlier_than(earlier_than: np.ndarray) -> np.ndarray:
 	# Create a directed graph from the earlier_than matrix
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 
@@ -35,7 +39,7 @@ def extend_earlier_than(earlier_than):
 
 	return extended_earlier_than.astype(bool)
 
-def find_groups(earlier_than):
+def find_groups(earlier_than: np.ndarray) -> Dict[int, List[int]]:
 	
 	if earlier_than.sum():
 		G = nx.convert_matrix.from_numpy_array(earlier_than, create_using = nx.Graph)
@@ -49,7 +53,7 @@ def find_groups(earlier_than):
 	# groups = {group: [idx, ...], ...}; idx = index in earlier_than
 	return dict(enumerate(sorted(groups, key = lambda group: len(group), reverse = True), start = 1))
 
-def create_earlier_than_matrix(model):
+def create_earlier_than_matrix(model: object):
 	samples = sorted(list(model.samples.keys()))
 	
 	# Create a matrix of earlier-than relationships
@@ -84,7 +88,7 @@ def create_earlier_than_matrix(model):
 	# earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
 	return earlier_than, samples
 
-def get_phases_gr(earlier_than):
+def get_phases_gr(earlier_than: np.ndarray):
 	n_samples = earlier_than.shape[0]
 	phasing = np.full(n_samples, np.nan)  # phasing[si] = phase; lower = earlier
 	
@@ -120,7 +124,7 @@ def get_phases_gr(earlier_than):
 	phasing[~mask] = -1
 	return phasing
 
-def get_groups_and_phases(earlier_than, samples):
+def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str]) -> Dict[str, List[int]]:
 	# returns groups_phases = {sample: [group, phase], ...}
 	
 	groups = find_groups(earlier_than)
@@ -141,7 +145,45 @@ def get_groups_and_phases(earlier_than, samples):
 	
 	return groups_phases
 
-def update_earlier_than_by_clustering(model, earlier_than, samples):
+
+def prob_earlier_than(dist1: np.ndarray, dist2: np.ndarray):
+	# Calculate the probability that dist1 is earlier than dist2
+	#
+	# Returns p
+	
+	p = 1 - np.sum(np.cumsum(dist2[::-1])[::-1] * np.cumsum(dist1))
+	return p
+
+def update_earlier_than_by_dating(model: object, earlier_than: np.ndarray, samples: List[str]) -> np.ndarray:
+	# Update earlier_than based on probability distributions of the samples
+	
+	distributions, samples_d, joined = samples_to_distributions(model.samples.values())
+	# distributions = [[p, ...], ...]
+	# samples = [combined_name, ...] ordered by distributions
+	# joined = {combined_name: [sample name, ...], ...}
+	
+	sample_lookup = {}
+	for combined_name in joined:
+		for sample in joined[combined_name]:
+			sample_lookup[combined_name] = sample
+	for sample in samples_d:
+		if sample not in sample_lookup:
+			sample_lookup[sample] = sample
+	
+	# Update earlier_than based on probability distributions
+	for i, s1 in enumerate(samples_d):
+		for j, s2 in enumerate(samples_d):
+			if i == j:
+				continue
+			if prob_earlier_than(distributions[i], distributions[j]) >= (1 - model.p_value):
+				earlier_than[samples.index(sample_lookup[s1])][samples.index(sample_lookup[s2])] = True
+	
+	# Extend the earlier_than matrix to include computed relations
+	earlier_than = extend_earlier_than(earlier_than)
+	
+	return earlier_than
+	
+def update_earlier_than_by_clustering(model: object, earlier_than: np.ndarray, samples: List[str]) -> np.ndarray:
 	# Update earlier_than based on temporal clustering of the samples
 	
 	if model.cluster_opt_n is None:
@@ -191,9 +233,9 @@ def update_earlier_than_by_clustering(model, earlier_than, samples):
 	
 	return earlier_than
 
-def find_dating_outliers(model):
+def find_dating_outliers(model: object):
 	
-	def _find_outliers_idxs(idxs, earlier_than, samples, ranges, check_only = False):
+	def _find_outliers_idxs(idxs: set, earlier_than: np.ndarray, samples: List[str], ranges: Dict[str, List[float]], check_only: bool = False):
 		found = set()
 		for i in idxs:
 			for j in np.where(earlier_than[i])[0]:
@@ -204,7 +246,7 @@ def find_dating_outliers(model):
 					found.add(j)
 		return list(found)
 	
-	def _pick_outliers(candidates, sample_idxs, earlier_than, samples, ranges):
+	def _pick_outliers(candidates: List[int], sample_idxs: List[int], earlier_than: np.ndarray, samples: List[str], ranges: Dict[str, List[float]]):
 		removed = set(candidates)
 		base = set(sample_idxs).difference(removed)
 		# Try adding back individual outliers first

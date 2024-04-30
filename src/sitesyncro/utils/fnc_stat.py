@@ -1,7 +1,9 @@
 import numpy as np
 from collections import defaultdict
 
-def calc_sum(distributions):
+from typing import List
+
+def calc_sum(distributions: List[np.ndarray]):
 	# distributions = [[p, ...], ...]
 	summed = np.zeros(len(distributions[0]), dtype = np.float64)
 	for dist in distributions:
@@ -11,22 +13,22 @@ def calc_sum(distributions):
 		summed /= s
 	return summed
 
-def calc_mean(years, distribution):
+def calc_mean(years: np.ndarray, distribution: np.ndarray):
 	if not distribution.sum():
 		return None
 	return float(np.average(years, weights=distribution))
 
-def calc_mean_std(years, distribution):
+def calc_mean_std(years: np.ndarray, distribution: np.ndarray):
 	mean = calc_mean(years, distribution)
 	if mean is None:
 		return None, None
 	std = np.sqrt(np.average((years - mean) ** 2, weights=distribution))
 	return mean, std
 
-def calc_range(years, distribution, p = 0.9545, p_threshold = 0.0001, max_multiplier = 32):
+def calc_range(years: np.ndarray, distribution: np.ndarray, p:float = 0.9545, p_threshold:float = 0.0001, max_multiplier:int = 32):
 	# returns [from, to] in calendar years BP
 	
-	def _find_rng(values, weights, v_min, v_max, mul):
+	def _find_rng(values: np.ndarray, weights: np.ndarray, v_min: float, v_max: float, mul: int):
 		
 		vs = np.linspace(values.min(), values.max(), values.shape[0] * mul)
 		weights = np.interp(vs, values, weights)
@@ -73,13 +75,13 @@ def calc_range(years, distribution, p = 0.9545, p_threshold = 0.0001, max_multip
 	
 	return [float(v_opt[1]), float(v_opt[0])]
 
-def calc_percentiles(distributions, perc_lower, perc_upper):
+def calc_percentiles(distributions: List[np.ndarray], perc_lower: float, perc_upper: float):
 	# distributions = [[p, ...], ...]
 	combined = np.array(distributions, dtype=np.float64)
 	percentiles = np.percentile(combined, [perc_lower, perc_upper], axis=0)
 	return percentiles
 
-def samples_to_distributions(samples):
+def samples_to_distributions(samples: List[object]):
 	# Get a list of probability distributions from samples
 	# Combine samples from the same context by summation
 	# Use only posterior (modeled) distributions for long-lived samples and outliers
@@ -87,7 +89,7 @@ def samples_to_distributions(samples):
 	#
 	# returns distributions, samples_collected, joined
 	#	distributions = [[p, ...], ...]
-	#	samples_collected = [sample name, ...] ordered by distributions
+	#	samples_collected = [combined_name, ...] ordered by distributions
 	#	joined = {combined_name: [sample name, ...], ...}
 	distributions_dict = {}  # {name: np.array([p, ...]), ...}
 	contexts = defaultdict(list)

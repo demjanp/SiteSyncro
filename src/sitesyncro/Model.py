@@ -3,7 +3,7 @@ from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 from sitesyncro.utils.fnc_data import (dict_keys_to_int, dict_np_to_list)
 from sitesyncro.utils.fnc_load import (load_data)
 from sitesyncro.utils.fnc_plot import (plot_randomized, plot_clusters, save_results_csv, save_outliers)
-from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, find_dating_outliers, update_earlier_than_by_clustering)
+from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, find_dating_outliers, update_earlier_than_by_clustering, update_earlier_than_by_dating)
 from sitesyncro.utils.fnc_simulate import (test_distributions)
 from sitesyncro.utils.fnc_cluster import (proc_clustering)
 from sitesyncro.Sample import Sample
@@ -25,6 +25,7 @@ class Model(object):
 			curve_name = 'intcal20.14c',
 			phase_model = 'sequence',
 			cluster_n = -1,
+			min_years_per_cluster = 50,
 			uniform = False,
 			p_value = 0.05,
 			uncertainty_base = 15,
@@ -53,6 +54,7 @@ class Model(object):
 			curve_name = curve_name,
 			phase_model = phase_model,
 			cluster_n = cluster_n,
+			min_years_per_cluster = min_years_per_cluster,
 			uniform = uniform,
 			p_value = p_value,
 			uncertainty_base = uncertainty_base,
@@ -75,6 +77,7 @@ class Model(object):
 			curve_name = None,
 			phase_model = None,
 			cluster_n = None,
+			min_years_per_cluster = None,
 			uniform = None,
 			p_value = None,
 			uncertainty_base = None,
@@ -148,6 +151,10 @@ class Model(object):
 	@property
 	def cluster_n(self):
 		return self._data['cluster_n']
+	
+	@property
+	def min_years_per_cluster(self):
+		return self._data['min_years_per_cluster']
 	
 	@property
 	def uniform(self):
@@ -415,7 +422,7 @@ class Model(object):
 		# Create a copy of the model with a new directory
 		samples = dict([(name, self.samples[name].copy()) for name in self.samples])
 		model = Model(directory, samples, self.curve_name, self.phase_model, 
-			self.cluster_n, self.uniform, self.p_value, self.uncertainty_base, self.oxcal_url
+			self.cluster_n, self.min_years_per_cluster, self.uniform, self.p_value, self.uncertainty_base, self.oxcal_url
 		)
 		for key in self._calculated():
 			model._data[key] = getattr(self, key)
@@ -615,12 +622,16 @@ class Model(object):
 			for name in self.samples:
 				self.samples[name].calibrate(self.curve)
 	
-	def process_phasing(self, by_clusters = False):
+	def process_phasing(self, by_clusters = False, by_dates = False):
 		# Update groups and phases of samples based on stratigraphic relations
 		# by_clusters: if True, update the phasing by clustering sample dates
 		earlier_than, samples = create_earlier_than_matrix(self)
 		if by_clusters and self.is_clustered:
 			earlier_than = update_earlier_than_by_clustering(self, earlier_than, samples)
+		
+		if by_dates and self.is_modeled:
+			earlier_than = update_earlier_than_by_dating(self, earlier_than, samples)
+		
 		groups_phases = get_groups_and_phases(earlier_than, samples)
 		# groups_phases = {sample: [group, phase], ...}
 		for name in self.samples:

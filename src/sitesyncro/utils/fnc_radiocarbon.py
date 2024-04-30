@@ -2,7 +2,7 @@ import os
 import numpy as np
 from scipy.interpolate import interp1d
 
-def get_curve(curve_name = 'intcal20.14c'):
+def get_curve(curve_name: str = 'intcal20.14c'):
 	# Load calibration curve
 	# returns: [[calendar year BP, C-14 year, uncertainty], ...], sorted by calendar years
 	
@@ -34,7 +34,7 @@ def get_curve(curve_name = 'intcal20.14c'):
 	
 	return cal_curve.astype(np.float64)
 
-def calibrate(age, uncert, curve, date_type = 'R'):
+def calibrate(age: float, uncert: float, curve: np.ndarray, date_type: str = 'R'):
 	# Calibrate a C-14 date
 	# Calibration formula as defined by Bronk Ramsey 2008, doi: 10.1111/j.1475-4754.2008.00394.x
 	#

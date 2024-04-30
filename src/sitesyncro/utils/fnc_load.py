@@ -1,7 +1,9 @@
 from collections import defaultdict
 import os
 
-def load_input(fname):
+from typing import List, Dict, Any
+
+def load_input(fname: str):
 	data = []
 	with open(fname, "r") as file:
 		next(file)  # Skip header
@@ -15,18 +17,32 @@ def load_input(fname):
 				try:
 					age = float(age.strip())
 					uncertainty = float(uncertainty.strip())
-					phase = float(phase.strip())
 					long_lived = int(long_lived.strip())
 					redeposited = int(redeposited.strip())
 					outlier = int(outlier.strip())
 				except ValueError:
 					raise Exception(f"Incorrect data format in line: {line}")
+				phase = phase.strip()
+				try:
+					phase = float(phase)
+				except:
+					phase = None
 				# split comma-separated values from earlier_than
-				earlier_than = [val.strip() for val in earlier_than.split(",")]
+				earlier_than = earlier_than.strip()
+				if earlier_than:
+					earlier_than = [val.strip() for val in earlier_than.split(",")]
+				else:
+					earlier_than = []
+				context = context.strip()
+				if not context:
+					context = None
+				area = area.strip()
+				if not area:
+					area = None
 				data.append({
 					"Sample": sample.strip(),
-					"Context": context.strip(),
-					"Area": area.strip(),
+					"Context": context,
+					"Area": area,
 					"C14 Age": age,
 					"Uncertainty": uncertainty,
 					"Phase": phase,
@@ -37,7 +53,7 @@ def load_input(fname):
 				})
 	return data
 
-def get_samples_contexts_and_areas(data):
+def get_samples_contexts_and_areas(data: List[Dict[str, Any]]):
 	# Create a list of samples
 	samples = sorted(list(set([line["Sample"] for line in data])))
 	
@@ -67,34 +83,34 @@ def get_samples_contexts_and_areas(data):
 	
 	return samples, context_samples, context_area, areas
 
-def get_long_lived(data):
+def get_long_lived(data: List[Dict[str, Any]]):
 	# Create a list of long-lived contexts
 	long_lived = {}
 	for line in data:
 		long_lived[line["Sample"]] = bool(line["Long-Lived"])
 	return long_lived
 
-def get_redeposited(data):
+def get_redeposited(data: List[Dict[str, Any]]):
 	# Create a list of redeposited contexts
 	redeposited = {}
 	for line in data:
 		redeposited[line["Sample"]] = bool(line["Redeposited"])
 	return redeposited
 
-def get_outlier(data):
+def get_outlier(data: List[Dict[str, Any]]):
 	# Create a list of outliers
 	outlier = {}
 	for line in data:
 		outlier[line["Sample"]] = bool(line["Outlier"])
 	return outlier
 
-def get_c14_dates(data):
+def get_c14_dates(data: List[Dict[str, Any]]):
 	r_dates = {}
 	for line in data:
 		r_dates[line["Sample"]] = (line["C14 Age"], line["Uncertainty"])
 	return r_dates
 
-def get_context_phase(data):
+def get_context_phase(data: List[Dict[str, Any]]):
 	
 	# Create a dictionary of contexts and their phases
 	context_phase = {}
@@ -102,7 +118,7 @@ def get_context_phase(data):
 		context_phase[line["Context"]] = line["Phase"]
 	return context_phase
 
-def get_earlier_than_relations(data, context_samples):
+def get_earlier_than_relations(data: List[Dict[str, Any]], context_samples: Dict[str, List[str]]):
 	
 	earlier_than_rel = defaultdict(list)
 	for line in data:
@@ -113,7 +129,7 @@ def get_earlier_than_relations(data, context_samples):
 					earlier_than_rel[sample1].append(sample2)
 	return dict(earlier_than_rel)
 
-def create_result_path(result_path, existing = False):
+def create_result_path(result_path: str, existing: bool = False):
 	
 	if existing and os.path.isdir(result_path):
 		return result_path
@@ -136,7 +152,7 @@ def create_result_path(result_path, existing = False):
 	os.makedirs(result_path)
 	return result_path
 
-def load_data(fname):
+def load_data(fname: str):
 	data = load_input(fname)
 	samples, context_samples, context_area, areas = get_samples_contexts_and_areas(data)
 	long_lived = get_long_lived(data)

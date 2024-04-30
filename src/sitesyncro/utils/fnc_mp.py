@@ -1,7 +1,9 @@
 import multiprocessing as mp
 import time
 
-def _worker(worker_fnc, params_mp, collect_mp, max_queue_size, args):
+from typing import List, Union, Generator, Callable
+
+def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max_queue_size: int, args: list):
 	
 	while True:
 		try:
@@ -15,7 +17,7 @@ def _worker(worker_fnc, params_mp, collect_mp, max_queue_size, args):
 			pass
 		collect_mp.put(worker_fnc(params, *args))
 
-def process_mp(worker_fnc, params_list, worker_args = [], collect_fnc = None, collect_args = [], progress_fnc = None, progress_args = [], max_cpus = -1, max_queue_size = -1):
+def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [], collect_fnc: Callable = None, collect_args: list = [], progress_fnc: Callable = None, progress_args:list = [], max_cpus: int = -1, max_queue_size: int = -1):
 	
 	def call_progress(progress_fnc, done, todo, progress_args):
 		

@@ -8,7 +8,9 @@ from tqdm import tqdm
 from collections import defaultdict
 from scipy.interpolate import interp1d
 
-def download_oxcal(url = None):
+from typing import Dict
+
+def download_oxcal(url: str = None):
 	
 	if os.path.isfile("OxCal\\bin\\OxCalWin.exe"):
 		return True
@@ -48,7 +50,7 @@ def download_oxcal(url = None):
 	
 	return True
 
-def oxcal_date(name, age, uncertainty, date_type, long_lived, outlier):
+def oxcal_date(name: str, age: float, uncertainty: float, date_type: str, long_lived: bool, outlier: bool):
 	txt = None
 	if date_type == 'R':
 		txt = '''R_Date("%s", %f, %f)''' % (name, age, uncertainty)
@@ -64,7 +66,7 @@ def oxcal_date(name, age, uncertainty, date_type, long_lived, outlier):
 		txt += ";"
 	return txt
 
-def gen_sequence(name, data):
+def gen_sequence(name: str, data: Dict[int, str]):
 	
 	txt = ""
 	for phase in sorted(list(data.keys())):
@@ -84,7 +86,7 @@ def gen_sequence(name, data):
 	};
 	''' % (name, txt)
 	
-def gen_contiguous(name, data):
+def gen_contiguous(name: str, data: Dict[int, str]):
 	
 	txt = ""
 	last_phase = None
@@ -115,7 +117,7 @@ def gen_contiguous(name, data):
 	};
 	''' % (name, txt)
 
-def gen_overlapping(name, data):
+def gen_overlapping(name: str, data: Dict[int, str]):
 	
 	txt = ""
 	for phase in sorted(list(data.keys())):
@@ -137,7 +139,7 @@ def gen_overlapping(name, data):
 	};
 	''' % (name, txt)
 
-def gen_none(name, data):
+def gen_none(name: str, data: Dict[int, str]):
 	
 	txt = ""
 	for phase in sorted(list(data.keys())):
@@ -147,7 +149,7 @@ def gen_none(name, data):
 		''' % (name, phase, data[phase])
 	return txt
 
-def gen_oxcal_model(model):
+def gen_oxcal_model(model: object):
 	
 	model_fncs = {
 		'sequence': gen_sequence,
@@ -184,7 +186,7 @@ Plot()
 	txt = ''.join(c for c in unicodedata.normalize('NFKD', txt) if unicodedata.category(c) != 'Mn')
 	return txt
 
-def load_oxcal_data(fname):
+def load_oxcal_data(fname: str):
 	
 	def replace_colons_in_braces(s):
 		# Find the innermost braces
@@ -264,7 +266,7 @@ def load_oxcal_data(fname):
 	
 	return read_js_file(fname)
 
-def get_distributions(data, curve):
+def get_distributions(data: Dict, curve: np.ndarray):
 	# data = OxCal data (from load_oxcal_data)
 	# curve = np.array([[calendar year BP, C-14 year, uncertainty], ...]), sorted by calendar years
 	#

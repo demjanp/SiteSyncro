@@ -1,8 +1,7 @@
 from matplotlib import pyplot
 import numpy as np
-import os
 
-def plot_randomized(model, fname = None, show = False):
+def plot_randomized(model: object, fname: str, show: bool = False):
 	# Plot the randomization test results
 	
 	if model.random_p < model.p_value:
@@ -30,7 +29,7 @@ def plot_randomized(model, fname = None, show = False):
 		pyplot.show()
 	pyplot.close()
 
-def plot_clusters(model, fname = None, show = False):
+def plot_clusters(model: object, fname: str, show: bool = False):
 	# Plot Silhouette and p-value for solutions with different numbers of clusters
 	
 	clu_ns = np.array(sorted(list(model.clusters.keys())), dtype = int)
@@ -69,22 +68,25 @@ def plot_clusters(model, fname = None, show = False):
 		pyplot.show()
 	pyplot.close()
 
-def save_outliers(model, fname):
+def save_outliers(model: object, fname: str):
 	
-	txt = ""
+	txt = "Eliminated outliers:\n"
 	outliers = model.outliers
 	if outliers:
-		txt += "Eliminated outliers:\n"
 		txt += "%s\n" % (", ".join(outliers))
+	else:
+		txt += "None\n"
+	txt += "\nOutlier candidates:\n"
 	candidates = model.outlier_candidates
 	if candidates:
-		txt += "\nOutlier candidates:\n"
 		txt += "%s\n" % (", ".join(candidates))
+	else:
+		txt += "None\n"
 	
 	with open(fname, "w") as file:
 		file.write(txt)
 
-def save_results_csv(model, fcsv):
+def save_results_csv(model: object, fcsv: str):
 	# Save results to a CSV file
 	
 	def _format_year(value):

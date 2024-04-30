@@ -6,7 +6,9 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import norm
 
-def generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform, max_iterations = 10000):
+from typing import Any, List
+
+def generate_random_distributions(dates_n: int, t_param1: float, t_param2: float, uncertainties: List[float], uncertainty_base: float, curve: np.ndarray, uniform: bool, max_iterations: int = 10000):
 	# Generate sets of randomized distributions based on observed distributions
 	#
 	# dates_n: number of dates to generate
@@ -112,7 +114,7 @@ def generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, un
 	
 	return distributions
 
-def calculate_parameters(years, distribution, uniform):
+def calculate_parameters(years: np.ndarray, distribution: np.ndarray, uniform: bool):
 	if uniform:
 		# Calculate weighted median and range of the summed distribution
 		t_median = np.average(years, weights=distribution)
@@ -125,18 +127,18 @@ def calculate_parameters(years, distribution, uniform):
 
 	return t_param1, t_param2
 
-def worker_fnc(params, dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform):
+def worker_fnc(params: Any, dates_n: int, t_param1: float, t_param2: float, uncertainties: List[float], uncertainty_base: float, curve: np.ndarray, uniform: bool):
 	
 	return calc_sum(generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform))
 
-def collect_fnc(data, results, pbar):
+def collect_fnc(data: np.ndarray, results: List[np.ndarray], pbar: tqdm):
 	
 	# data = dist_sum
 	# dist_sum = [p, ...]
 	pbar.update(1)
 	results.append(data)
 
-def test_distributions(model, max_cpus = -1, max_queue_size = -1):
+def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = -1):
 	
 	distributions, _, _ = samples_to_distributions(model.samples.values())
 	

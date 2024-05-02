@@ -14,7 +14,7 @@ from sitesyncro.utils.fnc_data import (dict_keys_to_int, dict_np_to_list)
 from sitesyncro.utils.fnc_load import (load_data)
 from sitesyncro.utils.fnc_oxcal import (download_oxcal, gen_oxcal_model, load_oxcal_data, get_distributions)
 from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, find_dating_outliers,
-                                        update_earlier_than_by_clustering, update_earlier_than_by_dating)
+										update_earlier_than_by_clustering, update_earlier_than_by_dating)
 from sitesyncro.utils.fnc_plot import (plot_randomized, plot_clusters, save_results_csv, save_outliers)
 from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 from sitesyncro.utils.fnc_simulate import (test_distributions)
@@ -23,24 +23,49 @@ from sitesyncro.utils.fnc_simulate import (test_distributions)
 class Model(object):
 	"""
 	A class representing a Bayesian model of dated samples interconnected by stratigraphic relationships.
-	
-	Parameters:
-	- `directory`: Working directory for model data (default is "model").
-	- `samples`: List of samples as instances of the class [Sample](#sample_class)
-	- `curve_name`: The name of the calibration curve to use (default is "intcal20.14c").
-	- `phase_model`: OxCal phase model type. Can be 'sequence', 'contiguous', 'overlapping', or 'none' (default is "sequence").
-	- `cluster_n`: Number of clusters to form (-1 = automatic; default is -1).
-	- `min_years_per_cluster`: The minimum average number of years per cluster.
-	- `uniform`: Flag indicating whether to use uniform randomization (default is False).
-	- `p_value`: The P-value for statistical tests (default is 0.05).
-	- `uncertainty_base`: The base uncertainty for randomization (default is 15).
-	- `npass`: Minimum number of passes for the randomization tests (default is 100).
-	- `convergence`: Convergence threshold for the randomization tests (default is 0.99).
-	- `oxcal_url`: Url to download the OxCal program (default is "https://c14.arch.ox.ac.uk/OxCalDistribution.zip").
-	- `overwrite`: Flag indicating whether to overwrite existing data in the model directory (default is False).
+
+	:param directory: Working directory for model data (default is "model").
+	:type directory: str
+
+	:param samples: List of samples as instances of the class [Sample](#sample_class)
+	:type samples: list
+
+	:param curve_name: The name of the calibration curve to use (default is "intcal20.14c").
+	:type curve_name: str
+
+	:param phase_model: OxCal phase model type. Can be 'sequence', 'contiguous', 'overlapping', or 'none' (default is "sequence").
+	:type phase_model: str
+
+	:param cluster_n: Number of clusters to form (-1 = automatic; default is -1).
+	:type cluster_n: int
+
+	:param min_years_per_cluster: The minimum average number of years per cluster.
+	:type min_years_per_cluster: int
+
+	:param uniform: Flag indicating whether to use uniform randomization (default is False).
+	:type uniform: bool
+
+	:param p_value: The P-value for statistical tests (default is 0.05).
+	:type p_value: float
+
+	:param uncertainty_base: The base uncertainty for randomization (default is 15).
+	:type uncertainty_base: float
+
+	:param npass: Minimum number of passes for the randomization tests (default is 100).
+	:type npass: int
+
+	:param convergence: Convergence threshold for the randomization tests (default is 0.99).
+	:type convergence: float
+
+	:param oxcal_url: Url to download the OxCal program (default is "https://c14.arch.ox.ac.uk/OxCalDistribution.zip").
+	:type oxcal_url: str
+
+	:param overwrite: Flag indicating whether to overwrite existing data in the model directory (default is False).
+	:type overwrite: bool
 	"""
 	
 	def __init__(self, **kwargs):
+
 		defaults = dict(
 			directory='model',
 			samples=[],
@@ -174,14 +199,23 @@ class Model(object):
 			str: The directory path as a string.
 		"""
 		return self._data['directory']
-	
+	@property
+	def directory(self) -> str:
+		"""
+		Represents the directory where the model data is stored.
+
+		:return: The directory where the model data is stored.
+		:rtype: str
+		"""
+		
+		return self._data['directory']
 	@property
 	def samples(self) -> Dict[str, Sample]:
 		"""
 		A dictionary of samples associated with the model.
-
-		Returns:
-			Dict[str, Sample]: A dictionary where the keys are the sample names and the values are Sample objects.
+		
+		:return: A dictionary where the keys are the sample names and the values are Sample objects.
+		:rtype: Dict[str, Sample]
 		"""
 		if self._data['samples'] is None:
 			return {}
@@ -192,18 +226,18 @@ class Model(object):
 		"""
 		File name of the radiocarbon age calibration curve (see OxCal/bin directory).
 
-		Returns:
-			str: The name of the calibration curve.
+		:return: The name of the calibration curve.
+		:rtype: str
 		"""
 		return self._data['curve_name']
 	
 	@property
 	def phase_model(self) -> str:
 		"""
-		OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none').
+		OxCal phase model type.
 
-		Returns:
-			str: The type of the phase model.
+		:return: The type of the phase model. Can be 'sequence', 'contiguous', 'overlapping', or 'none'.
+		:rtype: str
 		"""
 		return self._data['phase_model']
 	
@@ -211,9 +245,9 @@ class Model(object):
 	def cluster_n(self) -> int:
 		"""
 		Number of clusters to form (-1 = automatic).
-
-		Returns:
-			int: The number of clusters.
+		
+		:return: The number of clusters to form.
+		:rtype: int
 		"""
 		return self._data['cluster_n']
 	
@@ -221,9 +255,9 @@ class Model(object):
 	def min_years_per_cluster(self) -> int:
 		"""
 		The minimum average number of years per cluster.
-
-		Returns:
-			int: The minimum average number of years per cluster.
+		
+		:return: The minimum average number of years per cluster.
+		:rtype: int
 		"""
 		return self._data['min_years_per_cluster']
 	
@@ -232,8 +266,8 @@ class Model(object):
 		"""
 		Flag indicating whether the model tests for a uniform distribution of the calendar ages.
 
-		Returns:
-			bool: True if a uniform distribution is used, False otherwise.
+		:return: True if a uniform distribution is used, False otherwise.
+		:rtype: bool
 		"""
 		return self._data['uniform']
 	
@@ -242,8 +276,8 @@ class Model(object):
 		"""
 		The p-value used for the randomization test.
 
-		Returns:
-			float: The p-value.
+		:return: The P-value for statistical tests.
+		:rtype: float
 		"""
 		return self._data['p_value']
 	
@@ -252,8 +286,8 @@ class Model(object):
 		"""
 		The base uncertainty for the radiocarbon dates.
 
-		Returns:
-			float: The base uncertainty value.
+		:return: The base uncertainty for the radiocarbon dates.
+		:rtype: float
 		"""
 		return self._data['uncertainty_base']
 	
@@ -261,9 +295,9 @@ class Model(object):
 	def npass(self) -> int:
 		"""
 		The minimum number of passes for the randomization test.
-
-		Returns:
-			int: The minimum number of passes.
+		
+		:return: The minimum number of passes.
+		:rtype: int
 		"""
 		return self._data['npass']
 	
@@ -272,8 +306,8 @@ class Model(object):
 		"""
 		The convergence threshold for the randomization test.
 
-		Returns:
-			float: The convergence threshold value.
+		:return: The convergence threshold for the randomization tests.
+		:rtype: float
 		"""
 		return self._data['convergence']
 	
@@ -282,8 +316,8 @@ class Model(object):
 		"""
 		The URL from where the OxCal software can be downloaded.
 
-		Returns:
-			str: The URL of the OxCal software.
+		:return: The URL of the OxCal software.
+		:rtype: str
 		"""
 		return self._data['oxcal_url']
 	
@@ -294,8 +328,8 @@ class Model(object):
 		"""
 		Calendar years BP corresponding to the probability distributions.
 
-		Returns:
-			np.ndarray: An array of calendar years.
+		:return: An array of calendar years.
+		:rtype: np.ndarray
 		"""
 		if self._data['years'] is None:
 			if self.curve is not None:
@@ -309,10 +343,10 @@ class Model(object):
 		"""
 		Radiocarbon calibration curve.
 
-		A 2D array containing the calibration curve data. Each row represents a calendar year BP, C-14 year, and uncertainty.
-
-		Returns:
-			np.ndarray: An array of the calibration curve.
+		2D array containing the calibration curve data. Each row represents a calendar year BP, C-14 year, and uncertainty.
+		
+		:return: An array of the calibration curve.
+		:rtype: np.ndarray
 		"""
 		
 		if self._data['curve'] is None:
@@ -327,8 +361,8 @@ class Model(object):
 		"""
 		List of uncertainties from C-14 dates of samples.
 
-		Returns:
-			List[float]: A list of uncertainties from C-14 dates of samples.
+		:return: A list of uncertainties from C-14 dates of samples.
+		:rtype: List[float]
 		"""
 		uncertainties = []
 		for name in self.samples:
@@ -341,8 +375,8 @@ class Model(object):
 		"""
 		The OxCal data associated with the model.
 
-		Returns:
-			dict or None: A dictionary containing the OxCal data if it exists, None otherwise.
+		:return: A dictionary containing the OxCal data if it exists, otherwise None.
+		:rtype: dict or None
 		"""
 		if self._data['oxcal_data'] is None:
 			return None
@@ -353,8 +387,8 @@ class Model(object):
 		"""
 		List of outliers among samples which need to be removed for the model to be valid.
 
-		Returns:
-			List[str]: A list of sample names that are considered outliers.
+		:return: A list of sample names that are considered outliers.
+		:rtype: List[str]
 		"""
 		return [name for name in self.samples if self.samples[name].outlier]
 	
@@ -364,8 +398,8 @@ class Model(object):
 		List of candidates for outliers, from which the final outliers to be eliminated were picked.
 		These samples have conflicts between dating ranges and stratigraphic relationships with other samples.
 
-		Returns:
-			List[str]: A list of sample names that are considered candidates for outliers.
+		:return: A list of sample names that are considered candidates for outliers.
+		:rtype: List[str]
 		"""
 		if self._data['outlier_candidates'] is None:
 			return []
@@ -377,8 +411,8 @@ class Model(object):
 		Summed probability distribution of the dating of all samples.
 		The summed probability is represented as an array where each element is the probability of the calendar year.
 
-		Returns:
-			np.ndarray or None: An array of the summed probability distribution if it exists, None otherwise.
+		:return: An array of the summed probability distribution if it exists, otherwise None.
+		:rtype: np.ndarray or None
 		"""
 		if self._data['summed'] is None:
 			return None
@@ -389,8 +423,8 @@ class Model(object):
 		"""
 		The calculated p-value from the randomization test.
 
-		Returns:
-			float or None: The p-value if the randomization test has been performed, None otherwise.
+		:return: The p-value if the randomization test has been performed, otherwise None.
+		:rtype: float or None
 		"""
 		return self._data['random_p']
 	
@@ -400,8 +434,8 @@ class Model(object):
 		Lower bound of the randomization test.
 		The lower bound is represented as an array where each element is the probability of the calendar year.
 
-		Returns:
-			np.ndarray or None: An array of the lower bound of the randomization test if it exists, None otherwise.
+		:return: An array of the lower bound of the randomization test if it exists, otherwise None.
+		:rtype: np.ndarray or None
 		"""
 		if self._data['random_lower'] is None:
 			return None
@@ -413,8 +447,8 @@ class Model(object):
 		Upper bound of the randomization test.
 		The Upper bound is represented as an array where each element is the probability of the calendar year.
 
-		Returns:
-			np.ndarray or None: An array of the upper bound of the randomization test if it exists, None otherwise.
+		:return: An array of the upper bound of the randomization test if it exists, otherwise None.
+		:rtype: np.ndarray or None
 		"""
 		if self._data['random_upper'] is None:
 			return None
@@ -425,8 +459,8 @@ class Model(object):
 		"""
 		Unique area names extracted from the samples.
 
-		Returns:
-			List[str]: A sorted list of unique area names.
+		:return: A sorted list of unique area names.
+		:rtype: List[str]
 		"""
 		areas = set()
 		for name in self.samples:
@@ -438,8 +472,8 @@ class Model(object):
 		"""
 		Unique context names extracted from the samples.
 
-		Returns:
-			List[str]: A sorted list of unique context names.
+		:return: A sorted list of unique context names.
+		:rtype: List[str]
 		"""
 		
 		contexts = set()
@@ -453,11 +487,9 @@ class Model(object):
 		Groups that the samples belong to based on stratigraphic interconnection with other samples.
 		The groups are represented as a dictionary where the keys are the group names and the values are lists of sample names.
 
-		Returns:
-			groups: {group_name: [sample name, ...], ...}
+		:return: A dictionary where the keys are the group names and the values are lists of sample names.
+		:rtype: Dict[str, List[str]]
 		"""
-		
-		# Groups that the samples belong to based on stratigraphic interconnection with other samples
 		# groups = {group_name: [sample name, ...], ...}
 		
 		groups = defaultdict(list)
@@ -470,8 +502,8 @@ class Model(object):
 		"""
 		Clusters of samples based on the similarity of their probability distributions.
 
-		Returns:
-			clusters: {clusters_n: [cluster: [sample name, ...], ...}, ...}; clusters_n = number of clusters
+		:return: {clusters_n: [cluster: [sample name, ...], ...}, ...}; clusters_n = number of clusters
+		:rtype: Dict[int, Dict[int, List[str]]]
 		"""
 		
 		if self._data['clusters'] is None:
@@ -482,9 +514,9 @@ class Model(object):
 	def cluster_means(self) -> Dict[int, Dict[int, float]]:
 		"""
 		Mean date of the samples in each cluster in calendar years BP.
-
-		Returns:
-			cluster_means: {clusters_n: {cluster: year, ...}, ...}; clusters_n = number of clusters
+		
+		:return: {clusters_n: {cluster: year, ...}, ...}; clusters_n = number of clusters
+		:rtype: Dict[int, Dict[int, float]]
 		"""
 		
 		if self._data['cluster_means'] is None:
@@ -498,8 +530,8 @@ class Model(object):
 
 		The silhouette score is a measure of how similar an object is to its own cluster compared to other clusters.
 
-		Returns:
-			cluster_sils: {clusters_n: silhouette, ...}; clusters_n = number of clusters
+		:return: {clusters_n: silhouette, ...}; clusters_n = number of clusters
+		:rtype: Dict[int, float]
 		"""
 		
 		if self._data['cluster_sils'] is None:
@@ -511,8 +543,8 @@ class Model(object):
 		"""
 		P-values of the clustering solutions.
 
-		Returns:
-			cluster_ps = {clusters_n: p, ...}; clusters_n = number of clusters
+		:return: {clusters_n: p, ...}; clusters_n = number of clusters
+		:rtype: Dict[int, float]
 		"""
 		
 		if self._data['cluster_ps'] is None:
@@ -526,8 +558,8 @@ class Model(object):
 
 		The optimal number of clusters is the one that maximizes the average silhouette score for clustering solutions for which the p-value is lower than Model.p_value.
 
-		Returns:
-			int or None: The optimal number of clusters if the clustering has been performed, None otherwise.
+		:return: The optimal number of clusters if the clustering has been performed, None otherwise.
+		:rtype: int or None
 		"""
 		
 		return self._data['cluster_opt_n']
@@ -537,8 +569,8 @@ class Model(object):
 		"""
 		Checks if the model has any associated sample data.
 
-		Returns:
-			bool: True if the model has sample data, False otherwise.
+		:return: True if the model has sample data, False otherwise.
+		:rtype: bool
 		"""
 		
 		return (len(self.samples) > 0)
@@ -548,8 +580,8 @@ class Model(object):
 		"""
 		Checks if Bayesian modeling of sample dates has been performed for all samples.
 
-		Returns:
-			bool: True if Bayesian modeling has been performed for all samples, False otherwise.
+		:return: True if Bayesian modeling has been performed for all samples, False otherwise.
+		:rtype: bool
 		"""
 		
 		if not self.has_data:
@@ -564,8 +596,8 @@ class Model(object):
 		"""
 		Checks if the randomization test has been performed.
 		
-		Returns:
-			bool: True if the randomization test has been performed, False otherwise.
+		:return: True if the randomization test has been performed, False otherwise.
+		:rtype: bool
 		"""
 		return self._data['random_p'] is not None
 	
@@ -574,8 +606,8 @@ class Model(object):
 		"""
 		Checks if the model has been clustered.
 		
-		Returns:
-			bool: True if the model has been clustered, False otherwise.
+		:return: True if the model has been clustered, False otherwise.
+		:rtype: bool
 		"""
 		
 		if self._data['clusters']:
@@ -593,21 +625,18 @@ class Model(object):
 		If a single argument of type Sample is provided, it is added to the model's samples directly.
 		If multiple arguments are provided, they are used to create a new Sample instance which is then added to the model's samples.
 
-		Args:
-			*args: Either a single argument of type Sample or multiple arguments to create a new Sample instance.
-			**kwargs: Keyword arguments to create a new Sample instance.
-
-		Raises:
-			Exception: If the provided arguments do not match the expected format for creating a new Sample instance.
+		:param args: Either a single argument of type Sample or multiple arguments to create a new Sample instance.
+		:param kwargs: Keyword arguments to create a new Sample instance.
+		:return: None
 		"""
 		
 		def _from_arguments(name: str, age: float, uncertainty: float,
-		                    date_type: str = 'R', long_lived: bool = False, redeposited: bool = False,
-		                    outlier: bool = False, context: bool = None,
-		                    area: str = None,
-		                    excavation_area_phase: float = None,
-		                    earlier_than: List[str] = [],
-		                    ):
+							date_type: str = 'R', long_lived: bool = False, redeposited: bool = False,
+							outlier: bool = False, context: bool = None,
+							area: str = None,
+							excavation_area_phase: float = None,
+							earlier_than: List[str] = [],
+							):
 			self._data['samples'][name] = Sample(
 				name, age, uncertainty, date_type, long_lived, redeposited, outlier,
 				context, area, excavation_area_phase, earlier_than, self.curve
@@ -629,11 +658,9 @@ class Model(object):
 
 		Removes a sample from the model's samples based on the provided sample name.
 
-		Args:
-			name (str): The name of the sample to be deleted.
-
-		Raises:
-			KeyError: If the provided sample name does not exist in the model's samples.
+		:param name: The name of the sample to be deleted.
+		:type name: str
+		:return: None
 		"""
 		
 		if name in self._data['samples']:
@@ -643,11 +670,11 @@ class Model(object):
 		"""
 		Saves the model to a JSON file.
 
-		Saves the current state of the model to a JSON file. The file is saved in the model's directory.
-		Allows for the option to save the file in a zipped format for space efficiency.
-
-		Args:
-			zipped (bool, optional): If True, the model is saved as a zipped JSON file. Defaults to False.
+		The file is saved in the model's directory.
+		
+		:param zipped: If True, the model is saved as a zipped JSON file. Defaults to False.
+		:type zipped: bool
+		:return: None
 		"""
 		
 		fname = os.path.join(self.directory, 'model.json.gz' if zipped else 'model.json')
@@ -669,18 +696,18 @@ class Model(object):
 		Creates a new instance of the Model class with the same parameters and data as the current model,
 		but with a different directory. The new directory is provided as an argument.
 
-		Args:
-			directory (str): The directory for the new model.
+		:param directory: The directory for the new model.
+		:type directory: str
+		:return: A new instance of the Model class with the same data as the current model but a different directory.
+		:rtype: Model
 
-		Returns:
-			object: A new instance of the Model class with the same data as the current model but a different directory.
 		"""
 		
 		samples = dict([(name, self.samples[name].copy()) for name in self.samples])
 		model = Model(directory, samples, self.curve_name, self.phase_model,
-		              self.cluster_n, self.min_years_per_cluster, self.uniform, self.p_value, self.uncertainty_base,
-		              self.oxcal_url
-		              )
+					  self.cluster_n, self.min_years_per_cluster, self.uniform, self.p_value, self.uncertainty_base,
+					  self.oxcal_url
+					  )
 		for key in self._calculated():
 			model._data[key] = getattr(self, key)
 		return model
@@ -693,12 +720,10 @@ class Model(object):
 		If no directory is provided, it uses the model's current directory.
 		Supports both regular and zipped JSON files.
 
-		Args:
-			directory (str, optional): The directory from where the model data should be loaded.
-									   If None, the model's current directory is used. Defaults to None.
-
-		Returns:
-			bool: True if the model data was successfully loaded, False otherwise.
+		:param directory: The directory from where the model data should be loaded. If None, the model's current directory is used.
+		:type directory: str, optional
+		:return: True if the model data was successfully loaded, False otherwise.
+		:rtype: bool
 		"""
 		
 		if directory is None:
@@ -763,11 +788,10 @@ class Model(object):
 			- Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.
 			- Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.
 
-		Args:
-			fname (str): The file path of the CSV file to be imported.
-
-		Raises:
-			ValueError: If the input file does not exist or is not formatted correctly.
+		:param fname: The file path of the CSV file to be imported.
+		:type fname: str
+		:raises ValueError: If the input file does not exist or is not formatted correctly.
+		:return: None
 		"""
 		
 		# Check if the input file exists
@@ -789,15 +813,17 @@ class Model(object):
 		Plots the results of the randomization test.
 
 		The plot can either be saved to a file or displayed.
-		If a file name is provided, the plot is saved to that file. If no file name is provided, a default file name is used.
-		If the 'show' parameter is set to True, the plot is displayed.
 
 		Args:
 			fname (str, optional): The file name to save the plot to. If None, a default file name is used. Defaults to None.
 			show (bool, optional): If True, the plot is displayed. Defaults to False.
 
-		Returns:
-			str: The file name the plot was saved to.
+		:param fname: The file name to save the plot to. If None, a default file name is used. Defaults to None.
+		:type fname: str, optional
+		:param show: If True, the plot is displayed. Defaults to False.
+		:type show: bool, optional
+		:return: The file name the plot was saved to.
+		:rtype: str
 		"""
 		
 		if not self.is_randomized:
@@ -816,15 +842,13 @@ class Model(object):
 		Plots the clustering results.
 
 		The plot can either be saved to a file or displayed.
-		If a file name is provided, the plot is saved to that file. If no file name is provided, a default file name is used.
-		If the 'show' parameter is set to True, the plot is displayed.
 
-		Args:
-			fname (str, optional): The file name to save the plot to. If None, a default file name is used. Defaults to None.
-			show (bool, optional): If True, the plot is displayed. Defaults to False.
-
-		Returns:
-			str: The file name the plot was saved to.
+		:param fname: The file name to save the plot to. If None, a default file name is used. Defaults to None.
+		:type fname: str, optional
+		:param show: If True, the plot is displayed. Defaults to False.
+		:type show: bool, optional
+		:return: The file name the plot was saved to.
+		:rtype: str
 		"""
 		
 		if not self.is_clustered:
@@ -843,14 +867,10 @@ class Model(object):
 		"""
 		Saves the results to a CSV file.
 
-		If a file path is provided, the results are saved to that file.
-		If no file path is provided, a default file name and path are used.
-
-		Args:
-			fcsv (str, optional): The file path for the CSV file. If None, a default file name and path are used. Defaults to None.
-
-		Returns:
-			str: The file path the results were saved to.
+		:param fcsv: The file path for the CSV file. If None, a default file name and path are used. Defaults to None.
+		:type fcsv: str, optional
+		:return: The file path the results were saved to.
+		:rtype: str
 		"""
 		
 		# Check if there are any results
@@ -870,14 +890,10 @@ class Model(object):
 		"""
 		Saves a list of outliers to a text file.
 
-		If a file path is provided, the outliers are saved to that file.
-		If no file path is provided, a default file name and path are used.
-
-		Args:
-			fname (str, optional): The file path for the text file. If None, a default file name and path are used. Defaults to None.
-
-		Returns:
-			str: The file path the outliers were saved to.
+		:param fname: The file name to save the outliers to. If None, a default file name is used. Defaults to None.
+		:type fname: str, optional
+		:return: The file name the outliers were saved to.
+		:rtype: str
 		"""
 		
 		if fname is None:
@@ -893,11 +909,10 @@ class Model(object):
 		Generates an OxCal file from the current model. The OxCal file can be used for further analysis in the OxCal software.
 		If a file name is provided, the OxCal file is saved to that file. If no file name is provided, a default file name is used.
 
-		Args:
-			fname (str, optional): The file name to save the OxCal file to. If None, a default file name is used. Defaults to None.
-
-		Returns:
-			str: The file name the OxCal file was saved to.
+		:param fname: The file name to save the OxCal file to. If None, a default file name is used. Defaults to None.
+		:type fname: str, optional
+		:return: The file name the OxCal file was saved to.
+		:rtype: str
 		"""
 		
 		# Check if there is any data
@@ -920,7 +935,7 @@ class Model(object):
 		Attempts to load the OxCal data from a file named 'model.js' located in the model's directory.
 		The loaded data is then stored in the model's 'oxcal_data' attribute.
 
-		Returns: None
+		:return: None
 		"""
 		
 		fname = os.path.join(self.directory, "model.js")
@@ -948,8 +963,7 @@ class Model(object):
 		Resets all calculated properties of the model to their initial state.
 		It also sets the posterior distribution of each sample in the model to None.
 
-		Returns:
-			None
+		:return: None
 		"""
 		self._data.update(self._calculated())
 		for name in self.samples:
@@ -962,13 +976,12 @@ class Model(object):
 		Accepts keyword arguments that correspond to the model parameters.
 		If a parameter is provided that differs from the current value, the model parameter is updated and all related calculated attributes are reset.
 
-		Args:
-			**kwargs: Keyword arguments corresponding to the model parameters.
-
-		Returns:
-			(reset_assigned, reset_calculated)
-			reset_assigned: {parameter: [old value, new value], ...}; parameters and their values that have been updated
+		:param kwargs: Keyword arguments corresponding to the model parameters.
+		:type kwargs: dict
+		:return: (reset_assigned, reset_calculated);
+			reset_assigned: {parameter: [old value, new value], ...}; parameters and their values that have been updated;
 			reset_calculated: {attribute, ...}; calculated attributes that have been reset
+		:rtype: (Dict[str, List], set)
 		"""
 		
 		assigned_full = ['samples', 'curve_name', 'phase_model']
@@ -990,7 +1003,7 @@ class Model(object):
 				if self._data[key] is not None:
 					if key == 'samples':
 						reset_assigned[key] = ["N: %d" % (_get_n_samples(self._data[key])),
-						                       "N: %d" % (_get_n_samples(kwargs[key]))]
+											   "N: %d" % (_get_n_samples(kwargs[key]))]
 					else:
 						reset_assigned[key] = [self._data[key], kwargs[key]]
 				self._data[key] = kwargs[key]
@@ -1041,12 +1054,12 @@ class Model(object):
 
 		Updates the groups and phases of samples based on their stratigraphic relations.
 
-		Args:
-			by_clusters (bool, optional): If True, update the phasing by clustering sample dates. Defaults to False.
-			by_dates (bool, optional): If True, update the phasing by comparing sample dates. Defaults to False.
-
-		Returns:
-			bool: True if phasing has changed, False otherwise.
+		:param by_clusters: If True, update the phasing by clustering sample dates. Defaults to False.
+		:type by_clusters: bool, optional
+		:param by_dates: If True, update the phasing by comparing sample dates. Defaults to False.
+		:type by_dates: bool, optional
+		:return: True if phasing has changed, False otherwise.
+		:rtype: bool
 		"""
 		
 		earlier_than, samples = create_earlier_than_matrix(self)
@@ -1081,8 +1094,7 @@ class Model(object):
 		The outliers are identified based on conflicts between their dating ranges and stratigraphic relationships with other samples.
 		The identified outliers can be retrieved via the attributes Model.outliers and Model.outlier_candidates.
 
-		Returns:
-			None
+		:return: None
 		"""
 		
 		outliers, self._data['outlier_candidates'] = find_dating_outliers(self)
@@ -1099,8 +1111,7 @@ class Model(object):
 
 		Note: This method resets all calculated attributes that depend on the dating posteriors.
 
-		Returns:
-			None
+		:return: None
 		"""
 		
 		self.to_oxcal()
@@ -1117,12 +1128,11 @@ class Model(object):
 
 		Tests if the sample dates represent a uniform or normal distribution in time, depending on the Model.uniform parameter.
 
-		Args:
-			max_cpus (int, optional): Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
-			max_queue_size (int, optional): Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
-
-		Returns:
-			None
+		:param max_cpus: Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
+		:type max_cpus: int, optional
+		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
+		:type max_queue_size: int, optional
+		:return: None
 		"""
 		
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data[
@@ -1133,20 +1143,19 @@ class Model(object):
 		Performs clustering on the sample dates.
 
 		Clusters the sample dates and uses randomization testing to find the optimal clustering solution.
-
-		Args:
-			max_cpus (int, optional): Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
-			max_queue_size (int, optional): Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
-
-		Returns:
-			None
+		
+		:param max_cpus: Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
+		:type max_cpus: int, optional
+		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
+		:type max_queue_size: int, optional
+		:return: None
 		"""
 		
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
 			self._data['cluster_opt_n'] = proc_clustering(self, max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = -1,
-	            save: bool = False) -> None:
+				save: bool = False) -> None:
 		# Process the complete model
 		# by_clusters: if True, update the phasing by clustering sample dates
 		# by_dates: if True, update the phasing by comparing sample dates
@@ -1160,15 +1169,15 @@ class Model(object):
 		4. Testing the distribution of dates for randomness
 		5. Clustering temporal distributions
 		
-		Args:
-			by_clusters (bool, optional): If True, update the phasing by clustering results. Defaults to False.
-			by_dates (bool, optional): If True, update the phasing by comparing sample dates. Defaults to False.
-			max_cpus (int, optional): Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
-			max_queue_size (int, optional): Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
-			save (bool, optional): If True, the model is saved after each processing step. Defaults to False.
-
-		Returns:
-			None
+		:param by_clusters: If True, update the phasing by clustering sample dates. Defaults to False.
+		:type by_clusters: bool, optional
+		:param by_dates: If True, update the phasing by comparing sample dates. Defaults to False.
+		:type by_dates: bool, optional
+		:param max_cpus: Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.
+		:type max_cpus: int, optional
+		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
+		:type max_queue_size: int, optional
+		:return: None
 		"""
 		
 		if not self.is_modeled:

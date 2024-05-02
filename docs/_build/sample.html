@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sample Class &#8212; SiteSyncro 0.9.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
+    <script src="_static/documentation_options.js?v=0e439607"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Model Class" href="model.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="model.html" title="Model Class"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Sample Class</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-sitesyncro.Sample">
+<span id="sample-class"></span><h1>Sample Class<a class="headerlink" href="#module-sitesyncro.Sample" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sitesyncro.Sample.</span></span><span class="sig-name descname"><span class="pre">Sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sitesyncro.Sample.Sample" title="Link to this definition">¶</a></dt>
+<dd><p>A class representing a single radiocarbon sample.</p>
+<p>The constructor accepts a single dictionary argument or multiple arguments to initialize the object with the provided data.</p>
+<p>Parameters:
+:param name: Sample ID (required, unique identifier)
+:type name: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>age</strong> (<em>float</em>) – C-14 age (years BP) for date_type ‘R’; mean calendar age (years BP) for date_type ‘U’ (required)</p></li>
+<li><p><strong>uncertainty</strong> (<em>float</em>) – Uncertainty (years BP) for date_type ‘R’; 1/2 range (years BP) for date_type ‘U’ (required)</p></li>
+<li><p><strong>date_type</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘R’ for radiocarbon date; ‘U’ for calendar date as a uniform distribution</p></li>
+<li><p><strong>long_lived</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if sample could be older than the examined deposition event due to e.g. old wood effect</p></li>
+<li><p><strong>redeposited</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if sample could be redeposited from a different context</p></li>
+<li><p><strong>outlier</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if sample is an outlier and should not be used for modeling</p></li>
+<li><p><strong>context</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the context where sample was found</p></li>
+<li><p><strong>area</strong> (<em>str</em><em>, </em><em>optional</em>) – Excavation area</p></li>
+<li><p><strong>excavation_area_phase</strong> (<em>float</em><em>, </em><em>optional</em>) – Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)</p></li>
+<li><p><strong>earlier_than</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of names of samples which are stratigraphically later (younger) than this sample</p></li>
+<li><p><strong>curve</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Radiocarbon calibration curve in format <cite>np.array([[calendar year BP, C-14 year, uncertainty], …])</cite></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.age">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">age</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.age" title="Link to this definition">¶</a></dt>
+<dd><p>The C-14 age or mean calendar age of the sample in years BP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The C-14 age or mean calendar age of the sample or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.area">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">area</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.area" title="Link to this definition">¶</a></dt>
+<dd><p>The excavation area where the sample was found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The name of the excavation area where the sample was found or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.calibrate">
+<span class="sig-name descname"><span class="pre">calibrate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curve</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.calibrate" title="Link to this definition">¶</a></dt>
+<dd><p>Calibrates the sample using the provided calibration curve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>curve</strong> (<em>np.ndarray</em>) – The calibration curve to be used for calibration. Format: <cite>np.array([[calendar year BP, C-14 year, uncertainty], …])</cite>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the calibration curve is not provided or if the necessary sample data (age, uncertainty, date_type) is not set.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.context">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">context</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.context" title="Link to this definition">¶</a></dt>
+<dd><p>The context where the sample was found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The name of the context where the sample was found or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sitesyncro.Sample.Sample" title="sitesyncro.Sample.Sample"><span class="pre">Sample</span></a></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.copy" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a copy of the sample instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new instance of the Sample class with the same data as the current instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sitesyncro.Sample.Sample" title="sitesyncro.Sample.Sample">Sample</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.date_type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">date_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.date_type" title="Link to this definition">¶</a></dt>
+<dd><p>The type of the date for the sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The type of the date (‘R’ for radiocarbon date; ‘U’ for calendar date as a uniform distribution) or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.earlier_than">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">earlier_than</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.earlier_than" title="Link to this definition">¶</a></dt>
+<dd><p>List of names of samples which are stratigraphically later (younger) than this sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of names of samples which are stratigraphically later (younger) than this sample or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str] or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.excavation_area_phase">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">excavation_area_phase</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.excavation_area_phase" title="Link to this definition">¶</a></dt>
+<dd><p>The chronological phase of the context within the excavation area.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The chronological phase of the context within the excavation area (integer, lower = earlier (older) phase) or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.from_dict">
+<span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.from_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Loads the sample data from a dictionary.</p>
+<p>The method updates the sample data with the provided dictionary. It also converts keys to integers and numpy arrays to lists for JSON serialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>dict</em>) – A dictionary containing the sample data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.get_range">
+<span class="sig-name descname"><span class="pre">get_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">[&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.get_range" title="Link to this definition">¶</a></dt>
+<dd><p>Gets the 2-sigma (95.45%) range of the dating of the sample in calendar years BP.</p>
+<p>If the sample has been modeled, it returns the posterior range.
+If the sample is not calibrated, it returns [None, None].
+If the sample is long-lived and the date type is ‘R’, it keeps the lower boundary and doubles the range.
+Otherwise, it returns the likelihood range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.group">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">group</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.group" title="Link to this definition">¶</a></dt>
+<dd><p>The group that the sample belongs to based on stratigraphic interconnection with other samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The group that the sample belongs to or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.is_calibrated">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_calibrated</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.is_calibrated" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if the sample has been calibrated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the sample has been calibrated, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.is_modeled">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_modeled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.is_modeled" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if the posterior has been calculated using Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the posterior has been calculated, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.likelihood">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.likelihood" title="Link to this definition">¶</a></dt>
+<dd><p>The probability distribution of the dating of the sample before Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array representing the probability distribution of the dating of the sample before Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.likelihood_mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">likelihood_mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.likelihood_mean" title="Link to this definition">¶</a></dt>
+<dd><p>The mean calendar age of the sample in calendar years BP before Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The mean calendar age of the sample before Bayesian modeling or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.likelihood_range">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">likelihood_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.likelihood_range" title="Link to this definition">¶</a></dt>
+<dd><p>The 2-sigma (95.45%) range of the dating of the sample in calendar years BP before Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.long_lived">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">long_lived</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.long_lived" title="Link to this definition">¶</a></dt>
+<dd><p>Indicates if the sample is long-lived.</p>
+<p>True if the sample could be older than the examined deposition event due to factors like the old wood effect.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the sample is long-lived. Returns None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.name" title="Link to this definition">¶</a></dt>
+<dd><p>Gets the unique identifier (ID) of the sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The unique identifier of the sample or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.outlier">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">outlier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.outlier" title="Link to this definition">¶</a></dt>
+<dd><p>Indicates if the sample is an outlier and should not be used for modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the sample is an outlier, False otherwise. Returns None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.phase">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">phase</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.phase" title="Link to this definition">¶</a></dt>
+<dd><p>The stratigraphic phase of the sample within the group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The stratigraphic phase of the sample within the group (lower = earlier (older) phase) or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.posterior">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.posterior" title="Link to this definition">¶</a></dt>
+<dd><p>The probability distribution of the dating of the sample after Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array representing the probability distribution of the dating of the sample after Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.posterior_agreement">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior_agreement</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.posterior_agreement" title="Link to this definition">¶</a></dt>
+<dd><p>The agreement index generated by OxCal modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The agreement index generated by OxCal modeling or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.posterior_mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior_mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.posterior_mean" title="Link to this definition">¶</a></dt>
+<dd><p>The mean calendar age of the sample in calendar years BP after Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The mean calendar age of the sample after Bayesian modeling or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.posterior_range">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.posterior_range" title="Link to this definition">¶</a></dt>
+<dd><p>The 2-sigma (95.45%) range of the dating of the sample in calendar years BP after Bayesian modeling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.redeposited">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">redeposited</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.redeposited" title="Link to this definition">¶</a></dt>
+<dd><p>Indicates if the sample could be redeposited from a different context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the sample could be redeposited, False otherwise. Returns None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.set_group">
+<span class="sig-name descname"><span class="pre">set_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.set_group" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the group that the sample belongs to based on stratigraphic interconnection with other samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>group</strong> (<em>str</em>) – The group that the sample belongs to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.set_likelihood">
+<span class="sig-name descname"><span class="pre">set_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.set_likelihood" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the likelihood for the sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> (<em>np.ndarray</em>) – The likelihood distribution for the sample. It should be in the format <cite>np.array([p, …])</cite>, where p is the probability of the calendar year.</p></li>
+<li><p><strong>mean</strong> (<em>float</em><em>, </em><em>optional</em>) – The mean of the likelihood distribution. Defaults to None.</p></li>
+<li><p><strong>rng</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – The 2-sigma (95.45%) range of the likelihood distribution in calendar years BP. It should be in the format <cite>[from, to]</cite>. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.set_outlier">
+<span class="sig-name descname"><span class="pre">set_outlier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.set_outlier" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the outlier status of the sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – The outlier status to be set. True if the sample is an outlier and should not be used for modeling, False otherwise.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the provided state is not a boolean value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.set_phase">
+<span class="sig-name descname"><span class="pre">set_phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.set_phase" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the stratigraphic phase of the sample within the group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>phase</strong> (<em>float</em>) – The stratigraphic phase of the sample within the group (lower = earlier (older) phase).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.set_posterior">
+<span class="sig-name descname"><span class="pre">set_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agreement</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.set_posterior" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the posterior for the sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> (<em>np.ndarray</em>) – The posterior distribution for the sample. It should be in the format <cite>np.array([p, …])</cite>, where p is the probability of the calendar year.</p></li>
+<li><p><strong>mean</strong> (<em>float</em><em>, </em><em>optional</em>) – The mean of the posterior distribution. Defaults to None.</p></li>
+<li><p><strong>rng</strong> (<em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – The 2-sigma (95.45%) range of the posterior distribution in calendar years BP. It should be in the format <cite>[from, to]</cite>. Defaults to None.</p></li>
+<li><p><strong>agreement</strong> (<em>float</em><em>, </em><em>optional</em>) – The agreement index generated by OxCal modeling. Defaults to 0.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Converts the sample data to a dictionary.</p>
+<p>The method creates a deep copy of the sample data and converts numpy arrays to lists for JSON serialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing the sample data.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.to_oxcal">
+<span class="sig-name descname"><span class="pre">to_oxcal</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Sample.Sample.to_oxcal" title="Link to this definition">¶</a></dt>
+<dd><p>Converts the sample to OxCal model format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The sample in OxCal model format or None if the necessary sample data (name, age, uncertainty, date_type, long_lived, outlier) is not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.uncertainty">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uncertainty</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.uncertainty" title="Link to this definition">¶</a></dt>
+<dd><p>The uncertainty of the sample’s C-14 age in years BP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The uncertainty of the sample’s age or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Sample.Sample.years">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">years</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.years" title="Link to this definition">¶</a></dt>
+<dd><p>Calendar years BP corresponding to the probability distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of calendar years BP corresponding to the probability distributions or None if it’s not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Sample Class</a><ul>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample"><code class="docutils literal notranslate"><span class="pre">Sample</span></code></a><ul>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.age"><code class="docutils literal notranslate"><span class="pre">Sample.age</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.area"><code class="docutils literal notranslate"><span class="pre">Sample.area</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.calibrate"><code class="docutils literal notranslate"><span class="pre">Sample.calibrate()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.context"><code class="docutils literal notranslate"><span class="pre">Sample.context</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.copy"><code class="docutils literal notranslate"><span class="pre">Sample.copy()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.date_type"><code class="docutils literal notranslate"><span class="pre">Sample.date_type</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.earlier_than"><code class="docutils literal notranslate"><span class="pre">Sample.earlier_than</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.excavation_area_phase"><code class="docutils literal notranslate"><span class="pre">Sample.excavation_area_phase</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.from_dict"><code class="docutils literal notranslate"><span class="pre">Sample.from_dict()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.get_range"><code class="docutils literal notranslate"><span class="pre">Sample.get_range()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.group"><code class="docutils literal notranslate"><span class="pre">Sample.group</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.is_calibrated"><code class="docutils literal notranslate"><span class="pre">Sample.is_calibrated</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.is_modeled"><code class="docutils literal notranslate"><span class="pre">Sample.is_modeled</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.likelihood"><code class="docutils literal notranslate"><span class="pre">Sample.likelihood</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.likelihood_mean"><code class="docutils literal notranslate"><span class="pre">Sample.likelihood_mean</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.likelihood_range"><code class="docutils literal notranslate"><span class="pre">Sample.likelihood_range</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.long_lived"><code class="docutils literal notranslate"><span class="pre">Sample.long_lived</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.name"><code class="docutils literal notranslate"><span class="pre">Sample.name</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.outlier"><code class="docutils literal notranslate"><span class="pre">Sample.outlier</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.phase"><code class="docutils literal notranslate"><span class="pre">Sample.phase</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.posterior"><code class="docutils literal notranslate"><span class="pre">Sample.posterior</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.posterior_agreement"><code class="docutils literal notranslate"><span class="pre">Sample.posterior_agreement</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.posterior_mean"><code class="docutils literal notranslate"><span class="pre">Sample.posterior_mean</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.posterior_range"><code class="docutils literal notranslate"><span class="pre">Sample.posterior_range</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.redeposited"><code class="docutils literal notranslate"><span class="pre">Sample.redeposited</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.set_group"><code class="docutils literal notranslate"><span class="pre">Sample.set_group()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.set_likelihood"><code class="docutils literal notranslate"><span class="pre">Sample.set_likelihood()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.set_outlier"><code class="docutils literal notranslate"><span class="pre">Sample.set_outlier()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.set_phase"><code class="docutils literal notranslate"><span class="pre">Sample.set_phase()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.set_posterior"><code class="docutils literal notranslate"><span class="pre">Sample.set_posterior()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.to_dict"><code class="docutils literal notranslate"><span class="pre">Sample.to_dict()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.to_oxcal"><code class="docutils literal notranslate"><span class="pre">Sample.to_oxcal()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.uncertainty"><code class="docutils literal notranslate"><span class="pre">Sample.uncertainty</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Sample.Sample.years"><code class="docutils literal notranslate"><span class="pre">Sample.years</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="model.html"
+                          title="previous chapter">Model Class</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sample.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="model.html" title="Model Class"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Sample Class</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Peter Demján.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Model Class &#8212; SiteSyncro 0.9.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
+    <script src="_static/documentation_options.js?v=0e439607"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Sample Class" href="sample.html" />
+    <link rel="prev" title="Contents" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sample.html" title="Sample Class"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Contents"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model Class</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-sitesyncro.Model">
+<span id="model-class"></span><h1>Model Class<a class="headerlink" href="#module-sitesyncro.Model" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sitesyncro.Model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sitesyncro.Model.Model" title="Link to this definition">¶</a></dt>
+<dd><p>A class representing a Bayesian model of dated samples interconnected by stratigraphic relationships.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>directory</strong> (<em>str</em>) – Working directory for model data (default is “model”).</p></li>
+<li><p><strong>samples</strong> (<em>list</em>) – List of samples as instances of the class [Sample](#sample_class)</p></li>
+<li><p><strong>curve_name</strong> (<em>str</em>) – The name of the calibration curve to use (default is “intcal20.14c”).</p></li>
+<li><p><strong>phase_model</strong> (<em>str</em>) – OxCal phase model type. Can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’ (default is “sequence”).</p></li>
+<li><p><strong>cluster_n</strong> (<em>int</em>) – Number of clusters to form (-1 = automatic; default is -1).</p></li>
+<li><p><strong>min_years_per_cluster</strong> (<em>int</em>) – The minimum average number of years per cluster.</p></li>
+<li><p><strong>uniform</strong> (<em>bool</em>) – Flag indicating whether to use uniform randomization (default is False).</p></li>
+<li><p><strong>p_value</strong> (<em>float</em>) – The P-value for statistical tests (default is 0.05).</p></li>
+<li><p><strong>uncertainty_base</strong> (<em>float</em>) – The base uncertainty for randomization (default is 15).</p></li>
+<li><p><strong>npass</strong> (<em>int</em>) – Minimum number of passes for the randomization tests (default is 100).</p></li>
+<li><p><strong>convergence</strong> (<em>float</em>) – Convergence threshold for the randomization tests (default is 0.99).</p></li>
+<li><p><strong>oxcal_url</strong> (<em>str</em>) – Url to download the OxCal program (default is “<a class="reference external" href="https://c14.arch.ox.ac.uk/OxCalDistribution.zip">https://c14.arch.ox.ac.uk/OxCalDistribution.zip</a>”).</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>) – Flag indicating whether to overwrite existing data in the model directory (default is False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.add_sample">
+<span class="sig-name descname"><span class="pre">add_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.add_sample" title="Link to this definition">¶</a></dt>
+<dd><p>Adds a sample to the model.</p>
+<p>Accepts either a single argument of type Sample or a set of arguments and keyword arguments to create a new Sample instance.</p>
+<p>If a single argument of type Sample is provided, it is added to the model’s samples directly.
+If multiple arguments are provided, they are used to create a new Sample instance which is then added to the model’s samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Either a single argument of type Sample or multiple arguments to create a new Sample instance.</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to create a new Sample instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.areas">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">areas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.areas" title="Link to this definition">¶</a></dt>
+<dd><p>Unique area names extracted from the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A sorted list of unique area names.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.cluster_means">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cluster_means</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.cluster_means" title="Link to this definition">¶</a></dt>
+<dd><p>Mean date of the samples in each cluster in calendar years BP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{clusters_n: {cluster: year, …}, …}; clusters_n = number of clusters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[int, Dict[int, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.cluster_n">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cluster_n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.cluster_n" title="Link to this definition">¶</a></dt>
+<dd><p>Number of clusters to form (-1 = automatic).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The number of clusters to form.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.cluster_opt_n">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cluster_opt_n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.cluster_opt_n" title="Link to this definition">¶</a></dt>
+<dd><p>Optimal number of clusters based on the silhouette scores.</p>
+<p>The optimal number of clusters is the one that maximizes the average silhouette score for clustering solutions for which the p-value is lower than Model.p_value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The optimal number of clusters if the clustering has been performed, None otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.cluster_ps">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cluster_ps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.cluster_ps" title="Link to this definition">¶</a></dt>
+<dd><p>P-values of the clustering solutions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{clusters_n: p, …}; clusters_n = number of clusters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[int, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.cluster_sils">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cluster_sils</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.cluster_sils" title="Link to this definition">¶</a></dt>
+<dd><p>Silhouette scores of each clustering solution.</p>
+<p>The silhouette score is a measure of how similar an object is to its own cluster compared to other clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{clusters_n: silhouette, …}; clusters_n = number of clusters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[int, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.clusters">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clusters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.clusters" title="Link to this definition">¶</a></dt>
+<dd><p>Clusters of samples based on the similarity of their probability distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{clusters_n: [cluster: [sample name, …], …}, …}; clusters_n = number of clusters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[int, Dict[int, List[str]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.contexts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contexts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.contexts" title="Link to this definition">¶</a></dt>
+<dd><p>Unique context names extracted from the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A sorted list of unique context names.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.convergence">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convergence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Model.Model.convergence" title="Link to this definition">¶</a></dt>
+<dd><p>The convergence threshold for the randomization test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The convergence threshold for the randomization tests.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.copy" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a copy of the current model with a new directory.</p>
+<p>Creates a new instance of the Model class with the same parameters and data as the current model,
+but with a different directory. The new directory is provided as an argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>str</em>) – The directory for the new model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new instance of the Model class with the same data as the current model but a different directory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sitesyncro.Model.Model" title="sitesyncro.Model.Model">Model</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.curve">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">curve</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Model.Model.curve" title="Link to this definition">¶</a></dt>
+<dd><p>Radiocarbon calibration curve.</p>
+<p>2D array containing the calibration curve data. Each row represents a calendar year BP, C-14 year, and uncertainty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of the calibration curve.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.curve_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">curve_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Model.Model.curve_name" title="Link to this definition">¶</a></dt>
+<dd><p>File name of the radiocarbon age calibration curve (see OxCal/bin directory).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The name of the calibration curve.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.del_sample">
+<span class="sig-name descname"><span class="pre">del_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.del_sample" title="Link to this definition">¶</a></dt>
+<dd><p>Deletes a sample from the model.</p>
+<p>Removes a sample from the model’s samples based on the provided sample name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the sample to be deleted.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.directory">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">directory</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Model.Model.directory" title="Link to this definition">¶</a></dt>
+<dd><p>Represents the directory where the model data is stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The directory where the model data is stored.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.groups">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">groups</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.groups" title="Link to this definition">¶</a></dt>
+<dd><p>Groups that the samples belong to based on stratigraphic interconnection with other samples.
+The groups are represented as a dictionary where the keys are the group names and the values are lists of sample names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary where the keys are the group names and the values are lists of sample names.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, List[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.has_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Model.Model.has_data" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if the model has any associated sample data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model has sample data, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.import_csv">
+<span class="sig-name descname"><span class="pre">import_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.import_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Loads sample data from a CSV file.</p>
+<p>The file should be in the following format:
+- Each line represents a data record.
+- Data fields are separated by semicolons.
+- The first line is a header and is skipped.
+- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
+- The fields are processed as follows:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Sample, Context, and Area are stripped of leading and trailing whitespace.</p></li>
+<li><p>C14 Age and Uncertainty are converted to floats.</p></li>
+<li><p>Phase is converted to a float if possible, otherwise it is set to None.</p></li>
+<li><p>Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.</p></li>
+<li><p>Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – The file path of the CSV file to be imported.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input file does not exist or is not formatted correctly.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.is_clustered">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_clustered</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Model.Model.is_clustered" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if the model has been clustered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model has been clustered, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.is_modeled">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_modeled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Model.Model.is_modeled" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if Bayesian modeling of sample dates has been performed for all samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if Bayesian modeling has been performed for all samples, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.is_randomized">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_randomized</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Model.Model.is_randomized" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if the randomization test has been performed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the randomization test has been performed, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.load" title="Link to this definition">¶</a></dt>
+<dd><p>Loads the model from a JSON file.</p>
+<p>Attempts to load the model data from a JSON file located in the provided directory.
+If no directory is provided, it uses the model’s current directory.
+Supports both regular and zipped JSON files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directory</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory from where the model data should be loaded. If None, the model’s current directory is used.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the model data was successfully loaded, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.load_oxcal_data">
+<span class="sig-name descname"><span class="pre">load_oxcal_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.load_oxcal_data" title="Link to this definition">¶</a></dt>
+<dd><p>Loads the OxCal data associated with the model.</p>
+<p>Attempts to load the OxCal data from a file named ‘model.js’ located in the model’s directory.
+The loaded data is then stored in the model’s ‘oxcal_data’ attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.min_years_per_cluster">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min_years_per_cluster</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.min_years_per_cluster" title="Link to this definition">¶</a></dt>
+<dd><p>The minimum average number of years per cluster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The minimum average number of years per cluster.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.npass">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">npass</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.npass" title="Link to this definition">¶</a></dt>
+<dd><p>The minimum number of passes for the randomization test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The minimum number of passes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.outlier_candidates">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">outlier_candidates</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.outlier_candidates" title="Link to this definition">¶</a></dt>
+<dd><p>List of candidates for outliers, from which the final outliers to be eliminated were picked.
+These samples have conflicts between dating ranges and stratigraphic relationships with other samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of sample names that are considered candidates for outliers.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.outliers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">outliers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.outliers" title="Link to this definition">¶</a></dt>
+<dd><p>List of outliers among samples which need to be removed for the model to be valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of sample names that are considered outliers.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.oxcal_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">oxcal_data</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#sitesyncro.Model.Model.oxcal_data" title="Link to this definition">¶</a></dt>
+<dd><p>The OxCal data associated with the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing the OxCal data if it exists, otherwise None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.oxcal_url">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">oxcal_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Model.Model.oxcal_url" title="Link to this definition">¶</a></dt>
+<dd><p>The URL from where the OxCal software can be downloaded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The URL of the OxCal software.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.p_value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">p_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Model.Model.p_value" title="Link to this definition">¶</a></dt>
+<dd><p>The p-value used for the randomization test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The P-value for statistical tests.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.phase_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">phase_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Model.Model.phase_model" title="Link to this definition">¶</a></dt>
+<dd><p>OxCal phase model type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The type of the phase model. Can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.plot_clusters">
+<span class="sig-name descname"><span class="pre">plot_clusters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.plot_clusters" title="Link to this definition">¶</a></dt>
+<dd><p>Plots the clustering results.</p>
+<p>The plot can either be saved to a file or displayed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em><em>, </em><em>optional</em>) – The file name to save the plot to. If None, a default file name is used. Defaults to None.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the plot is displayed. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file name the plot was saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.plot_randomized">
+<span class="sig-name descname"><span class="pre">plot_randomized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.plot_randomized" title="Link to this definition">¶</a></dt>
+<dd><p>Plots the results of the randomization test.</p>
+<p>The plot can either be saved to a file or displayed.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fname (str, optional): The file name to save the plot to. If None, a default file name is used. Defaults to None.
+show (bool, optional): If True, the plot is displayed. Defaults to False.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em><em>, </em><em>optional</em>) – The file name to save the plot to. If None, a default file name is used. Defaults to None.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the plot is displayed. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file name the plot was saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">by_clusters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by_dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_queue_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process" title="Link to this definition">¶</a></dt>
+<dd><p>Processes the complete model.</p>
+<p>Performs the following steps:
+1. Modeling stratigraphy to determine phasing
+2. Finding outliers
+3. Bayesian modeling of C-14 dates
+4. Testing the distribution of dates for randomness
+5. Clustering temporal distributions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>by_clusters</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, update the phasing by clustering sample dates. Defaults to False.</p></li>
+<li><p><strong>by_dates</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, update the phasing by comparing sample dates. Defaults to False.</p></li>
+<li><p><strong>max_cpus</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.</p></li>
+<li><p><strong>max_queue_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process_clustering">
+<span class="sig-name descname"><span class="pre">process_clustering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_cpus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_queue_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process_clustering" title="Link to this definition">¶</a></dt>
+<dd><p>Performs clustering on the sample dates.</p>
+<p>Clusters the sample dates and uses randomization testing to find the optimal clustering solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_cpus</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.</p></li>
+<li><p><strong>max_queue_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process_dates">
+<span class="sig-name descname"><span class="pre">process_dates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process_dates" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the posterior probabilities of sample dates based on phasing using Bayesian modeling in OxCal.</p>
+<p>Generates an OxCal file from the current model and runs the OxCal software on it.
+The results of the OxCal modeling are then loaded back into the model.
+The calculated posterior probabilities can be retrieved via the samples’ attributes.</p>
+<p>Note: This method resets all calculated attributes that depend on the dating posteriors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process_outliers">
+<span class="sig-name descname"><span class="pre">process_outliers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process_outliers" title="Link to this definition">¶</a></dt>
+<dd><p>Identifies and marks dating outliers among the samples in the model.</p>
+<p>Finds dating outliers among the samples which need to be removed for the model to be valid.
+The outliers are identified based on conflicts between their dating ranges and stratigraphic relationships with other samples.
+The identified outliers can be retrieved via the attributes Model.outliers and Model.outlier_candidates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process_phasing">
+<span class="sig-name descname"><span class="pre">process_phasing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">by_clusters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by_dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process_phasing" title="Link to this definition">¶</a></dt>
+<dd><p>Updates the phasing of samples based on stratigraphic relations.</p>
+<p>Updates the groups and phases of samples based on their stratigraphic relations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>by_clusters</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, update the phasing by clustering sample dates. Defaults to False.</p></li>
+<li><p><strong>by_dates</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, update the phasing by comparing sample dates. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if phasing has changed, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.process_randomization">
+<span class="sig-name descname"><span class="pre">process_randomization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_queue_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.process_randomization" title="Link to this definition">¶</a></dt>
+<dd><p>Performs a randomization test on the sample dates.</p>
+<p>Tests if the sample dates represent a uniform or normal distribution in time, depending on the Model.uniform parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_cpus</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of CPUs to use for parallel processing. If -1, all available CPUs are used. Defaults to -1.</p></li>
+<li><p><strong>max_queue_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.random_lower">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_lower</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Model.Model.random_lower" title="Link to this definition">¶</a></dt>
+<dd><p>Lower bound of the randomization test.
+The lower bound is represented as an array where each element is the probability of the calendar year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of the lower bound of the randomization test if it exists, otherwise None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.random_p">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Model.Model.random_p" title="Link to this definition">¶</a></dt>
+<dd><p>The calculated p-value from the randomization test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The p-value if the randomization test has been performed, otherwise None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.random_upper">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_upper</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Model.Model.random_upper" title="Link to this definition">¶</a></dt>
+<dd><p>Upper bound of the randomization test.
+The Upper bound is represented as an array where each element is the probability of the calendar year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of the upper bound of the randomization test if it exists, otherwise None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.reset_model">
+<span class="sig-name descname"><span class="pre">reset_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.reset_model" title="Link to this definition">¶</a></dt>
+<dd><p>Resets the model.</p>
+<p>Resets all calculated properties of the model to their initial state.
+It also sets the posterior distribution of each sample in the model to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.samples">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sample.html#sitesyncro.Sample.Sample" title="sitesyncro.Sample.Sample"><span class="pre">Sample</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.samples" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of samples associated with the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary where the keys are the sample names and the values are Sample objects.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, <a class="reference internal" href="sample.html#sitesyncro.Sample.Sample" title="sitesyncro.Sample.Sample">Sample</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zipped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the model to a JSON file.</p>
+<p>The file is saved in the model’s directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>zipped</strong> (<em>bool</em>) – If True, the model is saved as a zipped JSON file. Defaults to False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.save_csv">
+<span class="sig-name descname"><span class="pre">save_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcsv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the results to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fcsv</strong> (<em>str</em><em>, </em><em>optional</em>) – The file path for the CSV file. If None, a default file name and path are used. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file path the results were saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.save_outliers">
+<span class="sig-name descname"><span class="pre">save_outliers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save_outliers" title="Link to this definition">¶</a></dt>
+<dd><p>Saves a list of outliers to a text file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em><em>, </em><em>optional</em>) – The file name to save the outliers to. If None, a default file name is used. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file name the outliers were saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.summed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">summed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Model.Model.summed" title="Link to this definition">¶</a></dt>
+<dd><p>Summed probability distribution of the dating of all samples.
+The summed probability is represented as an array where each element is the probability of the calendar year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of the summed probability distribution if it exists, otherwise None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.to_oxcal">
+<span class="sig-name descname"><span class="pre">to_oxcal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.to_oxcal" title="Link to this definition">¶</a></dt>
+<dd><p>Exports the model to an OxCal file.</p>
+<p>Generates an OxCal file from the current model. The OxCal file can be used for further analysis in the OxCal software.
+If a file name is provided, the OxCal file is saved to that file. If no file name is provided, a default file name is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em><em>, </em><em>optional</em>) – The file name to save the OxCal file to. If None, a default file name is used. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file name the OxCal file was saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.uncertainties">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uncertainties</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.uncertainties" title="Link to this definition">¶</a></dt>
+<dd><p>List of uncertainties from C-14 dates of samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of uncertainties from C-14 dates of samples.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.uncertainty_base">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uncertainty_base</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Model.Model.uncertainty_base" title="Link to this definition">¶</a></dt>
+<dd><p>The base uncertainty for the radiocarbon dates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The base uncertainty for the radiocarbon dates.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.uniform">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uniform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#sitesyncro.Model.Model.uniform" title="Link to this definition">¶</a></dt>
+<dd><p>Flag indicating whether the model tests for a uniform distribution of the calendar ages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if a uniform distribution is used, False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.update_params">
+<span class="sig-name descname"><span class="pre">update_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">**kwargs)</span> <span class="pre">-&gt;</span> <span class="pre">(typing.Dict[str,</span> <span class="pre">typing.List],</span> <span class="pre">&lt;class</span> <span class="pre">'set'&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sitesyncro.Model.Model.update_params" title="Link to this definition">¶</a></dt>
+<dd><p>Updates the model parameters and resets calculated attributes if necessary.</p>
+<p>Accepts keyword arguments that correspond to the model parameters.
+If a parameter is provided that differs from the current value, the model parameter is updated and all related calculated attributes are reset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>dict</em>) – Keyword arguments corresponding to the model parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(reset_assigned, reset_calculated);
+reset_assigned: {parameter: [old value, new value], …}; parameters and their values that have been updated;
+reset_calculated: {attribute, …}; calculated attributes that have been reset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(Dict[str, List], set)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.years">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">years</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#sitesyncro.Model.Model.years" title="Link to this definition">¶</a></dt>
+<dd><p>Calendar years BP corresponding to the probability distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array of calendar years.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Model Class</a><ul>
+<li><a class="reference internal" href="#sitesyncro.Model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a><ul>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.add_sample"><code class="docutils literal notranslate"><span class="pre">Model.add_sample()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.areas"><code class="docutils literal notranslate"><span class="pre">Model.areas</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.cluster_means"><code class="docutils literal notranslate"><span class="pre">Model.cluster_means</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.cluster_n"><code class="docutils literal notranslate"><span class="pre">Model.cluster_n</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.cluster_opt_n"><code class="docutils literal notranslate"><span class="pre">Model.cluster_opt_n</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.cluster_ps"><code class="docutils literal notranslate"><span class="pre">Model.cluster_ps</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.cluster_sils"><code class="docutils literal notranslate"><span class="pre">Model.cluster_sils</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.clusters"><code class="docutils literal notranslate"><span class="pre">Model.clusters</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.contexts"><code class="docutils literal notranslate"><span class="pre">Model.contexts</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.convergence"><code class="docutils literal notranslate"><span class="pre">Model.convergence</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.copy"><code class="docutils literal notranslate"><span class="pre">Model.copy()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.curve"><code class="docutils literal notranslate"><span class="pre">Model.curve</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.curve_name"><code class="docutils literal notranslate"><span class="pre">Model.curve_name</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.del_sample"><code class="docutils literal notranslate"><span class="pre">Model.del_sample()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.directory"><code class="docutils literal notranslate"><span class="pre">Model.directory</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.groups"><code class="docutils literal notranslate"><span class="pre">Model.groups</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.has_data"><code class="docutils literal notranslate"><span class="pre">Model.has_data</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.import_csv"><code class="docutils literal notranslate"><span class="pre">Model.import_csv()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.is_clustered"><code class="docutils literal notranslate"><span class="pre">Model.is_clustered</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.is_modeled"><code class="docutils literal notranslate"><span class="pre">Model.is_modeled</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.is_randomized"><code class="docutils literal notranslate"><span class="pre">Model.is_randomized</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.load"><code class="docutils literal notranslate"><span class="pre">Model.load()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.load_oxcal_data"><code class="docutils literal notranslate"><span class="pre">Model.load_oxcal_data()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.min_years_per_cluster"><code class="docutils literal notranslate"><span class="pre">Model.min_years_per_cluster</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.npass"><code class="docutils literal notranslate"><span class="pre">Model.npass</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.outlier_candidates"><code class="docutils literal notranslate"><span class="pre">Model.outlier_candidates</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.outliers"><code class="docutils literal notranslate"><span class="pre">Model.outliers</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.oxcal_data"><code class="docutils literal notranslate"><span class="pre">Model.oxcal_data</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.oxcal_url"><code class="docutils literal notranslate"><span class="pre">Model.oxcal_url</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.p_value"><code class="docutils literal notranslate"><span class="pre">Model.p_value</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.phase_model"><code class="docutils literal notranslate"><span class="pre">Model.phase_model</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.plot_clusters"><code class="docutils literal notranslate"><span class="pre">Model.plot_clusters()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.plot_randomized"><code class="docutils literal notranslate"><span class="pre">Model.plot_randomized()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process"><code class="docutils literal notranslate"><span class="pre">Model.process()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process_clustering"><code class="docutils literal notranslate"><span class="pre">Model.process_clustering()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process_dates"><code class="docutils literal notranslate"><span class="pre">Model.process_dates()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process_outliers"><code class="docutils literal notranslate"><span class="pre">Model.process_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process_phasing"><code class="docutils literal notranslate"><span class="pre">Model.process_phasing()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.process_randomization"><code class="docutils literal notranslate"><span class="pre">Model.process_randomization()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.random_lower"><code class="docutils literal notranslate"><span class="pre">Model.random_lower</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.random_p"><code class="docutils literal notranslate"><span class="pre">Model.random_p</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.random_upper"><code class="docutils literal notranslate"><span class="pre">Model.random_upper</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.reset_model"><code class="docutils literal notranslate"><span class="pre">Model.reset_model()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.samples"><code class="docutils literal notranslate"><span class="pre">Model.samples</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.save"><code class="docutils literal notranslate"><span class="pre">Model.save()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.save_csv"><code class="docutils literal notranslate"><span class="pre">Model.save_csv()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.save_outliers"><code class="docutils literal notranslate"><span class="pre">Model.save_outliers()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.summed"><code class="docutils literal notranslate"><span class="pre">Model.summed</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.to_oxcal"><code class="docutils literal notranslate"><span class="pre">Model.to_oxcal()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.uncertainties"><code class="docutils literal notranslate"><span class="pre">Model.uncertainties</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.uncertainty_base"><code class="docutils literal notranslate"><span class="pre">Model.uncertainty_base</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.uniform"><code class="docutils literal notranslate"><span class="pre">Model.uniform</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.update_params"><code class="docutils literal notranslate"><span class="pre">Model.update_params()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.years"><code class="docutils literal notranslate"><span class="pre">Model.years</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Contents</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="sample.html"
+                          title="next chapter">Sample Class</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sample.html" title="Sample Class"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Contents"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Model Class</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, Peter Demján.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.3.7.
+    </div>
+  </body>
+</html>

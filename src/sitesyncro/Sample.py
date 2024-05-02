@@ -16,18 +16,41 @@ class Sample(object):
 	The constructor accepts a single dictionary argument or multiple arguments to initialize the object with the provided data.
 	
 	Parameters:
-		name (str): Sample ID (required, unique identifier)
-		age (float): C-14 age (years BP) for date_type 'R'; mean calendar age (years BP) for date_type 'U' (required)
-		uncertainty (float): Uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U' (required)
-		date_type (str): 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
-		long_lived (bool): True if sample could be older than the examined deposition event due to e.g. old wood effect
-		redeposited (bool): True if sample could be redeposited from a different context
-		outlier (bool): True if sample is an outlier and should not be used for modeling
-		context (str): Name of the context where sample was found
-		area (str): Excavation area
-		excavation_area_phase (float): Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
-		earlier_than (List[str]): List of names of samples which are stratigraphically later (younger) than this sample
-		curve (np.ndarray): Radiocarbon calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
+	:param name: Sample ID (required, unique identifier)
+	:type name: str
+	
+	:param age: C-14 age (years BP) for date_type 'R'; mean calendar age (years BP) for date_type 'U' (required)
+	:type age: float
+	
+	:param uncertainty: Uncertainty (years BP) for date_type 'R'; 1/2 range (years BP) for date_type 'U' (required)
+	:type uncertainty: float
+	
+	:param date_type: 'R' for radiocarbon date; 'U' for calendar date as a uniform distribution
+	:type date_type: str, optional
+	
+	:param long_lived: True if sample could be older than the examined deposition event due to e.g. old wood effect
+	:type long_lived: bool, optional
+	
+	:param redeposited: True if sample could be redeposited from a different context
+	:type redeposited: bool, optional
+	
+	:param outlier: True if sample is an outlier and should not be used for modeling
+	:type outlier: bool, optional
+	
+	:param context: Name of the context where sample was found
+	:type context: str, optional
+	
+	:param area: Excavation area
+	:type area: str, optional
+	
+	:param excavation_area_phase: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+	:type excavation_area_phase: float, optional
+	
+	:param earlier_than: List of names of samples which are stratigraphically later (younger) than this sample
+	:type earlier_than: List[str], optional
+	
+	:param curve: Radiocarbon calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
+	:type curve: np.ndarray, optional
 	"""
 	
 	def __init__(self, *args, **kwargs):
@@ -106,8 +129,8 @@ class Sample(object):
 		"""
 		Gets the unique identifier (ID) of the sample.
 
-		Returns:
-			str or None: The unique identifier of the sample or None if it's not set.
+		:return: The unique identifier of the sample or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['name']
@@ -117,8 +140,8 @@ class Sample(object):
 		"""
 		The C-14 age or mean calendar age of the sample in years BP.
 
-		Returns:
-			float or None: The C-14 age or mean calendar age of the sample or None if it's not set.
+		:return: The C-14 age or mean calendar age of the sample or None if it's not set.
+		:rtype: float or None
 		"""
 		return self._data['age']
 	
@@ -127,8 +150,8 @@ class Sample(object):
 		"""
 		The uncertainty of the sample's C-14 age in years BP.
 
-		Returns:
-			float or None: The uncertainty of the sample's age or None if it's not set.
+		:return: The uncertainty of the sample's age or None if it's not set.
+		:rtype: float or None
 		"""
 		return self._data['uncertainty']
 	
@@ -137,8 +160,8 @@ class Sample(object):
 		"""
 		The type of the date for the sample.
 
-		Returns:
-			str or None: The type of the date ('R' for radiocarbon date; 'U' for calendar date as a uniform distribution) or None if it's not set.
+		:return: The type of the date ('R' for radiocarbon date; 'U' for calendar date as a uniform distribution) or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['date_type']
@@ -148,10 +171,10 @@ class Sample(object):
 		"""
 		Indicates if the sample is long-lived.
 
-		True if if the sample could be older than the examined deposition event due to factors like the old wood effect.
+		True if the sample could be older than the examined deposition event due to factors like the old wood effect.
 
-		Returns:
-			bool or None: True if the sample is long-lived. Returns None if it's not set.
+		:return: True if the sample is long-lived. Returns None if it's not set.
+		:rtype: bool or None
 		"""
 		
 		return self._data['long_lived']
@@ -161,8 +184,8 @@ class Sample(object):
 		"""
 		Indicates if the sample could be redeposited from a different context.
 
-		Returns:
-			bool or None: True if the sample could be redeposited, False otherwise. Returns None if it's not set.
+		:return: True if the sample could be redeposited, False otherwise. Returns None if it's not set.
+		:rtype: bool or None
 		"""
 		
 		return self._data['redeposited']
@@ -172,8 +195,8 @@ class Sample(object):
 		"""
 		Indicates if the sample is an outlier and should not be used for modeling.
 
-		Returns:
-			bool or None: True if the sample is an outlier, False otherwise. Returns None if it's not set.
+		:return: True if the sample is an outlier, False otherwise. Returns None if it's not set.
+		:rtype: bool or None
 		"""
 		
 		return self._data['outlier']
@@ -183,8 +206,8 @@ class Sample(object):
 		"""
 		The context where the sample was found.
 
-		Returns:
-			str or None: The name of the context where the sample was found or None if it's not set.
+		:return: The name of the context where the sample was found or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['context']
@@ -194,8 +217,8 @@ class Sample(object):
 		"""
 		The excavation area where the sample was found.
 
-		Returns:
-			str or None: The name of the excavation area where the sample was found or None if it's not set.
+		:return: The name of the excavation area where the sample was found or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['area']
@@ -204,9 +227,9 @@ class Sample(object):
 	def excavation_area_phase(self) -> float or None:
 		"""
 		The chronological phase of the context within the excavation area.
-
-		Returns:
-			float or None: The chronological phase of the context within the excavation area (integer, lower = earlier (older) phase) or None if it's not set.
+		
+		:return: The chronological phase of the context within the excavation area (integer, lower = earlier (older) phase) or None if it's not set.
+		:rtype: float or None
 		"""
 		
 		return self._data['excavation_area_phase']
@@ -216,8 +239,8 @@ class Sample(object):
 		"""
 		List of names of samples which are stratigraphically later (younger) than this sample.
 
-		Returns:
-			List[str] or None: List of names of samples which are stratigraphically later (younger) than this sample or None if it's not set.
+		:return: List of names of samples which are stratigraphically later (younger) than this sample or None if it's not set.
+		:rtype: List[str] or None
 		"""
 		
 		if self._data['earlier_than'] is None:
@@ -231,8 +254,8 @@ class Sample(object):
 		"""
 		The group that the sample belongs to based on stratigraphic interconnection with other samples.
 
-		Returns:
-			str or None: The group that the sample belongs to or None if it's not set.
+		:return: The group that the sample belongs to or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['group']
@@ -242,8 +265,8 @@ class Sample(object):
 		"""
 		The stratigraphic phase of the sample within the group.
 
-		Returns:
-			float or None: The stratigraphic phase of the sample within the group (lower = earlier (older) phase) or None if it's not set.
+		:return: The stratigraphic phase of the sample within the group (lower = earlier (older) phase) or None if it's not set.
+		:rtype: float or None
 		"""
 		
 		return self._data['phase']
@@ -253,8 +276,8 @@ class Sample(object):
 		"""
 		Calendar years BP corresponding to the probability distributions.
 
-		Returns:
-			np.ndarray or None: An array of calendar years BP corresponding to the probability distributions or None if it's not set.
+		:return: An array of calendar years BP corresponding to the probability distributions or None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		
 		if self._data['years'] is None:
@@ -266,8 +289,8 @@ class Sample(object):
 		"""
 		The probability distribution of the dating of the sample before Bayesian modeling.
 
-		Returns:
-			np.ndarray or None: An array representing the probability distribution of the dating of the sample before Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:return: An array representing the probability distribution of the dating of the sample before Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		
 		if self._data['likelihood'] is None:
@@ -279,8 +302,8 @@ class Sample(object):
 		"""
 		The probability distribution of the dating of the sample after Bayesian modeling.
 
-		Returns:
-			np.ndarray or None: An array representing the probability distribution of the dating of the sample after Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:return: An array representing the probability distribution of the dating of the sample after Bayesian modeling, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		
 		if self._data['posterior'] is None:
@@ -292,8 +315,8 @@ class Sample(object):
 		"""
 		The 2-sigma (95.45%) range of the dating of the sample in calendar years BP before Bayesian modeling.
 
-		Returns:
-			list: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:return: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:rtype: list
 		"""
 		
 		if self._data['likelihood_range'] is None:
@@ -307,8 +330,8 @@ class Sample(object):
 		"""
 		The mean calendar age of the sample in calendar years BP before Bayesian modeling.
 
-		Returns:
-			float or None: The mean calendar age of the sample before Bayesian modeling or None if it's not set.
+		:return: The mean calendar age of the sample before Bayesian modeling or None if it's not set.
+		:rtype: float or None
 		"""
 		
 		if self._data['likelihood_mean'] is None:
@@ -320,9 +343,10 @@ class Sample(object):
 		"""
 		The 2-sigma (95.45%) range of the dating of the sample in calendar years BP after Bayesian modeling.
 
-		Returns:
-			list: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:return: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:rtype: list
 		"""
+		
 		if self._data['posterior_range'] is None:
 			self._calc_range()
 		if self._data['posterior_range'] is None:
@@ -334,8 +358,8 @@ class Sample(object):
 		"""
 		The mean calendar age of the sample in calendar years BP after Bayesian modeling.
 
-		Returns:
-			float or None: The mean calendar age of the sample after Bayesian modeling or None if it's not set.
+		:return: The mean calendar age of the sample after Bayesian modeling or None if it's not set.
+		:rtype: float or None
 		"""
 		
 		if self._data['posterior_mean'] is None:
@@ -347,8 +371,8 @@ class Sample(object):
 		"""
 		The agreement index generated by OxCal modeling.
 
-		Returns:
-			float or None: The agreement index generated by OxCal modeling or None if it's not set.
+		:return: The agreement index generated by OxCal modeling or None if it's not set.
+		:rtype: float or None
 		"""
 		
 		return self._data['posterior_agreement']
@@ -358,8 +382,8 @@ class Sample(object):
 		"""
 		Checks if the sample has been calibrated.
 
-		Returns:
-			bool: True if the sample has been calibrated, False otherwise.
+		:return: True if the sample has been calibrated, False otherwise.
+		:rtype: bool
 		"""
 		
 		return (self._data['likelihood'] is not None)
@@ -369,8 +393,8 @@ class Sample(object):
 		"""
 		Checks if the posterior has been calculated using Bayesian modeling.
 
-		Returns:
-			bool: True if the posterior has been calculated, False otherwise.
+		:return: True if the posterior has been calculated, False otherwise.
+		:rtype: bool
 		"""
 		return (self._data['posterior'] is not None)
 	
@@ -379,12 +403,10 @@ class Sample(object):
 	def calibrate(self, curve: np.ndarray) -> None:
 		"""
 		Calibrates the sample using the provided calibration curve.
-
-		Args:
-			curve (np.ndarray): The calibration curve to be used for calibration. Format: `np.array([[calendar year BP, C-14 year, uncertainty], ...])`.
-
-		Raises:
-			Exception: If the calibration curve is not provided or if the necessary sample data (age, uncertainty, date_type) is not set.
+		
+		:param curve: The calibration curve to be used for calibration. Format: `np.array([[calendar year BP, C-14 year, uncertainty], ...])`.
+		:type curve: np.ndarray
+		:raises Exception: If the calibration curve is not provided or if the necessary sample data (age, uncertainty, date_type) is not set.
 		"""
 		
 		if curve is None:
@@ -398,11 +420,9 @@ class Sample(object):
 		"""
 		Sets the outlier status of the sample.
 
-		Args:
-			state (bool): The outlier status to be set. True if the sample is an outlier and should not be used for modeling, False otherwise.
-
-		Raises:
-			Exception: If the provided state is not a boolean value.
+		:param state: The outlier status to be set. True if the sample is an outlier and should not be used for modeling, False otherwise.
+		:type state: bool
+		:raises Exception: If the provided state is not a boolean value.
 		"""
 		
 		if not isinstance(state, bool):
@@ -413,8 +433,8 @@ class Sample(object):
 		"""
 		Sets the group that the sample belongs to based on stratigraphic interconnection with other samples.
 
-		Args:
-			group (str): The group that the sample belongs to.
+		:param group: The group that the sample belongs to.
+		:type group: str
 		"""
 		
 		self._data['group'] = group
@@ -423,8 +443,8 @@ class Sample(object):
 		"""
 		Sets the stratigraphic phase of the sample within the group.
 
-		Args:
-			phase (float): The stratigraphic phase of the sample within the group (lower = earlier (older) phase).
+		:param phase: The stratigraphic phase of the sample within the group (lower = earlier (older) phase).
+		:type phase: float
 		"""
 		
 		self._data['phase'] = phase
@@ -433,11 +453,12 @@ class Sample(object):
 		"""
 		Sets the likelihood for the sample.
 
-		Args:
-			distribution (np.ndarray): The likelihood distribution for the sample. It should be in the format `np.array([p, ...])`, where p is the probability of the calendar year.
-			mean (float, optional): The mean of the likelihood distribution. Defaults to None.
-			rng (List[float], optional): The 2-sigma (95.45%) range of the likelihood distribution in calendar years BP. It should be in the format `[from, to]`. Defaults to None.
-
+		:param distribution: The likelihood distribution for the sample. It should be in the format `np.array([p, ...])`, where p is the probability of the calendar year.
+		:type distribution: np.ndarray
+		:param mean: The mean of the likelihood distribution. Defaults to None.
+		:type mean: float, optional
+		:param rng: The 2-sigma (95.45%) range of the likelihood distribution in calendar years BP. It should be in the format `[from, to]`. Defaults to None.
+		:type rng: List[float], optional
 		"""
 		
 		self._data['likelihood'] = distribution
@@ -452,12 +473,14 @@ class Sample(object):
 		"""
 		Sets the posterior for the sample.
 
-		Args:
-			distribution (np.ndarray): The posterior distribution for the sample. It should be in the format `np.array([p, ...])`, where p is the probability of the calendar year.
-			mean (float, optional): The mean of the posterior distribution. Defaults to None.
-			rng (List[float], optional): The 2-sigma (95.45%) range of the posterior distribution in calendar years BP. It should be in the format `[from, to]`. Defaults to None.
-			agreement (float, optional): The agreement index generated by OxCal modeling. Defaults to 0.
-
+		:param distribution: The posterior distribution for the sample. It should be in the format `np.array([p, ...])`, where p is the probability of the calendar year.
+		:type distribution: np.ndarray
+		:param mean: The mean of the posterior distribution. Defaults to None.
+		:type mean: float, optional
+		:param rng: The 2-sigma (95.45%) range of the posterior distribution in calendar years BP. It should be in the format `[from, to]`. Defaults to None.
+		:type rng: List[float], optional
+		:param agreement: The agreement index generated by OxCal modeling. Defaults to 0.
+		:type agreement: float, optional
 		"""
 		
 		self._data['posterior'] = distribution
@@ -477,8 +500,8 @@ class Sample(object):
 		If the sample is long-lived and the date type is 'R', it keeps the lower boundary and doubles the range.
 		Otherwise, it returns the likelihood range.
 
-		Returns:
-			list: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:return: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:rtype: list
 		"""
 		
 		if self.is_modeled:
@@ -497,8 +520,8 @@ class Sample(object):
 		"""
 		Converts the sample to OxCal model format.
 
-		Returns:
-			str or None: The sample in OxCal model format or None if the necessary sample data (name, age, uncertainty, date_type, long_lived, outlier) is not set.
+		:return: The sample in OxCal model format or None if the necessary sample data (name, age, uncertainty, date_type, long_lived, outlier) is not set.
+		:rtype: str or None
 		"""
 		
 		return oxcal_date(self.name, self.age, self.uncertainty, self.date_type, self.long_lived, self.outlier)
@@ -509,8 +532,8 @@ class Sample(object):
 
 		The method creates a deep copy of the sample data and converts numpy arrays to lists for JSON serialization.
 
-		Returns:
-			dict: A dictionary containing the sample data.
+		:return: A dictionary containing the sample data.
+		:rtype: dict
 		"""
 		
 		data = copy.deepcopy(self._data)
@@ -522,8 +545,8 @@ class Sample(object):
 
 		The method updates the sample data with the provided dictionary. It also converts keys to integers and numpy arrays to lists for JSON serialization.
 
-		Args:
-			data (dict): A dictionary containing the sample data.
+		:param data: A dictionary containing the sample data.
+		:type data: dict
 		"""
 		
 		self._data = dict(
@@ -559,8 +582,8 @@ class Sample(object):
 		"""
 		Creates a copy of the sample instance.
 
-		Returns:
-			Sample: A new instance of the Sample class with the same data as the current instance.
+		:return: A new instance of the Sample class with the same data as the current instance.
+		:rtype: Sample
 		"""
 		
 		return Sample(self.to_dict())

@@ -67,7 +67,9 @@ sitesyncro.exe -input data_sample.csv
 - `-curve_name`: File name of the radiocarbon age calibration curve (default is "intcal20.14c").
 - `-phase_model`: OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none'; default is "sequence").
 - `-cluster_n`: Number of clusters to form (-1 = automatic; default is -1).
+- `-min_years_per_cluster`: Minimum number of years per cluster. (default is 25).
 - `-by_clusters`: Flag indicating whether to update the phasing by clustering sample dates (default is 0).
+- `-by_dates`: Flag indicating whether to update the phasing by comparing sample dates (default is 0).
 - `-uniform`: Flag indicating whether to use a uniform distribution for the calendar ages (default is 0).
 - `-p_value`: P-value for the randomization tests (default is 0.05).
 - `-uncertainty_base`: Base uncertainty for the radiocarbon dates for the randomization tests (default is 15).

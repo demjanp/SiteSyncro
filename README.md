@@ -133,7 +133,7 @@ This will create the default directory `model` and generate the following files:
 `silhouette.pdf`
 `results.csv`
 
-See [Model Class](docs/_build/model.html) documentation for more information.
+See [Model Class](https://sitesyncro.readthedocs.io/en/latest/model.html) documentation for more information.
 
 ### Sample Class <a name="sample_class"></a>
 The `Sample` class represents a single radiocarbon sample. Here is a basic example of how to use it:
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 	print(sample)
 ```
 
-See [Sample Class](docs/_build/sample.html) documentation for more information.
+See [Sample Class](https://sitesyncro.readthedocs.io/en/latest/sample.html) documentation for more information.
 
 ## Developer Notes <a name="developer"></a>
 ### Preparing the Virtual Environment <a name="venv"></a>

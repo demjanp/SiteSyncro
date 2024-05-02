@@ -1,17 +1,29 @@
 import os
 import re
 import zipfile
+from collections import defaultdict
+from typing import Dict, Any
+
+import numpy as np
 import requests
 import unicodedata
-import numpy as np
-from tqdm import tqdm
-from collections import defaultdict
 from scipy.interpolate import interp1d
+from tqdm import tqdm
 
-from typing import Dict
 
-def download_oxcal(url: str = None):
-	
+def download_oxcal(url: str = None) -> bool:
+	"""
+	Download and unzip OxCal from a specified URL.
+
+	This function checks if OxCal is already downloaded. If not, it downloads and unzips OxCal from a specified URL to
+	the current directory.
+
+	Parameters:
+	url (str, optional): The URL to download OxCal from. If not provided, the default OxCal distribution URL is used.
+
+	Returns:
+	bool: True if OxCal is successfully downloaded and unzipped, False otherwise.
+	"""
 	if os.path.isfile("OxCal\\bin\\OxCalWin.exe"):
 		return True
 	# Download and unzip OxCal from url to the current directory
@@ -28,7 +40,7 @@ def download_oxcal(url: str = None):
 	try:
 		response = requests.get(url, stream=True)
 	except requests.exceptions.RequestException as e:
-		print (f"Error: Unable to connect to {url}. Please check the URL or your internet connection.")
+		print(f"Error: Unable to connect to {url}. Please check the URL or your internet connection.")
 		return False
 	
 	total_size_in_bytes = int(response.headers.get('content-length', 0))
@@ -50,7 +62,27 @@ def download_oxcal(url: str = None):
 	
 	return True
 
-def oxcal_date(name: str, age: float, uncertainty: float, date_type: str, long_lived: bool, outlier: bool):
+
+def oxcal_date(name: str, age: float, uncertainty: float, date_type: str, long_lived: bool, outlier: bool) -> str:
+	"""
+	Generate an OxCal date string.
+
+	This function generates an OxCal date string based on the provided parameters.
+
+	Parameters:
+	name (str): The name of the date.
+	age (float): The age of the date.
+	uncertainty (float): The uncertainty of the date.
+	date_type (str): The type of the date. It should be 'R' or 'U'.
+	long_lived (bool): Whether the date is long-lived.
+	outlier (bool): Whether the date is an outlier.
+
+	Returns:
+	str: The generated OxCal date string.
+
+	Raises:
+	Exception: If an invalid date type is specified.
+	"""
 	txt = None
 	if date_type == 'R':
 		txt = '''R_Date("%s", %f, %f)''' % (name, age, uncertainty)
@@ -66,8 +98,8 @@ def oxcal_date(name: str, age: float, uncertainty: float, date_type: str, long_l
 		txt += ";"
 	return txt
 
-def gen_sequence(name: str, data: Dict[int, str]):
-	
+
+def gen_sequence(name: str, data: Dict[int, str]) -> str:
 	txt = ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
@@ -77,7 +109,7 @@ def gen_sequence(name: str, data: Dict[int, str]):
 			%(dates)s
 		};
 		Boundary("End %(name)s-%(phase)d");
-		''' % dict(name = name, phase = phase, dates = data[phase])
+		''' % dict(name=name, phase=phase, dates=data[phase])
 	
 	return '''
 	Sequence(%s)
@@ -85,9 +117,9 @@ def gen_sequence(name: str, data: Dict[int, str]):
 		%s
 	};
 	''' % (name, txt)
-	
-def gen_contiguous(name: str, data: Dict[int, str]):
-	
+
+
+def gen_contiguous(name: str, data: Dict[int, str]) -> str:
 	txt = ""
 	last_phase = None
 	for phase in sorted(list(data.keys())):
@@ -117,8 +149,8 @@ def gen_contiguous(name: str, data: Dict[int, str]):
 	};
 	''' % (name, txt)
 
-def gen_overlapping(name: str, data: Dict[int, str]):
-	
+
+def gen_overlapping(name: str, data: Dict[int, str]) -> str:
 	txt = ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
@@ -131,7 +163,7 @@ def gen_overlapping(name: str, data: Dict[int, str]):
 			};
 			Boundary("End %(name)s-%(phase)d");
 		};
-		''' % dict(name = name, phase = phase, dates = data[phase])
+		''' % dict(name=name, phase=phase, dates=data[phase])
 	return '''
 	Phase(%s)
 	{
@@ -139,8 +171,8 @@ def gen_overlapping(name: str, data: Dict[int, str]):
 	};
 	''' % (name, txt)
 
-def gen_none(name: str, data: Dict[int, str]):
-	
+
+def gen_none(name: str, data: Dict[int, str]) -> str:
 	txt = ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
@@ -149,8 +181,22 @@ def gen_none(name: str, data: Dict[int, str]):
 		''' % (name, phase, data[phase])
 	return txt
 
-def gen_oxcal_model(model: object):
-	
+
+def gen_oxcal_model(model: object) -> str:
+	"""
+	Generate an OxCal model string.
+
+	This function generates an OxCal model string based on the provided model object.
+
+	Parameters:
+	model (Model): The Model object.
+
+	Returns:
+	str: The generated OxCal model string.
+
+	Raises:
+	Exception: If an invalid phase model is specified.
+	"""
 	model_fncs = {
 		'sequence': gen_sequence,
 		'contiguous': gen_contiguous,
@@ -168,8 +214,8 @@ def gen_oxcal_model(model: object):
 			data[model.samples[name].phase].append(model.samples[name])
 		data = dict(data)
 		for phase in data:
-			data[phase] = sorted(data[phase], key = lambda sample: sum(sample.get_range()))
-			data[phase] = "\n".join([sample.to_oxcal() for sample in data[phase]])
+			data_phase = sorted(data[phase], key=lambda sample: sum(sample.get_range()))
+			data[phase] = "\n".join([sample.to_oxcal() for sample in data_phase])
 		txt += model_fncs[model.phase_model]("Gr.%d" % (group), data)
 	
 	txt = '''
@@ -186,7 +232,22 @@ Plot()
 	txt = ''.join(c for c in unicodedata.normalize('NFKD', txt) if unicodedata.category(c) != 'Mn')
 	return txt
 
-def load_oxcal_data(fname: str):
+
+def load_oxcal_data(fname: str) -> Dict:
+	"""
+	Load OxCal data from a file.
+
+	This function loads OxCal data from a specified file.
+
+	Parameters:
+	fname (str): The name of the file to load the data from.
+
+	Returns:
+	Dict: The loaded OxCal data.
+
+	Raises:
+	Exception: If the data file is not found.
+	"""
 	
 	def replace_colons_in_braces(s):
 		# Find the innermost braces
@@ -200,7 +261,7 @@ def load_oxcal_data(fname: str):
 		
 		# Recursively process the modified string
 		return replace_colons_in_braces(s)
-
+	
 	def read_js_file(file_path):
 		
 		data = {}
@@ -227,7 +288,7 @@ def load_oxcal_data(fname: str):
 				value = re.sub(r'\bNaN\b', 'None', value)
 				
 				# Parse value using python eval
-				value = eval(value, dict(true = True, false = False))
+				value = eval(value, dict(true=True, false=False))
 				if value == []:
 					value = {}
 				
@@ -259,20 +320,28 @@ def load_oxcal_data(fname: str):
 					current = current[key]
 		
 		return data
-
 	
 	if not os.path.isfile(fname):
 		raise Exception("Data file %s not found" % (fname))
 	
 	return read_js_file(fname)
 
-def get_distributions(data: Dict, curve: np.ndarray):
-	# data = OxCal data (from load_oxcal_data)
-	# curve = np.array([[calendar year BP, C-14 year, uncertainty], ...]), sorted by calendar years
-	#
-	# returns likelihoods, posteriors
-	# likelihoods = {name: [distribution, mean, rng], ...}
-	# posteriors = {name: [distribution, mean, rng, agreement], ...}
+
+def get_distributions(data: Dict, curve: np.ndarray) -> (Dict[str, Any], Dict[str, Any]):
+	"""
+	Get distributions from OxCal data.
+
+	This function gets likelihoods and posteriors from OxCal data unified to match the range and calendar ages on the calibration curve.
+
+	Parameters:
+	data (Dict): The OxCal data (from load_oxcal_data).
+	curve: np.array([[calendar year BP, C-14 year, uncertainty], ...]), sorted by calendar years. The radiocarbon calibration curve.
+
+	Returns:
+	(likelihoods, posteriors)
+		- likelihoods = {name: [distribution, mean, rng], ...}
+		- posteriors = {name: [distribution, mean, rng, agreement], ...}
+	"""
 	
 	def _get_params(params_data):
 		mean = None
@@ -294,7 +363,7 @@ def get_distributions(data: Dict, curve: np.ndarray):
 	
 	def _unify(dist, years, curve):
 		# years are in CE
-		all_years = curve[:,0]
+		all_years = curve[:, 0]
 		years = 1950 - np.array(years)
 		# Make sure years are in the correct order
 		if np.sign(years[-1] - years[0]) != np.sign(all_years[-1] - all_years[0]):
@@ -351,4 +420,3 @@ def get_distributions(data: Dict, curve: np.ndarray):
 	likelihoods = _load_likelihoods(data)
 	posteriors = _load_posteriors(data)
 	return likelihoods, posteriors
-

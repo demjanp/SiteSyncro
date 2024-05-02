@@ -1,10 +1,10 @@
 import multiprocessing as mp
 import time
 
-from typing import List, Union, Generator, Callable
+from typing import Union, Generator, Callable
 
-def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max_queue_size: int, args: list):
-	
+
+def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max_queue_size: int, args: list) -> None:
 	while True:
 		try:
 			params = params_mp.get()
@@ -17,12 +17,34 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max
 			pass
 		collect_mp.put(worker_fnc(params, *args))
 
-def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [], collect_fnc: Callable = None, collect_args: list = [], progress_fnc: Callable = None, progress_args:list = [], max_cpus: int = -1, max_queue_size: int = -1):
+
+def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [],
+               collect_fnc: Callable = None, collect_args: list = [], progress_fnc: Callable = None,
+               progress_args: list = [], max_cpus: int = -1, max_queue_size: int = -1) -> None:
+	"""
+	Process multiple tasks in parallel using multiprocessing.
+
+	This function takes a worker function and a list of parameters, and applies the worker function to each set of parameters in parallel using multiprocessing. The results are collected and processed by a collector function.
+
+	Parameters:
+	worker_fnc (Callable): The worker function to apply to each set of parameters. It should take a set of parameters and any additional arguments, and return a result.
+	params_list (list or generator): A list or generator of sets of parameters to apply the worker function to.
+	worker_args (list, optional): Additional arguments to pass to the worker function. Default is an empty list.
+	collect_fnc (Callable, optional): A function to process the results. It should take a result and any additional arguments. Default is None, which means the results are not processed.
+	collect_args (list, optional): Additional arguments to pass to the collector function. Default is an empty list.
+	progress_fnc (Callable, optional): A function to report progress. It should take the number of tasks done, the total number of tasks, and any additional arguments. Default is None, which means progress is not reported.
+	progress_args (list, optional): Additional arguments to pass to the progress function. Default is an empty list.
+	max_cpus (int, optional): The maximum number of CPUs to use for multiprocessing. Default is -1, which means all available CPUs will be used.
+	max_queue_size (int, optional): The maximum size of the queue for multiprocessing. Default is -1, which means the queue size is unlimited.
+
+	Returns:
+	None
+	"""
 	
 	def call_progress(progress_fnc, done, todo, progress_args):
 		
 		if progress_fnc == True:
-			print("\r%d/%d             " % (done, todo), end = "")
+			print("\r%d/%d             " % (done, todo), end="")
 		elif callable(progress_fnc):
 			progress_fnc(done, todo, *progress_args)
 	
@@ -43,7 +65,8 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 	procs = []
 	while done < todo:
 		if len(procs) < n_cpus:
-			procs.append(mp.Process(target = _worker, args = (worker_fnc, params_mp, collect_mp, max_queue_size, worker_args)))
+			procs.append(
+				mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, max_queue_size, worker_args)))
 			procs[-1].start()
 		if not collect_mp.empty():
 			data = collect_mp.get()

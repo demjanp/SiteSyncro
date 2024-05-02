@@ -1,9 +1,34 @@
-from collections import defaultdict
 import os
-
+from collections import defaultdict
 from typing import List, Dict, Any
 
-def load_input(fname: str):
+
+def load_input(fname: str) -> List[Dict[str, Any]]:
+	"""
+	Load input data from a file.
+
+	This function reads a file line by line, parses each line into a dictionary, and appends the dictionary to a list.
+	The file should be in the following format:
+	- Each line represents a data record.
+	- Data fields are separated by semicolons.
+	- The first line is a header and is skipped.
+	- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
+	- The fields are processed as follows:
+		- Sample, Context, and Area are stripped of leading and trailing whitespace.
+		- C14 Age and Uncertainty are converted to floats.
+		- Phase is converted to a float if possible, otherwise it is set to None.
+		- Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.
+		- Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.
+
+	Parameters:
+	fname (str): The name of the file to load.
+
+	Returns:
+	A list of dictionaries representing the data records in the file.
+
+	Raises:
+	Exception: If a line does not have exactly 10 fields, or if a field cannot be converted to the required type, an exception is raised.
+	"""
 	data = []
 	with open(fname, "r") as file:
 		next(file)  # Skip header
@@ -53,7 +78,9 @@ def load_input(fname: str):
 				})
 	return data
 
-def get_samples_contexts_and_areas(data: List[Dict[str, Any]]):
+
+def get_samples_contexts_and_areas(data: List[Dict[str, Any]]) -> (
+		List[str], Dict[str, List[str]], Dict[str, Any], List[str]):
 	# Create a list of samples
 	samples = sorted(list(set([line["Sample"] for line in data])))
 	
@@ -83,43 +110,48 @@ def get_samples_contexts_and_areas(data: List[Dict[str, Any]]):
 	
 	return samples, context_samples, context_area, areas
 
-def get_long_lived(data: List[Dict[str, Any]]):
+
+def get_long_lived(data: List[Dict[str, Any]]) -> Dict[str, bool]:
 	# Create a list of long-lived contexts
 	long_lived = {}
 	for line in data:
 		long_lived[line["Sample"]] = bool(line["Long-Lived"])
 	return long_lived
 
-def get_redeposited(data: List[Dict[str, Any]]):
+
+def get_redeposited(data: List[Dict[str, Any]]) -> Dict[str, bool]:
 	# Create a list of redeposited contexts
 	redeposited = {}
 	for line in data:
 		redeposited[line["Sample"]] = bool(line["Redeposited"])
 	return redeposited
 
-def get_outlier(data: List[Dict[str, Any]]):
+
+def get_outlier(data: List[Dict[str, Any]]) -> Dict[str, bool]:
 	# Create a list of outliers
 	outlier = {}
 	for line in data:
 		outlier[line["Sample"]] = bool(line["Outlier"])
 	return outlier
 
-def get_c14_dates(data: List[Dict[str, Any]]):
+
+def get_c14_dates(data: List[Dict[str, Any]]) -> Dict[str, Any]:
 	r_dates = {}
 	for line in data:
 		r_dates[line["Sample"]] = (line["C14 Age"], line["Uncertainty"])
 	return r_dates
 
-def get_context_phase(data: List[Dict[str, Any]]):
-	
+
+def get_context_phase(data: List[Dict[str, Any]]) -> Dict[str, float]:
 	# Create a dictionary of contexts and their phases
 	context_phase = {}
 	for line in data:
 		context_phase[line["Context"]] = line["Phase"]
 	return context_phase
 
-def get_earlier_than_relations(data: List[Dict[str, Any]], context_samples: Dict[str, List[str]]):
-	
+
+def get_earlier_than_relations(data: List[Dict[str, Any]], context_samples: Dict[str, List[str]]) -> Dict[
+	str, List[str]]:
 	earlier_than_rel = defaultdict(list)
 	for line in data:
 		sample1 = line["Sample"]
@@ -129,8 +161,20 @@ def get_earlier_than_relations(data: List[Dict[str, Any]], context_samples: Dict
 					earlier_than_rel[sample1].append(sample2)
 	return dict(earlier_than_rel)
 
-def create_result_path(result_path: str, existing: bool = False):
-	
+
+def create_result_path(result_path: str, existing: bool = False) -> str:
+	"""
+	Create a directory for storing results.
+
+	This function creates a new directory for storing results. If a directory with the same name already exists, a new directory with a suffix is created.
+
+	Parameters:
+	result_path (str): The path of the directory to create.
+	existing (bool, optional): If True, the function will return the path if the directory already exists. If False, the function will create a new directory with a suffix. Default is False.
+
+	Returns:
+	str: The path of the created directory.
+	"""
 	if existing and os.path.isdir(result_path):
 		return result_path
 	
@@ -152,7 +196,31 @@ def create_result_path(result_path: str, existing: bool = False):
 	os.makedirs(result_path)
 	return result_path
 
-def load_data(fname: str):
+
+def load_data(fname: str) -> (
+		List[str], Dict[str, str], Dict[str, Any], Dict[str, bool], Dict[str, bool], Dict[str, bool], Dict[str, Any],
+		Dict[str, float], Dict[str, List[str]]):
+	"""
+	Load data from a file and process it.
+
+	This function reads a file, processes the data, and returns it in a structured format.
+
+	Parameters:
+	fname (str): The name of the file to load.
+
+	Returns:
+	(samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than_rel):
+		- samples = [sample, ...]
+		- contexts = {sample: context, ...}
+		- context_area = {context: area, ...}
+		- long_lived = {sample: True/False, ...}
+		- redeposited = {sample: True/False, ...}
+		- outlier = {sample: True/False, ...}
+		- r_dates = {sample: (age, uncertainty), ...}
+		- context_phase = {context: phase, ...}
+		- earlier_than_rel = {sample: [sample, ...], ...}
+	"""
+	
 	data = load_input(fname)
 	samples, context_samples, context_area, areas = get_samples_contexts_and_areas(data)
 	long_lived = get_long_lived(data)
@@ -161,16 +229,6 @@ def load_data(fname: str):
 	r_dates = get_c14_dates(data)
 	context_phase = get_context_phase(data)
 	earlier_than_rel = get_earlier_than_relations(data, context_samples)
-	
-	# samples = [sample, ...]
-	# contexts = {sample: context, ...}
-	# context_area = {context: area, ...}
-	# long_lived = {sample: True/False, ...}
-	# redeposited = {sample: True/False, ...}
-	# outlier = {sample: True/False, ...}
-	# r_dates = {sample: (age, uncertainty), ...}
-	# context_phase = {context: phase, ...}
-	# earlier_than_rel = {sample: [sample, ...], ...}
 	
 	contexts = {}
 	for context in context_samples:
@@ -193,6 +251,6 @@ def load_data(fname: str):
 		if sample not in r_dates:
 			r_dates[sample] = (None, None)
 		if sample not in earlier_than_rel:
-			earlier_than_rel[sample] = {}
+			earlier_than_rel[sample] = []
 	
 	return samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than_rel

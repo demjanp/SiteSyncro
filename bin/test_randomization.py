@@ -72,8 +72,8 @@ if __name__ == '__main__':
 		results[clusters_n] = {}
 		for sample_size in DATES_N:
 			results[clusters_n][sample_size] = []
-			for iter in range(ITERATIONS):
-				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, iter + 1, ITERATIONS))
+			for i in range(ITERATIONS):
+				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, i + 1, ITERATIONS))
 				dates = sim_clustered(CENTER_DATE, GAP, clusters_n, DATES_N[sample_size], UNCERTAINTY_BASE, curve)
 				model = Model(directory = "test_rnd", uniform = (clusters_n == 0), overwrite = True)
 				n = 1

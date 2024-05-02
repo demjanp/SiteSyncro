@@ -39,7 +39,7 @@ class Model(object):
 	:param cluster_n: Number of clusters to form (-1 = automatic; default is -1).
 	:type cluster_n: int
 
-	:param min_years_per_cluster: The minimum average number of years per cluster.
+	:param min_years_per_cluster: The minimum number of years per cluster.
 	:type min_years_per_cluster: int
 
 	:param uniform: Flag indicating whether to use uniform randomization (default is False).
@@ -72,7 +72,7 @@ class Model(object):
 			curve_name='intcal20.14c',
 			phase_model='sequence',
 			cluster_n=-1,
-			min_years_per_cluster=50,
+			min_years_per_cluster=25,
 			uniform=False,
 			p_value=0.05,
 			uncertainty_base=15,
@@ -254,9 +254,9 @@ class Model(object):
 	@property
 	def min_years_per_cluster(self) -> int:
 		"""
-		The minimum average number of years per cluster.
+		The minimum number of years per cluster.
 		
-		:return: The minimum average number of years per cluster.
+		:return: The minimum number of years per cluster.
 		:rtype: int
 		"""
 		return self._data['min_years_per_cluster']

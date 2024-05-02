@@ -55,7 +55,7 @@
 <li><p><strong>curve_name</strong> (<em>str</em>) – The name of the calibration curve to use (default is “intcal20.14c”).</p></li>
 <li><p><strong>phase_model</strong> (<em>str</em>) – OxCal phase model type. Can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’ (default is “sequence”).</p></li>
 <li><p><strong>cluster_n</strong> (<em>int</em>) – Number of clusters to form (-1 = automatic; default is -1).</p></li>
-<li><p><strong>min_years_per_cluster</strong> (<em>int</em>) – The minimum average number of years per cluster.</p></li>
+<li><p><strong>min_years_per_cluster</strong> (<em>int</em>) – The minimum number of years per cluster.</p></li>
 <li><p><strong>uniform</strong> (<em>bool</em>) – Flag indicating whether to use uniform randomization (default is False).</p></li>
 <li><p><strong>p_value</strong> (<em>float</em>) – The P-value for statistical tests (default is 0.05).</p></li>
 <li><p><strong>uncertainty_base</strong> (<em>float</em>) – The base uncertainty for randomization (default is 15).</p></li>
@@ -430,10 +430,10 @@ The loaded data is then stored in the model’s ‘oxcal_data’ attribute.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="sitesyncro.Model.Model.min_years_per_cluster">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min_years_per_cluster</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.min_years_per_cluster" title="Link to this definition">¶</a></dt>
-<dd><p>The minimum average number of years per cluster.</p>
+<dd><p>The minimum number of years per cluster.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The minimum average number of years per cluster.</p>
+<dd class="field-odd"><p>The minimum number of years per cluster.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>int</p>

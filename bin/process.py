@@ -38,7 +38,7 @@ def parse_arguments(args):
 	parser.add_argument('-cluster_n', type=int, default=-1, required=False,
 		help="Number of clusters to form (-1 = automatic)")
 	parser.add_argument('-min_years_per_cluster', type=int, default=25, required=False,
-		help="min_years_per_cluster")
+		help="Minimum number of years per cluster.")
 	parser.add_argument('-by_clusters', type=int, default=0, required=False,
 		help="Flag indicating whether to update the phasing by clustering sample dates")
 	parser.add_argument('-by_dates', type=int, default=0, required=False,

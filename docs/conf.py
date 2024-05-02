@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'SiteSyncro
+project = 'SiteSyncro'
 copyright = '2024, Peter Demján'
 author = 'Peter Demján'
 release = '0.9.3'

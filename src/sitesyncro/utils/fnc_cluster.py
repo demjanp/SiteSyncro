@@ -10,8 +10,8 @@ from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
-from sitesyncro.utils.fnc_simulate import (calculate_parameters, generate_random_distributions)
-from sitesyncro.utils.fnc_stat import (calc_sum, samples_to_distributions)
+from sitesyncro.utils.fnc_simulate import (generate_random_distributions)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, samples_to_distributions)
 
 
 def calc_distance_matrix(distributions: List[np.ndarray]) -> np.ndarray:
@@ -200,9 +200,9 @@ def cluster_distributions(model: object) -> (Dict[int, Dict[int, List[str]]], Di
 	return clusters, means, sil
 
 
-def worker_fnc(params: Any, dates_n: int, t_param1: float, t_param2: float, uncertainties: List[float],
+def worker_fnc(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
                uncertainty_base: float, curve: np.ndarray, uniform: bool) -> np.ndarray:
-	distributions = generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve,
+	distributions = generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve,
 	                                              uniform)
 	D = calc_distance_matrix(distributions)
 	return D
@@ -213,7 +213,6 @@ def collect_fnc(data: Any, D_pool: List[np.ndarray], pbar: tqdm) -> None:
 	D_pool.append(data)
 	pbar.n = len(D_pool)
 	pbar.refresh()
-
 
 def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_size: int = -1) -> (
 		Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], Dict[int, float], Dict[int, float]):
@@ -252,7 +251,7 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 	print("Testing clustering of %d distributions" % dates_n)
 	
 	sum_obs = calc_sum(distributions)
-	t_param1, t_param2 = calculate_parameters(model.years, sum_obs, model.uniform)
+	t_mean, t_std = calc_mean_std(model.years, sum_obs)
 	
 	# Get dating range of all samples
 	rng_min, rng_max = np.inf, -np.inf
@@ -298,10 +297,16 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 				i += 1
 				while i >= len(D_pool):
 					process_mp(worker_fnc, range(max(4, (todo - len(D_pool)) + 1)),
-					           [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve,
+					           [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
 					            model.uniform],
 					           collect_fnc=collect_fnc, collect_args=[D_pool, pbar],
 					           max_cpus=max_cpus, max_queue_size=max_queue_size)
+					'''
+					for j in range(max(4, (todo - len(D_pool)) + 1)):
+						D_pool.append(worker_fnc(j, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform))
+						pbar.n = len(D_pool)
+						pbar.refresh()
+					'''  # DEBUG
 				D = squareform(D_pool[i])
 				sils_rnd.append(calc_silhouette(D, calc_clusters_hca(D, cluster_n)))
 				pbar.n = len(sils_rnd)

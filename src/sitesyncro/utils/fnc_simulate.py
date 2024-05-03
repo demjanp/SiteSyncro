@@ -9,7 +9,7 @@ from sitesyncro.utils.fnc_radiocarbon import (calibrate)
 from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_percentiles, samples_to_distributions)
 
 
-def generate_random_distributions(dates_n: int, t_param1: float, t_param2: float, uncertainties: List[float],
+def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
                                   uncertainty_base: float, curve: np.ndarray, uniform: bool,
                                   max_iterations: int = 10000) -> List[np.ndarray]:
 	"""
@@ -17,8 +17,8 @@ def generate_random_distributions(dates_n: int, t_param1: float, t_param2: float
 
 	Parameters:
 	dates_n (int): Number of dates to generate.
-	t_param1 (float): Mean or median of the calendar ages.
-	t_param2 (float): Standard deviation or range of the calendar ages.
+	t_mean (float): Mean of the calendar ages.
+	t_std (float): Standard deviation of the calendar ages.
 	uncertainties (list): Pool of uncertainties to simulate C-14 dates.
 	uncertainty_base (float): Base uncertainty to calculate uncertainty based on C-14 age if pool is not available.
 	curve (np.ndarray): A 2D array containing the calibration curve data. Each row represents a calendar year BP, C-14 year, and uncertainty.
@@ -29,24 +29,24 @@ def generate_random_distributions(dates_n: int, t_param1: float, t_param2: float
 	List[np.ndarray]: List of generated distributions.
 	"""
 	
-	def _sim_age(t_param1, t_param2, uniform, curve):
+	def _sim_age(t_mean, t_std, uniform, curve):
 		# Generate a random calendar age
 		if uniform:
-			t = np.random.uniform(t_param1 - t_param2, t_param1 + t_param2)
+			t = np.random.uniform(t_mean - t_std, t_mean + t_std)
 		else:
-			t = np.random.normal(t_param1, t_param2)
+			t = np.random.normal(t_mean, t_std)
 		# Find the closest index in the calibration curve
 		idx = np.argmin(np.abs(curve[:, 0] - t))
 		# Get the corresponding radiocarbon age
 		age = curve[idx, 1]
 		return age
 	
-	def _gen_distributions(dates_n, uncertainties, uncertainty_base, t_param1, t_param2, uniform, curve):
+	def _gen_distributions(dates_n, uncertainties, uncertainty_base, t_mean, t_std, uniform, curve):
 		dates = []
 		distributions = []
 		for i in range(dates_n):
 			# Generate a random calendar age
-			age = _sim_age(t_param1, t_param2, uniform, curve)
+			age = _sim_age(t_mean, t_std, uniform, curve)
 			# Calculate the standard deviation for the date
 			if uncertainties:
 				stdev = np.random.choice(uncertainties)
@@ -57,106 +57,71 @@ def generate_random_distributions(dates_n: int, t_param1: float, t_param2: float
 			# Calibrate the date and append the distribution to the distributions list
 			distribution = calibrate(age, stdev, curve)
 			distributions.append(distribution)
-		return dates, distributions
+		return np.array(dates), distributions
 	
-	def _analyze(distributions, uniform, curve):
+	def _analyze(distributions, curve):
 		# Sum the distributions
 		dist_summed = calc_sum(distributions)
-		median_sum, range_sum, mean_sum, std_sum = None, None, None, None
-		if uniform:
-			# Calculate weighted median and range
-			median_sum = np.average(curve[:, 0], weights=dist_summed)
-			range_sum = np.sqrt(np.average((curve[:, 0] - median_sum) ** 2, weights=dist_summed))
-		else:
-			# Calculate the mean and standard deviation of the summed distribution
-			mean_sum, std_sum = calc_mean_std(curve[:, 0], dist_summed)
-		return median_sum, range_sum, mean_sum, std_sum
+		# Calculate the mean and standard deviation of the summed distribution
+		mean_sum, std_sum = calc_mean_std(curve[:, 0], dist_summed)
+		return mean_sum, std_sum
 	
-	dates, distributions = _gen_distributions(dates_n, uncertainties, uncertainty_base, t_param1, t_param2, uniform,
-	                                          curve)
-	median_sum, range_sum, mean_sum, std_sum = _analyze(distributions, uniform, curve)
+	dates, distributions = _gen_distributions(dates_n, uncertainties, uncertainty_base, t_mean, t_std, uniform, curve)
 	
 	curve_min = curve[:, 1].min()
 	curve_max = curve[:, 1].max()
 	
 	# Adjust the dates until the mean and standard deviation of the summed distribution are close to the desired values
 	iteration = 0
-	scaling_factor = 1.0
-	if uniform:
-		c_threshold = t_param2 * 0.01
-	else:
-		c_threshold = t_param2 * 0.01
+	scaling_factor = 0.5
+	c_threshold = t_std * 0.001
+	m, s = 0, 0
 	while True:
-		if uniform:
-			c = max(abs(median_sum - t_param1), abs(range_sum - t_param2))
-		else:
-			c = max(abs(mean_sum - t_param1), abs(std_sum - t_param2))
-		
-		if c <= c_threshold:
-			break
+		# Adjust mean
+		reset = False
+		while not reset:
+			m, _ = _analyze(distributions, curve)
+			if abs(m - t_mean) <= c_threshold:
+				break
+			d = scaling_factor*(t_mean - m)
+			for i in range(len(dates)):
+				dates[i][0] += d
+				if (dates[i][0] < curve_min) or (dates[i][0] > curve_max):
+					reset = True
+					break
+				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
+		# Adjust stdev
+		while not reset:
+			m, s = _analyze(distributions, curve)
+			if abs(s - t_std) <= c_threshold:
+				break
+			# Scale dates around center
+			sf = 1 + scaling_factor*((t_std / s) - 1)
+			d_m = dates[:,0].mean()
+			for i in range(len(dates)):
+				dates[i][0] = d_m + (dates[i][0] - d_m)*sf
+				if (dates[i][0] < curve_min) or (dates[i][0] > curve_max):
+					reset = True
+					break
+				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
 		
 		iteration += 1
-		if iteration > max_iterations:
+		if (iteration > max_iterations) or reset:
 			# Re-initialize
-			dates, distributions = _gen_distributions(dates_n, uncertainties, uncertainty_base, t_param1, t_param2,
-			                                          uniform, curve)
-			median_sum, range_sum, mean_sum, std_sum = _analyze(distributions, uniform, curve)
+			dates, distributions = _gen_distributions(dates_n, uncertainties, uncertainty_base, t_mean, t_std, uniform, curve)
 			iteration = 0
-			scaling_factor = 1.0
 			continue
 		
-		# Randomly select a date to adjust
-		i = np.random.choice(dates_n)
-		age_new = dates[i][0]
-		if uniform:
-			age_new += 1 * (t_param1 - median_sum)
-			age_new *= 1 + scaling_factor * ((t_param2 / range_sum) - 1)
-		else:
-			age_new += (t_param1 - mean_sum)
-			age_new *= 1 + scaling_factor * ((t_param2 / std_sum) - 1)
-		if (age_new < curve_min) or (age_new > curve_max):
-			age_new = _sim_age(t_param1, t_param2, uniform, curve)
-		dates[i][0] = age_new
-		distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
-		# Recalculate the sum of the distributions and their mean or median
-		median_sum, range_sum, mean_sum, std_sum = _analyze(distributions, uniform, curve)
-		# Decrease the scaling factor
-		scaling_factor *= 0.999
+		if max(abs(m - t_mean), abs(s - t_std)) <= c_threshold:
+			break
 	
 	return distributions
 
 
-def calculate_parameters(years: np.ndarray, distribution: np.ndarray, uniform: bool) -> (float, float):
-	"""
-	Calculate parameters based on the given distribution.
-
-	Parameters:
-	years (np.ndarray): Array of years.
-	distribution (np.ndarray): Array of probabilities for each year.
-	uniform (bool): Flag indicating whether to use a uniform distribution for the calendar ages.
-
-	Returns:
-	(t_param1, t_param2)
-		- t_param1: Mean or median of the calendar ages.
-		- t_param2: Standard deviation or range of the calendar ages.
-	"""
-	if uniform:
-		# Calculate weighted median and range of the summed distribution
-		t_median = np.average(years, weights=distribution)
-		t_range = np.sqrt(np.average((years - t_median) ** 2, weights=distribution))
-		t_param1, t_param2 = t_median, t_range
-	else:
-		# Calculate the mean and standard deviation of the summed distribution
-		t_mean, t_std = calc_mean_std(years, distribution)
-		t_param1, t_param2 = t_mean, t_std
-	
-	return t_param1, t_param2
-
-
-def worker_fnc(params: Any, dates_n: int, t_param1: float, t_param2: float, uncertainties: List[float],
+def worker_fnc(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
                uncertainty_base: float, curve: np.ndarray, uniform: bool) -> np.ndarray:
 	return calc_sum(
-		generate_random_distributions(dates_n, t_param1, t_param2, uncertainties, uncertainty_base, curve, uniform))
+		generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve, uniform))
 
 
 def collect_fnc(data: np.ndarray, results: List[np.ndarray], pbar: tqdm) -> None:
@@ -195,7 +160,7 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	
 	sum_obs = calc_sum(distributions)
 	years = model.curve[:, 0]
-	t_param1, t_param2 = calculate_parameters(years, sum_obs, model.uniform)
+	t_mean, t_std = calc_mean_std(years, sum_obs)
 	
 	sums = []
 	sums_prev = None
@@ -205,10 +170,15 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
 			process_mp(worker_fnc, range(max(4, (todo - len(sums)) + 1)),
-			           [dates_n, t_param1, t_param2, model.uncertainties, model.uncertainty_base, model.curve,
+			           [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
 			            model.uniform],
 			           collect_fnc=collect_fnc, collect_args=[sums, pbar],
 			           max_cpus=max_cpus, max_queue_size=max_queue_size)
+			'''
+			for i in range(max(4, (todo - len(sums)) + 1)):
+				sums.append(worker_fnc(i, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform))
+				pbar.update(1)
+			'''  # DEBUG
 			if len(sums) >= todo:
 				sums_m = np.array(sums).mean(axis=0)
 				if sums_prev is not None:

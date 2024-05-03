@@ -121,6 +121,7 @@ def calc_range(years: np.ndarray, distribution: np.ndarray, p: float = 0.9545, p
 	
 	return [float(v_opt[1]), float(v_opt[0])]
 
+
 def calc_range_approx(years: np.ndarray, distribution: np.ndarray, p: float = 0.9545) -> [int, int] or [None, None]:
 	"""
 	Calculate the range of the given distribution - faster but less precise.
@@ -170,6 +171,7 @@ def calc_range_approx(years: np.ndarray, distribution: np.ndarray, p: float = 0.
 	r2 = np.average([r2, rp2], weights = weights)
 	
 	return [r1, r2]
+
 
 def calc_percentiles(distributions: List[np.ndarray] or np.ndarray, perc_lower: float, perc_upper: float) -> np.ndarray:
 	"""

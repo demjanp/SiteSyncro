@@ -10,7 +10,7 @@ from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
-from sitesyncro.utils.fnc_simulate import (get_params, generate_random_distributions)
+from sitesyncro.utils.fnc_simulate import (get_params, get_range_pool, generate_random_distributions)
 from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, samples_to_distributions)
 
 
@@ -201,9 +201,9 @@ def cluster_distributions(model: object) -> (Dict[int, Dict[int, List[str]]], Di
 
 
 def worker_fnc(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-               uncertainty_base: float, curve: np.ndarray, uniform: bool) -> np.ndarray:
+               uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray) -> np.ndarray:
 	distributions = generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve,
-	                                              uniform)
+	                                              uniform, range_pool)
 	D = calc_distance_matrix(distributions)
 	return D
 
@@ -252,6 +252,12 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 	
 	t_mean, t_std = get_params(distributions, model.curve, model.uniform)
 	
+	range_pool = None
+	if model.uniform:
+		range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
+		if not range_pool.size:
+			raise Exception("Could not generate random dates")
+	
 	# Get dating range of all samples
 	rng_min, rng_max = np.inf, -np.inf
 	for name in model.samples:
@@ -295,17 +301,18 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 			while True:
 				i += 1
 				while i >= len(D_pool):
+					'''
 					process_mp(worker_fnc, range(max(4, (todo - len(D_pool)) + 1)),
 					           [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
-					            model.uniform],
+					            model.uniform, range_pool],
 					           collect_fnc=collect_fnc, collect_args=[D_pool, pbar],
 					           max_cpus=max_cpus, max_queue_size=max_queue_size)
 					'''
 					for j in range(max(4, (todo - len(D_pool)) + 1)):
-						D_pool.append(worker_fnc(j, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform))
+						D_pool.append(worker_fnc(j, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform, range_pool))
 						pbar.n = len(D_pool)
 						pbar.refresh()
-					'''  # DEBUG
+					
 				D = squareform(D_pool[i])
 				sils_rnd.append(calc_silhouette(D, calc_clusters_hca(D, cluster_n)))
 				pbar.n = len(sils_rnd)

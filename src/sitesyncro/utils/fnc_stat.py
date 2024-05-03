@@ -121,6 +121,55 @@ def calc_range(years: np.ndarray, distribution: np.ndarray, p: float = 0.9545, p
 	
 	return [float(v_opt[1]), float(v_opt[0])]
 
+def calc_range_approx(years: np.ndarray, distribution: np.ndarray, p: float = 0.9545) -> [int, int] or [None, None]:
+	"""
+	Calculate the range of the given distribution - faster but less precise.
+
+	Parameters:
+	years (np.ndarray): Array of years.
+	distribution (np.ndarray): Array of probabilities for each year.
+	p (float): The desired percentile. Default is 0.9545.
+	p_threshold (float): The threshold for the percentile difference. Default is 0.0001.
+	max_multiplier (int): The maximum multiplier for the number of values. Default is 32.
+
+	Returns:
+	[from, to]: The range of the distribution, or [None, None] if the distribution sum is zero.
+	"""
+	
+	if not distribution.sum():
+		return [None, None]
+	
+	idxs = np.where(distribution > 0.0001)[0]
+	i0, i1 = idxs.min(), idxs.max()
+	years = years[i0:i1]
+	distribution = distribution[i0:i1]
+	
+	thresholds = np.unique(distribution)
+	thresholds.sort()
+	t_prev = thresholds[0]
+	p_sum = 0
+	p_sum_prev = 0
+	mask_prev = None
+	for t in thresholds[::-1]:
+		mask = (distribution > t)
+		if mask_prev is None:
+			mask_prev = mask.copy()
+		p_sum = distribution[mask].sum()
+		if p_sum >= p:
+			break
+		t_prev = t
+		p_sum_prev = p_sum
+		mask_prev = mask.copy()
+	
+	yrs = years[mask]
+	r1, r2 = yrs.max(), yrs.min()
+	yrs = years[mask_prev]
+	rp1, rp2 = yrs.max(), yrs.min()
+	weights = np.array([abs(p - p_sum_prev), abs(p - p_sum)])
+	r1 = np.average([r1, rp1], weights = weights)
+	r2 = np.average([r2, rp2], weights = weights)
+	
+	return [r1, r2]
 
 def calc_percentiles(distributions: List[np.ndarray] or np.ndarray, perc_lower: float, perc_upper: float) -> np.ndarray:
 	"""

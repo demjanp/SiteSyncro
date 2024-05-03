@@ -10,7 +10,7 @@ from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
-from sitesyncro.utils.fnc_simulate import (generate_random_distributions)
+from sitesyncro.utils.fnc_simulate import (get_params, generate_random_distributions)
 from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, samples_to_distributions)
 
 
@@ -250,8 +250,7 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 	
 	print("Testing clustering of %d distributions" % dates_n)
 	
-	sum_obs = calc_sum(distributions)
-	t_mean, t_std = calc_mean_std(model.years, sum_obs)
+	t_mean, t_std = get_params(distributions, model.curve, model.uniform)
 	
 	# Get dating range of all samples
 	rng_min, rng_max = np.inf, -np.inf

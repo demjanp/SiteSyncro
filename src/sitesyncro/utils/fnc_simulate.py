@@ -6,7 +6,29 @@ from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_radiocarbon import (calibrate)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_percentiles, samples_to_distributions)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_range, calc_range_approx, calc_percentiles, samples_to_distributions)
+
+
+def get_params(distributions, curve, uniform, approx = False):
+	"""
+	Calculate parameters of the summed distributions
+	
+	Returns:
+	(mean_sum, std_sum)
+	mean_sum: Mean (normal model) or center of range (uniform model)
+	std_sum: Standard deviation (normal model) or 1/2 range (uniform model)
+	"""
+	# Sum the distributions
+	sum_dist = calc_sum(distributions)
+	if uniform:
+		range_fnc = calc_range_approx if approx else calc_range
+		rng = range_fnc(curve[:,0], sum_dist)
+		mean_sum = np.mean(rng)
+		std_sum = abs(np.diff(rng)[0]) / 2
+	else:
+		# Calculate the mean and standard deviation of the summed distribution
+		mean_sum, std_sum = calc_mean_std(curve[:, 0], sum_dist)
+	return mean_sum, std_sum
 
 
 def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
@@ -59,13 +81,6 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 			distributions.append(distribution)
 		return np.array(dates), distributions
 	
-	def _analyze(distributions, curve):
-		# Sum the distributions
-		dist_summed = calc_sum(distributions)
-		# Calculate the mean and standard deviation of the summed distribution
-		mean_sum, std_sum = calc_mean_std(curve[:, 0], dist_summed)
-		return mean_sum, std_sum
-	
 	dates, distributions = _gen_distributions(dates_n, uncertainties, uncertainty_base, t_mean, t_std, uniform, curve)
 	
 	curve_min = curve[:, 1].min()
@@ -73,30 +88,41 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 	
 	# Adjust the dates until the mean and standard deviation of the summed distribution are close to the desired values
 	iteration = 0
-	scaling_factor = 0.5
 	c_threshold = t_std * 0.001
 	m, s = 0, 0
+	approx = True
 	while True:
 		# Adjust mean
 		reset = False
+		scaling_factor = 1
 		while not reset:
-			m, _ = _analyze(distributions, curve)
+			m, _ = get_params(distributions, curve, uniform, approx)
 			if abs(m - t_mean) <= c_threshold:
 				break
-			d = scaling_factor*(t_mean - m)
+			sfactor = scaling_factor
+			if uniform:
+				sfactor /= 8
+			d = sfactor*(t_mean - m)
 			for i in range(len(dates)):
 				dates[i][0] += d
 				if (dates[i][0] < curve_min) or (dates[i][0] > curve_max):
 					reset = True
 					break
 				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
+			scaling_factor *= 0.99
+			if scaling_factor < 0.001:
+				reset = True
 		# Adjust stdev
+		scaling_factor = 1
 		while not reset:
-			m, s = _analyze(distributions, curve)
+			_, s = get_params(distributions, curve, uniform, approx)
 			if abs(s - t_std) <= c_threshold:
 				break
 			# Scale dates around center
-			sf = 1 + scaling_factor*((t_std / s) - 1)
+			sfactor = scaling_factor
+			if uniform:
+				sfactor /= 4
+			sf = 1 + sfactor*((t_std / s) - 1)
 			d_m = dates[:,0].mean()
 			for i in range(len(dates)):
 				dates[i][0] = d_m + (dates[i][0] - d_m)*sf
@@ -104,7 +130,9 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 					reset = True
 					break
 				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
-		
+			scaling_factor *= 0.99
+			if scaling_factor < 0.001:
+				reset = True
 		iteration += 1
 		if (iteration > max_iterations) or reset:
 			# Re-initialize
@@ -112,6 +140,8 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 			iteration = 0
 			continue
 		
+		approx = False
+		m, s = get_params(distributions, curve, uniform, approx)
 		if max(abs(m - t_mean), abs(s - t_std)) <= c_threshold:
 			break
 	
@@ -158,9 +188,7 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	
 	print("Testing %d distributions" % dates_n)
 	
-	sum_obs = calc_sum(distributions)
-	years = model.curve[:, 0]
-	t_mean, t_std = calc_mean_std(years, sum_obs)
+	t_mean, t_std = get_params(distributions, model.curve, model.uniform)
 	
 	sums = []
 	sums_prev = None
@@ -193,6 +221,7 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	
 	sums_rnd = np.array(sums)
 	
+	sum_obs = calc_sum(distributions)
 	mask = (sums_rnd.std(axis=0) > 0)
 	p = (1 - norm(sums_rnd[:, mask].mean(axis=0), sums_rnd[:, mask].std(axis=0)).cdf(sum_obs[mask])).min()
 	

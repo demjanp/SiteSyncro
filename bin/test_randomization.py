@@ -1,6 +1,7 @@
 from sitesyncro import Model
 from sitesyncro.utils.fnc_radiocarbon import (get_curve)
 
+import os
 import json
 import numpy as np
 
@@ -8,9 +9,11 @@ UNCERTAINTY_BASE = 30
 GAP = 300
 CENTER_DATE = 3500
 DATES_N = {'small': 10, 'large': 50}
-ITERATIONS = 10
+#ITERATIONS = 10
+ITERATIONS = 1
 
 FRESULTS = "test_results.json"
+DIRECTORY = "test_rnd"
 
 def sim_event(cal_age_bp, n_dates, curve):
 	
@@ -75,16 +78,16 @@ if __name__ == '__main__':
 			for i in range(ITERATIONS):
 				print("\nClusters: %d, Sample size: %s, Iter. %d/%d\n" % (clusters_n, sample_size, i + 1, ITERATIONS))
 				dates = sim_clustered(CENTER_DATE, GAP, clusters_n, DATES_N[sample_size], UNCERTAINTY_BASE, curve)
-				model = Model(directory = "test_rnd", uniform = (clusters_n == 0), overwrite = True)
+				model = Model(directory = DIRECTORY, uniform = (clusters_n == 0), overwrite = True)
 				n = 1
 				for phase, age, uncert in dates:
 					name = "%d_%d" % (phase, n)
 					n += 1
 					model.add_sample(name, age, uncert)
 				model.process_randomization()
-				model.plot_randomized(fname = "rnd_%d_%s.pdf" % (clusters_n, sample_size))
+				model.plot_randomized(fname = os.path.join(DIRECTORY, "rnd_%d_%s_%03d.pdf" % (clusters_n, sample_size, i)))
 				model.process_clustering()
-				model.plot_clusters(fname = "clu_%d_%s.pdf" % (clusters_n, sample_size))
+				model.plot_clusters(fname = os.path.join(DIRECTORY, "clu_%d_%s_%03d.pdf" % (clusters_n, sample_size, i)))
 				model.process_phasing(by_clusters = True)
 				distr_check = None
 				clustering_check = None
@@ -124,7 +127,7 @@ if __name__ == '__main__':
 					phasing_check = ph_good / len(model.samples)
 				
 				results[clusters_n][sample_size].append([distr_check, clustering_check, phasing_check, model.random_p, model.cluster_opt_n])
-				with open(FRESULTS, 'w') as file:
+				with open(os.path.join(DIRECTORY, FRESULTS), 'w') as file:
 					json.dump(results, file)
 				
 				print("Distr: %0.2f, Clust: %0.2f, Phasing: %0.2f" % (distr_check, clustering_check, phasing_check))

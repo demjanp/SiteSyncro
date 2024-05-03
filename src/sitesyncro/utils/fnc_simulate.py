@@ -110,7 +110,7 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 					break
 				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
 			scaling_factor *= 0.99
-			if scaling_factor < 0.001:
+			if scaling_factor < 0.01:
 				reset = True
 		# Adjust stdev
 		scaling_factor = 1
@@ -131,7 +131,7 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 					break
 				distributions[i] = calibrate(dates[i][0], dates[i][1], curve)
 			scaling_factor *= 0.99
-			if scaling_factor < 0.001:
+			if scaling_factor < 0.01:
 				reset = True
 		iteration += 1
 		if (iteration > max_iterations) or reset:

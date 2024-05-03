@@ -65,7 +65,9 @@ class Model(object):
 	"""
 	
 	def __init__(self, **kwargs):
-
+		
+		self._range_pool = [None, None]  # [signature, range_pool]
+		
 		defaults = dict(
 			directory='model',
 			samples=[],
@@ -187,6 +189,18 @@ class Model(object):
 			directory = os.path.join(parent_dir, os.path.basename(directory) + "_" + str(n))
 		os.makedirs(directory)
 		return directory
+	
+	def _set_range_pool(self, range_pool, t_mean, t_std):
+		
+		signature = "#".join([",".join([str(val) for val in self.uncertainties]), str(self.uncertainty_base), self.curve_name, str(t_mean), str(t_std)])
+		self._range_pool = [signature, range_pool]
+	
+	def _get_range_pool(self, t_mean, t_std):
+		
+		signature = "#".join([",".join([str(val) for val in self.uncertainties]), str(self.uncertainty_base), self.curve_name, str(t_mean), str(t_std)])
+		if self._range_pool[0] == signature:
+			return self._range_pool[1]
+		return None
 	
 	# Assigned properties
 	

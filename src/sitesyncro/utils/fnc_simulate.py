@@ -256,9 +256,12 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	
 	range_pool = None
 	if model.uniform:
-		range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
+		range_pool = model._get_range_pool(t_mean, t_std)
+		if range_pool is None:
+			range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
 		if not range_pool.size:
 			raise Exception("Could not generate random dates")
+		model._set_range_pool(range_pool, t_mean, t_std)
 	
 	sums = []
 	sums_prev = None
@@ -301,3 +304,4 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	sums_rnd_lower, sums_rnd_upper = calc_percentiles(sums_rnd, perc_lower, perc_upper)
 	
 	return sum_obs, sums_rnd_lower, sums_rnd_upper, p
+

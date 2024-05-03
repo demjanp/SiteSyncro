@@ -214,6 +214,7 @@ def collect_fnc(data: Any, D_pool: List[np.ndarray], pbar: tqdm) -> None:
 	pbar.n = len(D_pool)
 	pbar.refresh()
 
+
 def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_size: int = -1) -> (
 		Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], Dict[int, float], Dict[int, float]):
 	"""
@@ -254,9 +255,12 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 	
 	range_pool = None
 	if model.uniform:
-		range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
+		range_pool = model._get_range_pool(t_mean, t_std)
+		if range_pool is None:
+			range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
 		if not range_pool.size:
 			raise Exception("Could not generate random dates")
+		model._set_range_pool(range_pool, t_mean, t_std)
 	
 	# Get dating range of all samples
 	rng_min, rng_max = np.inf, -np.inf

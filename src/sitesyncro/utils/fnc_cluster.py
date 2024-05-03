@@ -9,9 +9,8 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from tqdm import tqdm
 
-from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_simulate import (get_params, get_range_pool, generate_random_distributions)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, samples_to_distributions)
+from sitesyncro.utils.fnc_stat import (calc_sum, samples_to_distributions)
 
 
 def calc_distance_matrix(distributions: List[np.ndarray]) -> np.ndarray:
@@ -201,9 +200,10 @@ def cluster_distributions(model: object) -> (Dict[int, Dict[int, List[str]]], Di
 
 
 def worker_fnc(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-               uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray) -> np.ndarray:
+				uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray) -> np.ndarray:
+	
 	distributions = generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve,
-	                                              uniform, range_pool)
+												uniform, range_pool)
 	D = calc_distance_matrix(distributions)
 	return D
 
@@ -257,7 +257,8 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 	if model.uniform:
 		range_pool = model._get_range_pool(t_mean, t_std)
 		if range_pool is None:
-			range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, max_cpus=max_cpus, max_queue_size=max_queue_size)
+			range_pool = get_range_pool(t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
+										max_cpus=max_cpus, max_queue_size=max_queue_size)
 		if not range_pool.size:
 			raise Exception("Could not generate random dates")
 		model._set_range_pool(range_pool, t_mean, t_std)
@@ -305,18 +306,20 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 			while True:
 				i += 1
 				while i >= len(D_pool):
-					'''
-					process_mp(worker_fnc, range(max(4, (todo - len(D_pool)) + 1)),
-					           [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
-					            model.uniform, range_pool],
-					           collect_fnc=collect_fnc, collect_args=[D_pool, pbar],
-					           max_cpus=max_cpus, max_queue_size=max_queue_size)
-					'''
-					for j in range(max(4, (todo - len(D_pool)) + 1)):
-						D_pool.append(worker_fnc(j, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform, range_pool))
-						pbar.n = len(D_pool)
-						pbar.refresh()
-					
+					n_dists = max(4, (todo - len(D_pool)) + 1)
+					if n_dists > 200:						
+						process_mp(worker_fnc, range(n_dists),
+								   [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
+									model.uniform, range_pool],
+								   collect_fnc=collect_fnc, collect_args=[D_pool, pbar],
+								   max_cpus=max_cpus, max_queue_size=max_queue_size)
+					else:
+						for j in range(n_dists):
+							D_pool.append(worker_fnc(j, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base,
+													 model.curve, model.uniform, range_pool))
+							pbar.n = len(D_pool)
+							pbar.refresh()
+				
 				D = squareform(D_pool[i])
 				sils_rnd.append(calc_silhouette(D, calc_clusters_hca(D, cluster_n)))
 				pbar.n = len(sils_rnd)
@@ -353,7 +356,7 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 
 
 def find_opt_clusters(clusters: Dict[int, Dict[int, List[int]]], ps: Dict[int, float], sils: Dict[int, float],
-                      p_value: float = 0.05) -> int or None:
+					  p_value: float = 0.05) -> int or None:
 	"""
 	Find the optimal number of clusters based on Silhouette scores and p-values of clustering solutions.
 
@@ -418,7 +421,7 @@ def proc_clustering(model: object, max_cpus: int = -1, max_queue_size: int = -1)
 		opt_n = model.cluster_n
 	else:
 		clusters, means, sils, ps = test_distribution_clustering(model, max_cpus=max_cpus,
-		                                                         max_queue_size=max_queue_size)
+																 max_queue_size=max_queue_size)
 		opt_n = find_opt_clusters(clusters, ps, sils, model.p_value)
 	if opt_n is None:
 		opt_n = 0

@@ -94,7 +94,7 @@ def gen_random_dists_uniform(dates_n: int, t_mean: float, t_std: float, uncertai
 
 
 def gen_random_dists_normal(dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-                                  uncertainty_base: float, curve: np.ndarray, max_iterations: int = 10000) -> List[np.ndarray]:
+								  uncertainty_base: float, curve: np.ndarray, max_iterations: int = 10000) -> List[np.ndarray]:
 	"""
 	Generate sets of randomized distributions based on observed distributions.
 
@@ -200,8 +200,8 @@ def gen_random_dists_normal(dates_n: int, t_mean: float, t_std: float, uncertain
 
 
 def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-                                  uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray = None,
-                                  max_iterations: int = 10000, max_cpus: int = -1, max_queue_size: int = -1) -> List[np.ndarray]:
+								  uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray = None,
+								  max_iterations: int = 10000, max_cpus: int = -1, max_queue_size: int = -1) -> List[np.ndarray]:
 	
 	if uniform:
 		if range_pool is None:
@@ -213,7 +213,7 @@ def generate_random_distributions(dates_n: int, t_mean: float, t_std: float, unc
 
 
 def test_distributions_worker(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-               uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray) -> np.ndarray:
+			   uncertainty_base: float, curve: np.ndarray, uniform: bool, range_pool: np.ndarray) -> np.ndarray:
 	
 	return calc_sum(generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve, uniform, range_pool))
 
@@ -270,16 +270,17 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 	with tqdm(total=todo * 2) as pbar:
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
-			'''
-			process_mp(test_distributions_worker, range(max(4, (todo - len(sums)) + 1)),
-			           [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
-			            model.uniform, range_pool],
-			           collect_fnc=test_distributions_collect, collect_args=[sums, pbar],
-			           max_cpus=max_cpus, max_queue_size=max_queue_size)
-			'''
-			for i in range(max(4, (todo - len(sums)) + 1)):
-				sums.append(test_distributions_worker(i, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform, range_pool))
-				pbar.update(1)
+			n_dists = max(4, (todo - len(sums)) + 1)
+			if n_dists > 200:
+				process_mp(test_distributions_worker, range(n_dists),
+						[dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
+						model.uniform, range_pool],
+						collect_fnc=test_distributions_collect, collect_args=[sums, pbar],
+						max_cpus=max_cpus, max_queue_size=max_queue_size)
+			else:
+				for i in range(n_dists):
+					sums.append(test_distributions_worker(i, dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform, range_pool))
+					pbar.update(1)
 			
 			if len(sums) >= todo:
 				sums_m = np.array(sums).mean(axis=0)

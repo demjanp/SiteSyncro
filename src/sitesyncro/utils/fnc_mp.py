@@ -9,7 +9,7 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max
 	while True:
 		try:
 			params = params_mp.get(timeout=10)
-		except queue.Empty:
+		except mp.Empty:
 			return
 		except:
 			time.sleep(0.01)

@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import threading
 import time
 
 from typing import Union, Generator, Callable
@@ -19,8 +20,8 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max
 
 
 def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [],
-               collect_fnc: Callable = None, collect_args: list = [], progress_fnc: Callable = None,
-               progress_args: list = [], max_cpus: int = -1, max_queue_size: int = -1) -> None:
+			   collect_fnc: Callable = None, collect_args: list = [], progress_fnc: Callable = None,
+			   progress_args: list = [], max_cpus: int = -1, max_queue_size: int = -1) -> None:
 	"""
 	Process multiple tasks in parallel using multiprocessing.
 
@@ -48,6 +49,9 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 		elif callable(progress_fnc):
 			progress_fnc(done, todo, *progress_args)
 	
+	def start_process(proc):
+		proc.start()
+	
 	params_mp = mp.Queue()
 	todo = 0
 	for params in params_list:
@@ -63,11 +67,11 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 		max_queue_size = n_cpus * 10
 	call_progress(progress_fnc, done, todo, progress_args)
 	procs = []
+	while len(procs) < n_cpus:
+		procs.append(
+			mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, max_queue_size, worker_args)))
+		threading.Thread(target=start_process, args=(procs[-1],)).start()
 	while done < todo:
-		if len(procs) < n_cpus:
-			procs.append(
-				mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, max_queue_size, worker_args)))
-			procs[-1].start()
 		if not collect_mp.empty():
 			data = collect_mp.get()
 			done += 1
@@ -77,5 +81,8 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 		else:
 			time.sleep(0.5)
 	for proc in procs:
-		proc.terminate()
+		try:
+			proc.terminate()
+		except:
+			pass
 		proc = None

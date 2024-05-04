@@ -9,16 +9,18 @@ UNCERTAINTY_BASE = 30
 GAP = 300
 CENTER_DATE = 3500
 DATES_N = {'small': 10, 'large': 50}
-#ITERATIONS = 10
-ITERATIONS = 1
+ITERATIONS = 10
 
 FRESULTS = "test_results.json"
 DIRECTORY = "test_rnd"
 
-def sim_event(cal_age_bp, n_dates, curve):
+def sim_event(cal_age_bp, curve):
+	# Simulate a C-14 dated event
 	
-	c14_age, error = curve[np.argmin(np.abs(curve[:,0] - cal_age_bp))][1:3]
-	return np.random.normal(c14_age, error, n_dates)
+	# Find the closest index in the calibration curve
+	idx = np.argmin(np.abs(curve[:, 0] - cal_age_bp))
+	# Get the corresponding radiocarbon age
+	return curve[idx, 1]
 
 def sim_clustered(cal_bp_mean, gap, clusters_n, dates_n, uncertainty_base, curve):
 	# Simulate dates_n dates from clusters_n of events with gaps of gap years around cal_bp_mean
@@ -30,8 +32,9 @@ def sim_clustered(cal_bp_mean, gap, clusters_n, dates_n, uncertainty_base, curve
 		means.sort()
 		dates = []
 		for cal_age in means:
-			c14age = sim_event(cal_age, 1, curve)[0]
-			dates.append([1, c14age, np.random.normal(uncertainty_base, 5)])
+			c14age = sim_event(cal_age, curve)
+			uncert = uncertainty_base * np.exp(c14age / (2 * 8033))
+			dates.append([1, c14age, np.random.normal(uncert, 2)])
 		return dates
 	
 	if clusters_n == 1:
@@ -40,8 +43,9 @@ def sim_clustered(cal_bp_mean, gap, clusters_n, dates_n, uncertainty_base, curve
 		means.sort()
 		dates = []
 		for cal_age in means:
-			c14age = sim_event(cal_age, 1, curve)[0]
-			dates.append([1, c14age, np.random.normal(uncertainty_base, 5)])
+			c14age = sim_event(cal_age, curve)
+			uncert = uncertainty_base * np.exp(c14age / (2 * 8033))
+			dates.append([1, c14age, np.random.normal(uncert, 2)])
 		return dates
 	
 	# Randomly split dates_n between the clusters
@@ -62,8 +66,10 @@ def sim_clustered(cal_bp_mean, gap, clusters_n, dates_n, uncertainty_base, curve
 	means = means[::-1]
 	dates = []
 	for i, mean in enumerate(means):
-		for c14age in sim_event(mean, ns[i], curve):
-			dates.append([i + 1, c14age, np.random.normal(uncertainty_base, 5)])
+		for cal_age_bp in np.random.normal(mean, gap / 2, ns[i]):
+			c14age = sim_event(cal_age_bp, curve)
+			uncert = uncertainty_base * np.exp(c14age / (2 * 8033))
+			dates.append([i + 1, c14age, np.random.normal(uncert, 2)])
 	return dates
 
 if __name__ == '__main__':

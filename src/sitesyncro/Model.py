@@ -784,19 +784,13 @@ class Model(object):
 	def import_csv(self, fname: str) -> None:
 		"""
 		Loads sample data from a CSV file.
-
+		
 		The file should be in the following format:
 		- Each line represents a data record.
 		- Data fields are separated by semicolons.
 		- The first line is a header and is skipped.
 		- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
-		- The fields are processed as follows:
-			- Sample, Context, and Area are stripped of leading and trailing whitespace.
-			- C14 Age and Uncertainty are converted to floats.
-			- Phase is converted to a float if possible, otherwise it is set to None.
-			- Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.
-			- Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.
-
+		
 		:param fname: The file path of the CSV file to be imported.
 		:type fname: str
 		:raises ValueError: If the input file does not exist or is not formatted correctly.

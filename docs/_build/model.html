@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Model Class &#8212; SiteSyncro 0.9.3 documentation</title>
+    <title>Model Class &#8212; SiteSyncro 0.9.4 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
-    <script src="_static/documentation_options.js?v=0e439607"></script>
+    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="index.html" title="Contents"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Class</a></li> 
       </ul>
     </div>  
@@ -328,17 +328,7 @@ The groups are represented as a dictionary where the keys are the group names an
 - Each line represents a data record.
 - Data fields are separated by semicolons.
 - The first line is a header and is skipped.
-- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
-- The fields are processed as follows:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>Sample, Context, and Area are stripped of leading and trailing whitespace.</p></li>
-<li><p>C14 Age and Uncertainty are converted to floats.</p></li>
-<li><p>Phase is converted to a float if possible, otherwise it is set to None.</p></li>
-<li><p>Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.</p></li>
-<li><p>Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.</p></li>
-</ul>
-</div></blockquote>
+- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – The file path of the CSV file to be imported.</p>
@@ -1052,7 +1042,7 @@ reset_calculated: {attribute, …}; calculated attributes that have been reset</
         <li class="right" >
           <a href="index.html" title="Contents"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.4 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Class</a></li> 
       </ul>
     </div>

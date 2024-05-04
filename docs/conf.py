@@ -6,10 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from sitesyncro import __version__
+
 project = 'SiteSyncro'
 copyright = '2024, Peter Demján'
 author = 'Peter Demján'
-release = '0.9.3'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

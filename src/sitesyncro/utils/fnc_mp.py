@@ -1,3 +1,4 @@
+from queue import Empty as QueueEmpty
 import multiprocessing as mp
 import threading
 import time
@@ -9,7 +10,7 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max
 	while True:
 		try:
 			params = params_mp.get(timeout=10)
-		except mp.Empty:
+		except QueueEmpty:
 			return
 		except:
 			time.sleep(0.01)

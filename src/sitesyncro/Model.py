@@ -87,7 +87,7 @@ class Model(object):
 			if key not in defaults:
 				raise Exception("Invalid argument: %s" % key)
 			if type(kwargs[key]) != type(defaults[key]):
-				raise Exception("Invalid argument type for %s: %s" % (key, type(kwargs[key].__name__)))
+				raise Exception("Invalid argument type for %s: %s" % (key, type(kwargs[key]).__name__))
 		
 		overwrite = kwargs.pop('overwrite', False)
 		
@@ -703,11 +703,20 @@ class Model(object):
 
 		"""
 		
-		samples = dict([(name, self.samples[name].copy()) for name in self.samples])
-		model = Model(directory, samples, self.curve_name, self.phase_model,
-					  self.cluster_n, self.min_years_per_cluster, self.uniform, self.p_value, self.uncertainty_base,
-					  self.oxcal_url
-					  )
+		model = Model(
+			directory = directory,
+			samples = [self.samples[name].copy() for name in self.samples],
+			curve_name = self.curve_name,
+			phase_model = self.phase_model,
+			cluster_n = self.cluster_n,
+			min_years_per_cluster = self.min_years_per_cluster,
+			uniform = self.uniform,
+			p_value = self.p_value,
+			uncertainty_base = self.uncertainty_base,
+			npass = self.npass,
+			convergence = self.convergence,
+			oxcal_url = self.oxcal_url
+		)
 		for key in self._calculated():
 			model._data[key] = getattr(self, key)
 		return model

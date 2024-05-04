@@ -6,23 +6,22 @@ from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_radiocarbon import (calibrate)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_range, calc_range_approx, calc_percentiles, samples_to_distributions)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_range, calc_percentiles, samples_to_distributions)
 
 
-def get_params(distributions, curve, uniform, approx = False):
+def get_params(distributions, curve, uniform):
 	"""
 	Calculate parameters of the summed distributions
 	
 	Returns:
 	(mean_sum, std_sum)
-	mean_sum: Mean (normal model) or center of range (uniform model)
+	mean_sum: Mean (normal model) or center of 1-sigma range (uniform model)
 	std_sum: Standard deviation (normal model) or 1/2 range (uniform model)
 	"""
 	# Sum the distributions
 	sum_dist = calc_sum(distributions)
 	if uniform:
-		range_fnc = calc_range_approx if approx else calc_range
-		rng = range_fnc(curve[:,0], sum_dist)
+		rng = calc_range(curve[:,0], sum_dist, p = 0.6827)
 		mean_sum = np.mean(rng)
 		std_sum = abs(np.diff(rng)[0]) / 2
 	else:
@@ -36,7 +35,7 @@ def gen_random_dists_uniform(dates_n: int, t_mean: float, t_std: float, uncertai
 	def _get_params(dates, curve):
 		
 		sum_dist = calc_sum([calibrate(age, uncert, curve) for age, uncert in dates])
-		rng = calc_range(curve[:,0], sum_dist)
+		rng = calc_range(curve[:,0], sum_dist, p = 0.6827)
 		mean_sum = np.mean(rng)
 		std_sum = abs(np.diff(rng)[0]) / 2
 		return mean_sum, std_sum	

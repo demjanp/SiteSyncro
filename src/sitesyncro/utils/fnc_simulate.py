@@ -15,13 +15,13 @@ def get_params(distributions, curve, uniform):
 	
 	Returns:
 	(mean_sum, std_sum)
-	mean_sum: Mean (normal model) or center of 1-sigma range (uniform model)
-	std_sum: Standard deviation (normal model) or 1/2 range (uniform model)
+	mean_sum: Mean (normal model) or the center of the 2-sigma range (uniform model)
+	std_sum: Standard deviation (normal model) or 1/2 of the 2-sigma range (uniform model)
 	"""
 	# Sum the distributions
 	sum_dist = calc_sum(distributions)
 	if uniform:
-		rng = calc_range(curve[:,0], sum_dist, p = 0.6827)
+		rng = calc_range(curve[:,0], sum_dist, p = 0.9545)
 		mean_sum = np.mean(rng)
 		std_sum = abs(np.diff(rng)[0]) / 2
 	else:
@@ -35,7 +35,7 @@ def gen_random_dists_uniform(dates_n: int, t_mean: float, t_std: float, uncertai
 	distributions = []
 	sum_dists = np.zeros(curve.shape[0], dtype = float)
 	while len(distributions) < dates_n:
-		cal_age = np.random.uniform(t_mean - t_std*2, t_mean + t_std*2)
+		cal_age = np.random.uniform(t_mean - t_std*2.5, t_mean + t_std*2.5)
 		age = curve[np.argmin(np.abs(curve[:, 0] - cal_age)), 1]
 		if uncertainties:
 			uncert = np.random.choice(uncertainties)
@@ -46,7 +46,7 @@ def gen_random_dists_uniform(dates_n: int, t_mean: float, t_std: float, uncertai
 		s = s_d.sum()
 		if s > 0:
 			s_d /= s
-		rng = calc_range_approx(curve[:,0], s_d, p = 0.6827)
+		rng = calc_range_approx(curve[:,0], s_d, p = 0.9545)
 		if (rng[0] <= t_mean + t_std) and (rng[1] >= t_mean - t_std):
 			distributions.append(dist)
 			sum_dists += dist

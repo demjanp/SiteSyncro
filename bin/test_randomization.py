@@ -8,8 +8,9 @@ import numpy as np
 UNCERTAINTY_BASE = 30
 GAP = 300
 CENTER_DATE = 3500
-DATES_N = {'small': 10, 'large': 50}
-ITERATIONS = 10
+#DATES_N = {'small': 10, 'large': 50}
+DATES_N = {'large': 50}
+ITERATIONS = 1
 
 FRESULTS = "test_results.json"
 DIRECTORY = "test_rnd"

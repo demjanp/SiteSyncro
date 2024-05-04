@@ -297,7 +297,7 @@ def test_distribution_clustering(model: object, max_cpus: int = -1, max_queue_si
 				i += 1
 				while i >= len(D_pool):
 					n_dists = max(4, (todo - len(D_pool)) + 1)
-					if n_dists > 10:						
+					if n_dists > 50:						
 						process_mp(worker_fnc, range(n_dists),
 								   [dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve,
 									model.uniform],

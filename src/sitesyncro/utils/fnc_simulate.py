@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_radiocarbon import (calibrate)
-from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_range, calc_percentiles, samples_to_distributions)
+from sitesyncro.utils.fnc_stat import (calc_sum, calc_mean_std, calc_range, calc_range_approx, calc_percentiles, samples_to_distributions)
 
 
 def get_params(distributions, curve, uniform):
@@ -32,46 +32,24 @@ def get_params(distributions, curve, uniform):
 
 def gen_random_dists_uniform(dates_n: int, t_mean: float, t_std: float, uncertainties: List[float], uncertainty_base: float, curve: np.ndarray) -> List[np.ndarray]:
 	
-	def _get_params(dates, curve):
-		
-		sum_dist = calc_sum([calibrate(age, uncert, curve) for age, uncert in dates])
-		rng = calc_range(curve[:,0], sum_dist, p = 0.6827)
-		mean_sum = np.mean(rng)
-		std_sum = abs(np.diff(rng)[0]) / 2
-		return mean_sum, std_sum	
-	
-	def _gen_dates(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve):
-		
-		cal_ages = np.random.uniform(t_mean - t_std, t_mean + t_std, dates_n)
-		dates = []
-		for cal_age in cal_ages:
-			age = curve[np.argmin(np.abs(curve[:, 0] - cal_age)), 1]
-			if uncertainties:
-				uncert = np.random.choice(uncertainties)
-			else:
-				uncert = uncertainty_base * np.exp(age / (2 * 8033))
-			dates.append([age, uncert])
-		return np.array(dates)
-	
-	dates = _gen_dates(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve)
-	c_threshold = t_std * 0.001
-	scaling_factor = 1/4
-	curve_min = curve[:, 1].min()
-	curve_max = curve[:, 1].max()
-	while True:
-		m, s = _get_params(dates, curve)
-		if max(abs(m - t_mean), abs(s - t_std)) <= c_threshold:
-			break
-		dates[:,0] += scaling_factor*(t_mean - m)
-		sf = 1 + scaling_factor*((t_std / s) - 1)
-		d_m = dates[:,0].mean()
-		dates[:,0] = d_m + (dates[:,0] - d_m)*sf
-		scaling_factor *= 0.99
-		if (scaling_factor < 0.05) or (dates[:,0].min() < curve_min) or (dates[:,0].max() > curve_max):
-			dates = _gen_dates(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve)
-			scaling_factor = 1/4
-	distributions = [calibrate(age, uncert, curve) for age, uncert in dates]
-	
+	distributions = []
+	sum_dists = np.zeros(curve.shape[0], dtype = float)
+	while len(distributions) < dates_n:
+		cal_age = np.random.uniform(t_mean - t_std*2, t_mean + t_std*2)
+		age = curve[np.argmin(np.abs(curve[:, 0] - cal_age)), 1]
+		if uncertainties:
+			uncert = np.random.choice(uncertainties)
+		else:
+			uncert = uncertainty_base * np.exp(age / (2 * 8033))
+		dist = calibrate(age, uncert, curve)
+		s_d = sum_dists + dist
+		s = s_d.sum()
+		if s > 0:
+			s_d /= s
+		rng = calc_range_approx(curve[:,0], s_d, p = 0.6827)
+		if (rng[0] <= t_mean + t_std) and (rng[1] >= t_mean - t_std):
+			distributions.append(dist)
+			sum_dists += dist
 	return distributions
 
 
@@ -214,7 +192,7 @@ def test_distributions(model: object, max_cpus: int = -1, max_queue_size: int = 
 		pbar.set_description("Convergence: %0.3f" % (c))
 		while True:
 			n_dists = max(4, (todo - len(sums)) + 1)
-			if n_dists > 10:
+			if n_dists > 50:
 				process_mp(test_distributions_worker, range(n_dists),
 						[dates_n, t_mean, t_std, model.uncertainties, model.uncertainty_base, model.curve, model.uniform],
 						collect_fnc=test_distributions_collect, collect_args=[sums, pbar],

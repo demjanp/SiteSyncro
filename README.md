@@ -3,7 +3,8 @@ Site-specific chronological modeling and synchronization
 
 Created on 10.4.2024
 
-<details>
+Project homepage: [https://github.com/demjanp/SiteSyncro](https://github.com/demjanp/SiteSyncro)
+
 <summary>Table of Contents</summary>
 
 1. [About SiteSyncro](#about)
@@ -18,8 +19,6 @@ Created on 10.4.2024
 5. [Contact](#contact)
 6. [Acknowledgements](#acknowledgements)
 7. [License](#license)
-
-</details>
 
 ## About SiteSyncro <a name="about"></a>
 SiteSyncro is a Python-based tool designed for site-specific chronological modeling and synchronization based on radiocarbon dates from stratigraphically and/or spatially linked archaeological contexts. It uses the [OxCal](https://c14.arch.ox.ac.uk/oxcal.html) program for bayesian modelling and a method of temporal clustering of the modelled C-14 dates to determine whether they represent separate events, or phases in time.
@@ -52,7 +51,7 @@ SiteSyncro requires [OxCal](https://c14.arch.ox.ac.uk/oxcal.html) to be installe
 ## Usage <a name="usage"></a>
 
 ### Running the Script
-To use SiteSyncro, you need to run the [process.py](bin/process.py) or `sitesyncro.exe` script. This script accepts several command-line arguments. Here's a basic example of how to run the script:
+To use SiteSyncro, you need to run the [process.py](https://github.com/demjanp/SiteSyncro/blob/main/bin/process.py) or `sitesyncro.exe` script. This script accepts several command-line arguments. Here's a basic example of how to run the script:
 ```
 python process.py -input data_sample.csv
 ```
@@ -99,7 +98,7 @@ The input file name must be a semicolon-separated CSV file with the following 10
 9. Redeposited: Flag indicating whether the sample could be redeposited from a different context (required, 1 or 0)
 10. Outlier: Flag indicating whether the sample is an outlier and should not be used for modeling (required, 1 or 0)
 
-See [data_sample.csv](data_sample.csv) for an example of the input file format.
+See [data_sample.csv](https://github.com/demjanp/SiteSyncro/blob/main/data_sample.csv) for an example of the input file format.
 
 ### Model Class <a name="model_class"></a>
 All functions regarding modeling are encapsulated in the `Model` class. Here is a basic example of how to use it:
@@ -217,4 +216,4 @@ This software uses the following open source packages:
 
 ## License <a name="license"></a>
 
-This code is licensed under the [GNU GENERAL PUBLIC LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) - see the [LICENSE](LICENSE) file for details
+This code is licensed under the [GNU GENERAL PUBLIC LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) - see the [LICENSE](https://github.com/demjanp/SiteSyncro/blob/main/LICENSE) file for details

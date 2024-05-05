@@ -1,6 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 
 from sitesyncro import __version__
+import myst_parser
 
 project = 'SiteSyncro'
 copyright = '2024, Peter Demján'

@@ -4,6 +4,7 @@ Site-specific chronological modeling and synchronization
 Created on 10.4.2024
 
 Project homepage: [https://github.com/demjanp/SiteSyncro](https://github.com/demjanp/SiteSyncro)
+
 Documentation: [https://sitesyncro.readthedocs.io](https://sitesyncro.readthedocs.io)
 
 <summary>Table of Contents</summary>

@@ -43,10 +43,10 @@ class Sample(object):
 	:param area: Excavation area
 	:type area: str, optional
 	
-	:param excavation_area_phase: Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)
+	:param excavation_area_phase: Chronological phase of the context within the excavation area (integer, higher = earlier (older) phase)
 	:type excavation_area_phase: float, optional
 	
-	:param earlier_than: List of names of samples which are stratigraphically later (younger) than this sample
+	:param earlier_than: List of names of samples which are stratigraphically earlier (older) than this sample
 	:type earlier_than: List[str], optional
 	
 	:param curve: Radiocarbon calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
@@ -228,7 +228,7 @@ class Sample(object):
 		"""
 		The chronological phase of the context within the excavation area.
 		
-		:return: The chronological phase of the context within the excavation area (integer, lower = earlier (older) phase) or None if it's not set.
+		:return: The chronological phase of the context within the excavation area (integer, higher = earlier (older) phase) or None if it's not set.
 		:rtype: float or None
 		"""
 		
@@ -237,9 +237,9 @@ class Sample(object):
 	@property
 	def earlier_than(self) -> List[str] or None:
 		"""
-		List of names of samples which are stratigraphically later (younger) than this sample.
+		List of names of samples which are stratigraphically earlier (older) than this sample.
 
-		:return: List of names of samples which are stratigraphically later (younger) than this sample or None if it's not set.
+		:return: List of names of samples which are stratigraphically earlier (older) than this sample or None if it's not set.
 		:rtype: List[str] or None
 		"""
 		

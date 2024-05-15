@@ -12,11 +12,11 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 	- Each line represents a data record.
 	- Data fields are separated by semicolons.
 	- The first line is a header and is skipped.
-	- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
+	- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Excavation Area Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
 	- The fields are processed as follows:
 		- Sample, Context, and Area are stripped of leading and trailing whitespace.
 		- C14 Age and Uncertainty are converted to floats.
-		- Phase is converted to a float if possible, otherwise it is set to None.
+		- Excavation Area Phase (higher = earlier) is converted to a float if possible, otherwise it is set to None.
 		- Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.
 		- Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.
 
@@ -38,7 +38,7 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 				elements = line.split(";")
 				if len(elements) != 10:
 					raise Exception(f"Incorrect data format in line: {line}")
-				sample, context, area, age, uncertainty, phase, earlier_than, long_lived, redeposited, outlier = elements
+				sample, context, area, age, uncertainty, eap, earlier_than, long_lived, redeposited, outlier = elements
 				try:
 					age = float(age.strip())
 					uncertainty = float(uncertainty.strip())
@@ -47,11 +47,11 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 					outlier = int(outlier.strip())
 				except ValueError:
 					raise Exception(f"Incorrect data format in line: {line}")
-				phase = phase.strip()
+				eap = eap.strip()
 				try:
-					phase = float(phase)
+					eap = float(eap)
 				except:
-					phase = None
+					eap = None
 				# split comma-separated values from earlier_than
 				earlier_than = earlier_than.strip()
 				if earlier_than:
@@ -70,7 +70,7 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 					"Area": area,
 					"C14 Age": age,
 					"Uncertainty": uncertainty,
-					"Phase": phase,
+					"EAP": eap,
 					"Earlier-Than": earlier_than,
 					"Long-Lived": long_lived,
 					"Redeposited": redeposited,
@@ -142,12 +142,12 @@ def get_c14_dates(data: List[Dict[str, Any]]) -> Dict[str, Any]:
 	return r_dates
 
 
-def get_context_phase(data: List[Dict[str, Any]]) -> Dict[str, float]:
-	# Create a dictionary of contexts and their phases
-	context_phase = {}
+def get_context_eap(data: List[Dict[str, Any]]) -> Dict[str, float]:
+	# Create a dictionary of contexts and their excavation area phases
+	context_eap = {}
 	for line in data:
-		context_phase[line["Context"]] = line["Phase"]
-	return context_phase
+		context_eap[line["Context"]] = line["EAP"]
+	return context_eap
 
 
 def get_earlier_than_relations(data: List[Dict[str, Any]], context_samples: Dict[str, List[str]]) -> Dict[
@@ -209,7 +209,7 @@ def load_data(fname: str) -> (
 	fname (str): The name of the file to load.
 
 	Returns:
-	(samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than_rel):
+	(samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_eap, earlier_than_rel):
 		- samples = [sample, ...]
 		- contexts = {sample: context, ...}
 		- context_area = {context: area, ...}
@@ -217,7 +217,7 @@ def load_data(fname: str) -> (
 		- redeposited = {sample: True/False, ...}
 		- outlier = {sample: True/False, ...}
 		- r_dates = {sample: (age, uncertainty), ...}
-		- context_phase = {context: phase, ...}
+		- context_eap = {context: eap, ...}
 		- earlier_than_rel = {sample: [sample, ...], ...}
 	"""
 	
@@ -227,7 +227,7 @@ def load_data(fname: str) -> (
 	redeposited = get_redeposited(data)
 	outlier = get_outlier(data)
 	r_dates = get_c14_dates(data)
-	context_phase = get_context_phase(data)
+	context_eap = get_context_eap(data)
 	earlier_than_rel = get_earlier_than_relations(data, context_samples)
 	
 	contexts = {}
@@ -236,8 +236,8 @@ def load_data(fname: str) -> (
 			contexts[sample] = context
 		if context not in context_area:
 			context_area[context] = None
-		if context not in context_phase:
-			context_phase[context] = None
+		if context not in context_eap:
+			context_eap[context] = None
 	
 	for sample in samples:
 		if sample not in contexts:
@@ -253,4 +253,4 @@ def load_data(fname: str) -> (
 		if sample not in earlier_than_rel:
 			earlier_than_rel[sample] = []
 	
-	return samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than_rel
+	return samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_eap, earlier_than_rel

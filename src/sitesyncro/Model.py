@@ -789,7 +789,7 @@ class Model(object):
 		- Each line represents a data record.
 		- Data fields are separated by semicolons.
 		- The first line is a header and is skipped.
-		- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
+		- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Excavation Area Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
 		
 		:param fname: The file path of the CSV file to be imported.
 		:type fname: str
@@ -801,14 +801,14 @@ class Model(object):
 		if not os.path.isfile(fname):
 			raise ValueError("Input file %s not found" % fname)
 		
-		samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_phase, earlier_than = load_data(
+		samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_eap, earlier_than = load_data(
 			fname)
 		self._data['samples'] = {}
 		for name in samples:
 			age, uncertainty = r_dates[name]
 			self.add_sample(
 				name, age, uncertainty, 'R', long_lived[name], redeposited[name], outlier[name], contexts[name],
-				context_area[contexts[name]], context_phase[contexts[name]], earlier_than[name]
+				context_area[contexts[name]], context_eap[contexts[name]], earlier_than[name]
 			)
 	
 	def plot_randomized(self, fname: str = None, show: bool = False) -> str:

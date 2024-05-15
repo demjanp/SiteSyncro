@@ -94,7 +94,7 @@ The input file name must be a semicolon-separated CSV file with the following 10
 3. Excavation Area: Excavation area ID (required)
 4. C-14 Age: Radiocarbon age in years BP (required)
 5. Uncertainty: Uncertainty of the radiocarbon age in C-14 years (required)
-6. Phase: Phase of the sample (lower = older) (optional)
+6. Excavation Area Phase: Phase of the sample (higher = older) (optional)
 7. Earlier-Than: List of contexts that the sample is earlier (older) than (optional)
 8. Long-Lived: Flag indicating whether the sample is long-lived (e.g. old wood)(required, 1 or 0)
 9. Redeposited: Flag indicating whether the sample could be redeposited from a different context (required, 1 or 0)
@@ -147,7 +147,7 @@ from sitesyncro import Sample
 if __name__ == '__main__':
 	
 	# Initialize the Sample object
-	sample = Sample('Sample1', 1000, 50, phase = 1, earlier_than = ['Sample2'], long_lived = 1)
+	sample = Sample('Sample1', 1000, 50, excavation_area_phase = 1, earlier_than = ['Sample2'], long_lived = 1)
 	
 	# Print the sample data
 	print(sample)

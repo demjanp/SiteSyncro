@@ -89,7 +89,7 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 	for i, s1 in enumerate(samples):
 		for s2 in model.samples[s1].earlier_than:
 			j = samples.index(s2)
-			earlier_than[i][j] = True
+			earlier_than[j][i] = True
 	
 	# Update earlier-than relationships based on excavation area phases
 	for i, s1 in enumerate(samples):
@@ -102,7 +102,7 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 				continue
 			if model.samples[s1].area != model.samples[s2].area:
 				continue
-			if model.samples[s1].excavation_area_phase < model.samples[s2].excavation_area_phase:
+			if model.samples[s1].excavation_area_phase > model.samples[s2].excavation_area_phase:
 				earlier_than[i][j] = True
 	
 	# Update earlier-than relationships based on groups and phases

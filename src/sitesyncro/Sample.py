@@ -43,8 +43,8 @@ class Sample(object):
 	:param area: Excavation area
 	:type area: str, optional
 	
-	:param excavation_area_phase: Chronological phase of the context within the excavation area (integer, higher = earlier (older) phase)
-	:type excavation_area_phase: float, optional
+	:param excavation_area_phase: Chronological phase of the context within the excavation area (format: "1" or "1a" or "1-2" or "1a-b" or "1a-2b", higher = earlier (older) phase)
+	:type excavation_area_phase: str, optional
 	
 	:param earlier_than: List of names of samples which are stratigraphically earlier (older) than this sample
 	:type earlier_than: List[str], optional
@@ -64,7 +64,7 @@ class Sample(object):
 							outlier: bool = False,
 							context: str = None,
 							area: str = None,
-							excavation_area_phase: float = None,
+							excavation_area_phase: str = None,
 							earlier_than: List[str] = [],
 							curve: np.ndarray = None,
 							) -> None:
@@ -224,12 +224,12 @@ class Sample(object):
 		return self._data['area']
 	
 	@property
-	def excavation_area_phase(self) -> float or None:
+	def excavation_area_phase(self) -> str or None:
 		"""
 		The chronological phase of the context within the excavation area.
 		
-		:return: The chronological phase of the context within the excavation area (integer, higher = earlier (older) phase) or None if it's not set.
-		:rtype: float or None
+		:return: The chronological phase of the context within the excavation area (format: "1" or "1a" or "1-2" or "1a-b" or "1a-2b", higher = earlier (older) phase) or None if it's not set.
+		:rtype: str or None
 		"""
 		
 		return self._data['excavation_area_phase']

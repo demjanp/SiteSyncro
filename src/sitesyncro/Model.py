@@ -634,7 +634,7 @@ class Model(object):
 							date_type: str = 'R', long_lived: bool = False, redeposited: bool = False,
 							outlier: bool = False, context: bool = None,
 							area: str = None,
-							excavation_area_phase: float = None,
+							excavation_area_phase: str = None,
 							earlier_than: List[str] = [],
 							):
 			self._data['samples'][name] = Sample(

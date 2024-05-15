@@ -70,6 +70,51 @@ def find_groups(earlier_than: np.ndarray) -> Dict[int, List[int]]:
 	return dict(enumerate(sorted(groups, key=lambda group: len(group), reverse=True), start=1))
 
 
+def eap_to_int(eap: str) -> float:
+	"""
+	Converts an excavation area phase name to an interval of integers.
+	Args:
+		eap (str): "1" or "1a" or "1-2" or "1a-b" or "1a-2b", higher = earlier (older) phase
+
+	Returns:
+		[[int, int], [int, int]]: [[major from, minor from], [major to, minor to]]
+
+	"""
+	
+	def _name_to_int(name: str) -> [int, int]:
+		# convert excavation area phase name to two numbers [major, minor]
+		# 1 => [1,0]
+		# 1a => [1,1]
+	
+		if not name:
+			return None
+		
+		if not name[0].isdigit():
+			return [None, ord(name) - ord("a") + 1]
+		
+		i = 0
+		while i < len(name) and name[i].isdigit():
+			i += 1
+		if i == len(name):
+			return [int(name), None]
+		return [int(name[:i]), ord(name[i:]) - ord("a") + 1]
+	
+	if not eap:
+		return None
+		
+	if "-" in eap:
+		eap = eap.split("-")
+		if len(eap) != 2:
+			return None
+		eap = [eap[0].strip(), eap[1].strip()]
+	else:
+		eap = [eap.strip(), eap.strip()]
+	eap = [_name_to_int(eap[0]), _name_to_int(eap[1])]
+	if eap[1][0] is None:
+		eap[1][0] = eap[0][0]
+	
+	return eap
+
 def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 	"""
 	Creates a matrix representing the "earlier than" relationships between samples.
@@ -83,22 +128,27 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 		- samples: The list of sample names.
 	"""
 	
-	def _is_earlier(eap1, eap2):
-		# Check if excavation area phase 1 is earlier than excavation area phase 2.
-		# If both phases have a decimal value, the one with the higher value is considered earlier.
-		# Otherwise, the one with the higher integer value is considered earlier.
+	def _is_earlier(eap1: [[int, int], [int, int]], eap2: [[int, int], [int, int]]):
+		# Check if eap1 is earlier than eap2
+		# eap = [[major from, minor from], [major to, minor to]]
 		
 		if eap1 is None:
 			return False
 		if eap2 is None:
 			return False
 		
-		eap1_dec, eap1_int = np.modf(eap1)
-		eap2_dec, eap2_int = np.modf(eap2)
+		eap1 = eap_to_int(eap1)
+		eap2 = eap_to_int(eap2)
 		
-		if (eap1_dec == 0) or (eap2_dec == 0):
-			return (eap1_int > eap2_int)
-		return (eap1 > eap2)
+		for val in [eap1, eap2]:
+			if val is None:
+				return False
+			if val[0] is None:
+				return False
+		
+		if (eap1[0][1] is None) or (eap2[1][1] is None):
+			return (eap1[0][0] > eap2[1][0])
+		return (eap1[0] > eap2[1])
 	
 	samples = sorted(list(model.samples.keys()))
 	

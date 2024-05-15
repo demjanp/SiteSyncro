@@ -2,6 +2,8 @@ import os
 from collections import defaultdict
 from typing import List, Dict, Any
 
+from sitesyncro.utils.fnc_phase import (eap_to_int)
+
 
 def load_input(fname: str) -> List[Dict[str, Any]]:
 	"""
@@ -13,13 +15,7 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 	- Data fields are separated by semicolons.
 	- The first line is a header and is skipped.
 	- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Excavation Area Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
-	- The fields are processed as follows:
-		- Sample, Context, and Area are stripped of leading and trailing whitespace.
-		- C14 Age and Uncertainty are converted to floats.
-		- Excavation Area Phase (higher = earlier) is converted to a float if possible, otherwise it is set to None.
-		- Earlier-Than is split on commas and stripped of leading and trailing whitespace. If it is empty, it is set to an empty list.
-		- Long-Lived, Redeposited, and Outlier are converted to integers and then to booleans.
-
+	
 	Parameters:
 	fname (str): The name of the file to load.
 
@@ -48,10 +44,12 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 				except ValueError:
 					raise Exception(f"Incorrect data format in line: {line}")
 				eap = eap.strip()
-				try:
-					eap = float(eap)
-				except:
+				# EAP should be in format "1" or "1a" or "1-2" or "1a-b" or "1a-2b"
+				if not eap:
 					eap = None
+				elif eap_to_int(eap) is None:
+					raise Exception(f"Incorrect EAP format in line: {line}")
+				
 				# split comma-separated values from earlier_than
 				earlier_than = earlier_than.strip()
 				if earlier_than:
@@ -142,11 +140,13 @@ def get_c14_dates(data: List[Dict[str, Any]]) -> Dict[str, Any]:
 	return r_dates
 
 
-def get_context_eap(data: List[Dict[str, Any]]) -> Dict[str, float]:
+def get_context_eap(data: List[Dict[str, Any]]) -> Dict[str, str]:
 	# Create a dictionary of contexts and their excavation area phases
 	context_eap = {}
 	for line in data:
-		context_eap[line["Context"]] = line["EAP"]
+		context = line["Context"]
+		if (context not in context_eap) or (context_eap[context] is None):
+			context_eap[context] = line["EAP"]
 	return context_eap
 
 

@@ -82,6 +82,28 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 		- earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
 		- samples: The list of sample names.
 	"""
+	
+	def _is_earlier(eap1, eap2):
+		# Check if excavation area phase 1 is earlier than excavation area phase 2
+		# If both phases have the same integer value and both have a decimal value, the one with the higher decimal value is considered earlier
+		# If either of the phases doesn't have a decimal value, the one with the higher integer value is considered earlier
+		
+		if eap1 is None:
+			return False
+		if eap2 is None:
+			return False
+		
+		eap1_dec, eap1_int =np.modf(eap1)
+		eap2_dec, eap2_int = np.modf(eap2)
+		
+		if eap1_int > eap2_int:
+			return True
+		if eap1_int < eap2_int:
+			return False
+		if eap1_dec > eap2_dec:
+			return True
+		return False
+	
 	samples = sorted(list(model.samples.keys()))
 	
 	# Create a matrix of earlier-than relationships
@@ -98,12 +120,9 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 		for j, s2 in enumerate(samples):
 			if s2 == s1:
 				continue
-			if model.samples[s2].excavation_area_phase is None:
-				continue
 			if model.samples[s1].area != model.samples[s2].area:
 				continue
-			if model.samples[s1].excavation_area_phase > model.samples[s2].excavation_area_phase:
-				earlier_than[i][j] = True
+			earlier_than[i][j] = _is_earlier(model.samples[s1].excavation_area_phase, model.samples[s2].excavation_area_phase)
 	
 	# Update earlier-than relationships based on groups and phases
 	for i, s1 in enumerate(samples):

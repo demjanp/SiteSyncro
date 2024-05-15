@@ -43,6 +43,19 @@ def extend_earlier_than(earlier_than: np.ndarray) -> np.ndarray:
 	return extended_earlier_than.astype(bool)
 
 
+def reduce_earlier_than(earlier_than: np.ndarray) -> np.ndarray:
+	# Create a directed graph from the earlier_than matrix
+	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
+	
+	# Compute the transitive reduction
+	reduced = nx.transitive_reduction(G)
+	
+	# Convert the reduced graph back to a matrix
+	reduced_earlier_than = nx.convert_matrix.to_numpy_array(reduced)
+	
+	return reduced_earlier_than.astype(bool)
+
+
 def find_groups(earlier_than: np.ndarray) -> Dict[int, List[int]]:
 	if earlier_than.sum():
 		G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.Graph)
@@ -78,7 +91,7 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 			j = samples.index(s2)
 			earlier_than[i][j] = True
 	
-	# Update earlier-than relationships based on phases
+	# Update earlier-than relationships based on excavation area phases
 	for i, s1 in enumerate(samples):
 		if model.samples[s1].excavation_area_phase is None:
 			continue
@@ -90,6 +103,20 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 			if model.samples[s1].area != model.samples[s2].area:
 				continue
 			if model.samples[s1].excavation_area_phase < model.samples[s2].excavation_area_phase:
+				earlier_than[i][j] = True
+	
+	# Update earlier-than relationships based on groups and phases
+	for i, s1 in enumerate(samples):
+		if model.samples[s1].phase is None:
+			continue
+		for j, s2 in enumerate(samples):
+			if s2 == s1:
+				continue
+			if model.samples[s2].group is None:
+				continue
+			if model.samples[s1].group != model.samples[s2].group:
+				continue
+			if model.samples[s1].phase < model.samples[s2].phase:
 				earlier_than[i][j] = True
 	
 	# Check if earlier_than has circular relationships

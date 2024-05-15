@@ -60,7 +60,7 @@ setup(
 		'scikit-learn>=1.4.2, <2',
 		'tqdm>=4.66.0, <5',
 		'requests>=2.31.0, <3',
-		'networkx>=3.3.0, <4',
+		'networkx>=2.8.0, <4',
 		'sphinx>=7.3.7, <7.4',
 		'myst-parser>=3.0.1, <3.1',
 	],

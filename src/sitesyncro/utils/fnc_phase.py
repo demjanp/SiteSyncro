@@ -84,25 +84,21 @@ def create_earlier_than_matrix(model: object) -> (np.ndarray, List[str]):
 	"""
 	
 	def _is_earlier(eap1, eap2):
-		# Check if excavation area phase 1 is earlier than excavation area phase 2
-		# If both phases have the same integer value and both have a decimal value, the one with the higher decimal value is considered earlier
-		# If either of the phases doesn't have a decimal value, the one with the higher integer value is considered earlier
+		# Check if excavation area phase 1 is earlier than excavation area phase 2.
+		# If both phases have a decimal value, the one with the higher value is considered earlier.
+		# Otherwise, the one with the higher integer value is considered earlier.
 		
 		if eap1 is None:
 			return False
 		if eap2 is None:
 			return False
 		
-		eap1_dec, eap1_int =np.modf(eap1)
+		eap1_dec, eap1_int = np.modf(eap1)
 		eap2_dec, eap2_int = np.modf(eap2)
 		
-		if eap1_int > eap2_int:
-			return True
-		if eap1_int < eap2_int:
-			return False
-		if eap1_dec > eap2_dec:
-			return True
-		return False
+		if (eap1_dec == 0) or (eap2_dec == 0):
+			return (eap1_int > eap2_int)
+		return (eap1 > eap2)
 	
 	samples = sorted(list(model.samples.keys()))
 	

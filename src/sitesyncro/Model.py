@@ -927,7 +927,7 @@ class Model(object):
 			fname = os.path.join(self.directory, "model.oxcal")
 		
 		txt = gen_oxcal_model(self)
-		with open(fname, "w") as file:
+		with open(fname, "w", encoding="utf-8") as file:
 			file.write(txt)
 		return fname
 	

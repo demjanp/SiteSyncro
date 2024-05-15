@@ -26,7 +26,7 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 	Exception: If a line does not have exactly 10 fields, or if a field cannot be converted to the required type, an exception is raised.
 	"""
 	data = []
-	with open(fname, "r") as file:
+	with open(fname, "r", encoding="utf-8") as file:
 		next(file)  # Skip header
 		for line in file:
 			line = line.strip()

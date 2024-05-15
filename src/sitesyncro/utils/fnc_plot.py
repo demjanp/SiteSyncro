@@ -119,7 +119,7 @@ def save_outliers(model: object, fname: str) -> None:
 	else:
 		txt += "None\n"
 	
-	with open(fname, "w") as file:
+	with open(fname, "w", encoding="utf-8") as file:
 		file.write(txt)
 
 
@@ -161,7 +161,7 @@ def save_results_csv(model: object, fcsv: str) -> None:
 			for name in m_clusters[clu]:
 				cluster[name] = clu
 	
-	with open(fcsv, "w") as file:
+	with open(fcsv, "w", encoding="utf-8") as file:
 		file.write(
 			"Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Redeposited;Outlier;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
 		for name in samples:

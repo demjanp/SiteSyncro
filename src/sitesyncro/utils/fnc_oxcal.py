@@ -229,7 +229,7 @@ Plot()
 	''' % (model.curve_name, model.curve_name, txt)
 	
 	# Replace non-ASCII characters with their closest ASCII equivalent
-	txt = ''.join(c for c in unicodedata.normalize('NFKD', txt) if unicodedata.category(c) != 'Mn')
+	# txt = ''.join(c for c in unicodedata.normalize('NFKD', txt) if unicodedata.category(c) != 'Mn')
 	return txt
 
 
@@ -266,7 +266,7 @@ def load_oxcal_data(fname: str) -> Dict:
 		
 		data = {}
 		
-		with (open(file_path, 'r') as file):
+		with (open(file_path, 'r', encoding='utf-8') as file):
 			for line in file:
 				if line.startswith('if('):
 					continue

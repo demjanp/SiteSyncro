@@ -94,7 +94,7 @@ The input file name must be a semicolon-separated CSV file with the following 10
 3. Excavation Area: Excavation area ID (required)
 4. C-14 Age: Radiocarbon age in years BP (required)
 5. Uncertainty: Uncertainty of the radiocarbon age in C-14 years (required)
-6. Excavation Area Phase: Phase of the sample (higher = older) (optional)
+6. Excavation Area Phase: Phase of the sample (format: '1' or '1a' or '1-2' or '1a-b' or '1a-2b', higher = earlier (older) phase) (optional)
 7. Earlier-Than: List of contexts that the sample is earlier (older) than (optional)
 8. Long-Lived: Flag indicating whether the sample is long-lived (e.g. old wood)(required, 1 or 0)
 9. Redeposited: Flag indicating whether the sample could be redeposited from a different context (required, 1 or 0)

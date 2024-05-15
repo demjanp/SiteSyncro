@@ -1,3 +1,4 @@
+import codecs
 import numpy as np
 from matplotlib import pyplot
 
@@ -161,7 +162,7 @@ def save_results_csv(model: object, fcsv: str) -> None:
 			for name in m_clusters[clu]:
 				cluster[name] = clu
 	
-	with open(fcsv, "w", encoding="utf-8") as file:
+	with codecs.open(fcsv, "w", encoding="utf-8-sig") as file:
 		file.write(
 			"Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Redeposited;Outlier;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
 		for name in samples:

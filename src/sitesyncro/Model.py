@@ -9,15 +9,16 @@ from typing import List, Dict, Any
 import numpy as np
 
 from sitesyncro.Sample import Sample
-from sitesyncro.utils.fnc_cluster import (proc_clustering)
+from sitesyncro.MPhasing import MPhasing
+from sitesyncro.MOxCal import MOxCal
+from sitesyncro.MRandomization import MRandomization
+from sitesyncro.MCluster import MCluster
+from sitesyncro.MPlot import MPlot
+
 from sitesyncro.utils.fnc_data import (dict_keys_to_int, dict_np_to_list)
 from sitesyncro.utils.fnc_load import (load_data)
-from sitesyncro.utils.fnc_oxcal import (download_oxcal, gen_oxcal_model, load_oxcal_data, get_distributions)
-from sitesyncro.utils.fnc_phase import (create_earlier_than_matrix, get_groups_and_phases, find_dating_outliers,
-										update_earlier_than_by_clustering, update_earlier_than_by_dating)
-from sitesyncro.utils.fnc_plot import (plot_randomized, plot_clusters, save_results_csv, save_outliers)
+from sitesyncro.utils.fnc_oxcal import (download_oxcal, load_oxcal_data, get_distributions)
 from sitesyncro.utils.fnc_radiocarbon import (get_curve)
-from sitesyncro.utils.fnc_simulate import (test_distributions)
 
 
 class Model(object):
@@ -38,7 +39,10 @@ class Model(object):
 
 	:param cluster_n: Number of clusters to form (-1 = automatic; default is -1).
 	:type cluster_n: int
-
+	
+	:param cluster_selection: The method used to select the optimal number of clusters. Can be 'silhouette' or 'mcst' (default is 'silhouette').
+	:type cluster_selection: str
+	
 	:param min_years_per_cluster: The minimum number of years per cluster.
 	:type min_years_per_cluster: int
 
@@ -72,6 +76,7 @@ class Model(object):
 			curve_name='intcal20.14c',
 			phase_model='sequence',
 			cluster_n=-1,
+			cluster_selection='silhouette',
 			min_years_per_cluster=25,
 			uniform=False,
 			p_value=0.05,
@@ -121,6 +126,12 @@ class Model(object):
 		
 		# Create model directory if needed
 		self._data['directory'] = self._create_dir(self.directory, overwrite)
+		
+		self._mphasing = MPhasing(self)
+		self._moxcal = MOxCal(self)
+		self._mrandomization = MRandomization(self)
+		self._mcluster = MCluster(self)
+		self._mplot = MPlot(self)
 	
 	def _assigned(self) -> Dict[str, Any]:
 		return dict(
@@ -129,6 +140,7 @@ class Model(object):
 			curve_name=None,
 			phase_model=None,
 			cluster_n=None,
+			cluster_selection=None,
 			min_years_per_cluster=None,
 			uniform=None,
 			p_value=None,
@@ -195,20 +207,11 @@ class Model(object):
 		"""
 		The directory where the model data is stored.
 		
-		Returns:
-			str: The directory path as a string.
-		"""
-		return self._data['directory']
-	@property
-	def directory(self) -> str:
-		"""
-		Represents the directory where the model data is stored.
-
 		:return: The directory where the model data is stored.
 		:rtype: str
 		"""
-		
 		return self._data['directory']
+	
 	@property
 	def samples(self) -> Dict[str, Sample]:
 		"""
@@ -250,6 +253,16 @@ class Model(object):
 		:rtype: int
 		"""
 		return self._data['cluster_n']
+	
+	@property
+	def cluster_selection(self) -> str:
+		"""
+		The method used to select the optimal number of clusters.
+		
+		:return: The method used to select the optimal number of clusters. Can be 'silhouette' or 'mcst'.
+		:rtype: str
+		"""
+		return self._data['cluster_selection']
 	
 	@property
 	def min_years_per_cluster(self) -> int:
@@ -324,7 +337,7 @@ class Model(object):
 	# Calculated properties
 	
 	@property
-	def years(self) -> np.ndarray:
+	def years(self) -> np.ndarray or None:
 		"""
 		Calendar years BP corresponding to the probability distributions.
 
@@ -339,7 +352,7 @@ class Model(object):
 		return self._data['years'].copy()
 	
 	@property
-	def curve(self) -> np.ndarray:
+	def curve(self) -> np.ndarray or None:
 		"""
 		Radiocarbon calibration curve.
 
@@ -709,6 +722,7 @@ class Model(object):
 			curve_name = self.curve_name,
 			phase_model = self.phase_model,
 			cluster_n = self.cluster_n,
+			cluster_selection = self.cluster_selection,
 			min_years_per_cluster = self.min_years_per_cluster,
 			uniform = self.uniform,
 			p_value = self.p_value,
@@ -837,7 +851,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "randomized.pdf")
 		
-		plot_randomized(self, fname, show)
+		self._mplot.plot_randomized(fname, show)
 		return fname
 	
 	def plot_clusters(self, fname: str = None, show: bool = False) -> str:
@@ -863,7 +877,7 @@ class Model(object):
 			fname = os.path.join(self.directory, "silhouette.pdf")
 		
 		# Plot the clustering data
-		plot_clusters(self, fname, show)
+		self._mplot.plot_clusters(fname, show)
 		return fname
 	
 	def save_csv(self, fcsv: str = None) -> str:
@@ -886,7 +900,7 @@ class Model(object):
 			fcsv = os.path.join(self.directory, "results.csv")
 		
 		# Save the results to the CSV file
-		save_results_csv(self, fcsv)
+		self._mplot.save_results_csv(fcsv)
 		return fcsv
 	
 	def save_outliers(self, fname: str = None) -> str:
@@ -902,7 +916,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "outliers.txt")
 		
-		save_outliers(self, fname)
+		self._mplot.save_outliers(fname)
 		return fname
 	
 	def to_oxcal(self, fname: str = None) -> str:
@@ -926,7 +940,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "model.oxcal")
 		
-		txt = gen_oxcal_model(self)
+		txt = self._moxcal.gen_oxcal_model()
 		with open(fname, "w", encoding="utf-8") as file:
 			file.write(txt)
 		return fname
@@ -989,7 +1003,7 @@ class Model(object):
 		
 		assigned_full = ['samples', 'curve_name', 'phase_model']
 		assigned_randomization = ['uniform', 'p_value', 'uncertainty_base', 'npass', 'convergence']
-		assigned_clustering = ['cluster_n', 'min_years_per_cluster']
+		assigned_clustering = ['cluster_n', 'cluster_selection', 'min_years_per_cluster']
 		
 		def _get_n_samples(value):
 			if isinstance(value, dict):
@@ -1065,29 +1079,7 @@ class Model(object):
 		:rtype: bool
 		"""
 		
-		earlier_than, samples = create_earlier_than_matrix(self)
-		if by_clusters and self.is_clustered:
-			earlier_than = update_earlier_than_by_clustering(self, earlier_than, samples)
-		
-		if by_dates and self.is_modeled:
-			earlier_than = update_earlier_than_by_dating(self, earlier_than, samples)
-		
-		groups_phases = get_groups_and_phases(earlier_than, samples)
-		# groups_phases = {sample: [group, phase], ...}
-		for name in self.samples:
-			if name in groups_phases:
-				group, phase = groups_phases[name]
-				self.samples[name].set_group(group)
-				self.samples[name].set_phase(phase)
-			else:
-				self.samples[name].set_group(None)
-				self.samples[name].set_phase(None)
-		
-		earlier_than_1, samples_1 = create_earlier_than_matrix(self)
-		if not ((earlier_than.shape == earlier_than.shape) and np.allclose(earlier_than, earlier_than_1) and (
-				samples == samples_1)):
-			return True
-		return False
+		return self._mphasing.process(by_clusters, by_dates)
 	
 	def process_outliers(self) -> None:
 		"""
@@ -1100,7 +1092,7 @@ class Model(object):
 		:return: None
 		"""
 		
-		outliers, self._data['outlier_candidates'] = find_dating_outliers(self)
+		outliers, self._data['outlier_candidates'] = self._mphasing.find_dating_outliers()
 		for name in outliers:
 			self.samples[name].set_outlier(True)
 	
@@ -1139,7 +1131,7 @@ class Model(object):
 		"""
 		
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data[
-			'random_p'] = test_distributions(self, max_cpus=max_cpus, max_queue_size=max_queue_size)
+			'random_p'] = self._mrandomization.test_distributions(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process_clustering(self, max_cpus=-1, max_queue_size=-1) -> None:
 		"""
@@ -1155,7 +1147,7 @@ class Model(object):
 		"""
 		
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
-			self._data['cluster_opt_n'] = proc_clustering(self, max_cpus=max_cpus, max_queue_size=max_queue_size)
+			self._data['cluster_opt_n'] = self._mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = -1,
 				save: bool = False) -> None:
@@ -1214,3 +1206,4 @@ class Model(object):
 				self.process_dates()
 				if save:
 					self.save(zipped=True)
+

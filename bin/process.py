@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 **SiteSyncro**
 
 Site-specific chronological modeling and synchronization
@@ -11,7 +11,7 @@ Created on 10.4.2024
 Author:	Peter Demján, Institute of Archaeology of the Czech Academy of Sciences <peter.demjan@gmail.com>
 Home:	https://github.com/demjanp/SiteSyncro
 
-'''
+"""
 
 from sitesyncro import Model
 from sitesyncro import __version__
@@ -22,6 +22,7 @@ import sys
 import os
 
 DESCRIPTION = "SiteSyncro v%s - Site-specific chronological modeling and synchronization (https://github.com/demjanp/SiteSyncro)" % (__version__)
+
 
 def parse_arguments(args):
 	
@@ -37,6 +38,8 @@ def parse_arguments(args):
 		help="OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none')")
 	parser.add_argument('-cluster_n', type=int, default=-1, required=False,
 		help="Number of clusters to form (-1 = automatic)")
+	parser.add_argument('-cluster_selection', type=str, default="silhouette", required=False,
+		help="Cluster selection method ('silhouette' or 'mcst')")
 	parser.add_argument('-min_years_per_cluster', type=int, default=25, required=False,
 		help="Minimum number of years per cluster.")
 	parser.add_argument('-by_clusters', type=int, default=0, required=False,
@@ -57,9 +60,12 @@ def parse_arguments(args):
 		help="Maximum number of CPUs to use for parallel processing (-1 = all available)")
 	parser.add_argument('-max_queue_size', type=int, default=-1, required=False,
 		help="Maximum queue size for parallel processing (-1 = automatic)")
+	parser.add_argument('-overwrite', type=int, default=0, required=False,
+		help="Flag indicating whether to overwrite an existing model")
 	
 	parsed_args = parser.parse_args(args)
 	return vars(parsed_args)  # Directly return parsed arguments as a dictionary
+
 
 if __name__ == '__main__':
 	multiprocessing.freeze_support()  # Needed for PyInstaller
@@ -67,6 +73,7 @@ if __name__ == '__main__':
 	arguments = parse_arguments(sys.argv[1:])
 	
 	arguments['uniform'] = bool(arguments['uniform'])
+	arguments['overwrite'] = bool(arguments['overwrite'])
 	
 	finput = arguments.pop('input', None)
 	by_clusters = bool(arguments.pop('by_clusters', False))
@@ -96,6 +103,7 @@ if __name__ == '__main__':
 	print("   Calibration curve:      %s" % model.curve_name)
 	print("   Phase model:            %s" % model.phase_model)
 	print("   Number of clusters:     %s" % ("all possible" if model.cluster_n == -1 else model.cluster_n))
+	print("   Cluster selection:      %s" % model.cluster_selection)
 	print("   Min. years per cluster: %s" % model.min_years_per_cluster)
 	print("   Uniform distribution:   %s" % model.uniform)
 	print("   P-value threshold:      %s" % model.p_value)
@@ -104,7 +112,7 @@ if __name__ == '__main__':
 	print("   Convergence threshold:  %s" % model.convergence)
 	print()
 	
-	model.process(by_clusters = by_clusters, by_dates = by_dates, max_cpus = max_cpus, max_queue_size = max_queue_size, save = True)
+	model.process(by_clusters=by_clusters, by_dates=by_dates, max_cpus=max_cpus, max_queue_size=max_queue_size, save=True)
 	model.plot_randomized()
 	model.plot_clusters()
 	model.save_outliers()

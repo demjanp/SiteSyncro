@@ -34,16 +34,16 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 				elements = line.split(";")
 				if len(elements) != 10:
 					raise Exception(f"Incorrect data format in line: {line}")
+				elements = [val.strip() for val in elements]
 				sample, context, area, age, uncertainty, eap, earlier_than, long_lived, redeposited, outlier = elements
 				try:
-					age = float(age.strip())
-					uncertainty = float(uncertainty.strip())
-					long_lived = int(long_lived.strip())
-					redeposited = int(redeposited.strip())
-					outlier = int(outlier.strip())
+					age = float(age)
+					uncertainty = float(uncertainty)
+					long_lived = int(long_lived) if long_lived else 0
+					redeposited = int(redeposited) if redeposited else 0
+					outlier = int(outlier) if outlier else 0
 				except ValueError:
 					raise Exception(f"Incorrect data format in line: {line}")
-				eap = eap.strip()
 				# EAP should be in format "1" or "1a" or "1-2" or "1a-b" or "1a-2b"
 				if not eap:
 					eap = None
@@ -51,19 +51,16 @@ def load_input(fname: str) -> List[Dict[str, Any]]:
 					raise Exception(f"Incorrect EAP format in line: {line}")
 				
 				# split comma-separated values from earlier_than
-				earlier_than = earlier_than.strip()
 				if earlier_than:
 					earlier_than = [val.strip() for val in earlier_than.split(",")]
 				else:
 					earlier_than = []
-				context = context.strip()
 				if not context:
 					context = None
-				area = area.strip()
 				if not area:
 					area = None
 				data.append({
-					"Sample": sample.strip(),
+					"Sample": sample,
 					"Context": context,
 					"Area": area,
 					"C14 Age": age,

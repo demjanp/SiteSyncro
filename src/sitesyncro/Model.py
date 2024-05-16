@@ -9,11 +9,12 @@ from typing import List, Dict, Any
 import numpy as np
 
 from sitesyncro.Sample import Sample
-from sitesyncro.MPhasing import MPhasing
-from sitesyncro.MOxCal import MOxCal
-from sitesyncro.MRandomization import MRandomization
-from sitesyncro.MCluster import MCluster
-from sitesyncro.MPlot import MPlot
+
+from sitesyncro.mhelpers.MPhasing import MPhasing
+from sitesyncro.mhelpers.MOxCal import MOxCal
+from sitesyncro.mhelpers.MRandomization import MRandomization
+from sitesyncro.mhelpers.MCluster import MCluster
+from sitesyncro.mhelpers.MPlot import MPlot
 
 from sitesyncro.utils.fnc_data import (dict_keys_to_int, dict_np_to_list)
 from sitesyncro.utils.fnc_load import (load_data)

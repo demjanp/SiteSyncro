@@ -80,22 +80,29 @@ class MPlot(object):
 		ax1.plot(clu_ns, sils_plot, ".", color=color1)
 		ax1.tick_params(axis="y", labelcolor=color1)
 		
-		ax2 = ax1.twinx()
-		ax2.set_ylabel("p", color=color2)
-		ax2.plot(clu_ns, ps_plot, color=color2)
-		ax2.plot(clu_ns, ps_plot, ".", color=color2)
-		if self.model.cluster_opt_n is not None:
-			ax2.plot([self.model.cluster_opt_n, self.model.cluster_opt_n], [0, max(ps_plot.max(), sils_plot.max())], color=color3,
-					 linewidth=0.7, label="Optimal no. of clusters")
-		if self.model.p_value is not None:
-			ax2.plot([clu_ns[0], clu_ns[-1]], [self.model.p_value, self.model.p_value], "--", color=color2, linewidth=0.7)
-			ax2.annotate("p = %0.3f" % (self.model.p_value), xy=(clu_ns.mean(), self.model.p_value), xytext=(0, -3),
-						 textcoords="offset pixels", va="top", ha="center", color=color2)
-		ax2.tick_params(axis="y", labelcolor=color2)
+		if self.model.cluster_selection == 'mcst':
+			ax2 = ax1.twinx()
+			ax2.set_ylabel("p", color=color2)
+			ax2.plot(clu_ns, ps_plot, color=color2)
+			ax2.plot(clu_ns, ps_plot, ".", color=color2)
+			if self.model.p_value is not None:
+				ax2.plot([clu_ns[0], clu_ns[-1]], [self.model.p_value, self.model.p_value], "--", color=color2, linewidth=0.7)
+				ax2.annotate("p = %0.3f" % (self.model.p_value), xy=(clu_ns.mean(), self.model.p_value), xytext=(0, -3),
+							 textcoords="offset pixels", va="top", ha="center", color=color2)
+			ax2.tick_params(axis="y", labelcolor=color2)
 		
 		pyplot.xticks(clu_ns, clu_ns)
-		pyplot.legend()
 		
+		if self.model.cluster_opt_n is not None:
+			ymin, ymax = ax1.get_ylim()
+			if self.model.cluster_selection == 'mcst':
+				ymin2, ymax2 = ax2.get_ylim()
+				ymin, ymax = min(ymin, ymin2), max(ymax, ymax2)
+			ax1.plot([self.model.cluster_opt_n, self.model.cluster_opt_n], [ymin, ymax], color=color3,
+					 linewidth=0.7, label="Optimal no. of clusters")
+			ax1.set_ylim(ymin, ymax)
+		
+		pyplot.legend()
 		fig.tight_layout()
 		pyplot.savefig(fname)
 		if show:

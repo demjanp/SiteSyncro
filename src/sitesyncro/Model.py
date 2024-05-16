@@ -107,6 +107,12 @@ class Model(object):
 		if not download_oxcal(url=kwargs.get('oxcal_url', defaults['oxcal_url'])):
 			raise Exception("OxCal not found")
 		
+		self.mphasing = MPhasing(self)
+		self.moxcal = MOxCal(self)
+		self.mrandomization = MRandomization(self)
+		self.mcluster = MCluster(self)
+		self.mplot = MPlot(self)
+		
 		self._data = self._assigned()
 		self._data.update(self._calculated())
 		
@@ -128,12 +134,6 @@ class Model(object):
 		# Create model directory if needed
 		self._data['directory'] = self._create_dir(self.directory, overwrite)
 		
-		self._mphasing = MPhasing(self)
-		self._moxcal = MOxCal(self)
-		self._mrandomization = MRandomization(self)
-		self._mcluster = MCluster(self)
-		self._mplot = MPlot(self)
-	
 	def _assigned(self) -> Dict[str, Any]:
 		return dict(
 			directory=None,
@@ -852,7 +852,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "randomized.pdf")
 		
-		self._mplot.plot_randomized(fname, show)
+		self.mplot.plot_randomized(fname, show)
 		return fname
 	
 	def plot_clusters(self, fname: str = None, show: bool = False) -> str:
@@ -878,7 +878,7 @@ class Model(object):
 			fname = os.path.join(self.directory, "silhouette.pdf")
 		
 		# Plot the clustering data
-		self._mplot.plot_clusters(fname, show)
+		self.mplot.plot_clusters(fname, show)
 		return fname
 	
 	def save_csv(self, fcsv: str = None) -> str:
@@ -901,7 +901,7 @@ class Model(object):
 			fcsv = os.path.join(self.directory, "results.csv")
 		
 		# Save the results to the CSV file
-		self._mplot.save_results_csv(fcsv)
+		self.mplot.save_results_csv(fcsv)
 		return fcsv
 	
 	def save_outliers(self, fname: str = None) -> str:
@@ -917,7 +917,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "outliers.txt")
 		
-		self._mplot.save_outliers(fname)
+		self.mplot.save_outliers(fname)
 		return fname
 	
 	def to_oxcal(self, fname: str = None) -> str:
@@ -941,7 +941,7 @@ class Model(object):
 		if fname is None:
 			fname = os.path.join(self.directory, "model.oxcal")
 		
-		txt = self._moxcal.gen_oxcal_model()
+		txt = self.moxcal.gen_oxcal_model()
 		with open(fname, "w", encoding="utf-8") as file:
 			file.write(txt)
 		return fname
@@ -1080,7 +1080,7 @@ class Model(object):
 		:rtype: bool
 		"""
 		
-		return self._mphasing.process(by_clusters, by_dates)
+		return self.mphasing.process(by_clusters, by_dates)
 	
 	def process_outliers(self) -> None:
 		"""
@@ -1093,7 +1093,7 @@ class Model(object):
 		:return: None
 		"""
 		
-		outliers, self._data['outlier_candidates'] = self._mphasing.find_dating_outliers()
+		outliers, self._data['outlier_candidates'] = self.mphasing.find_dating_outliers()
 		for name in outliers:
 			self.samples[name].set_outlier(True)
 	
@@ -1132,7 +1132,7 @@ class Model(object):
 		"""
 		
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data[
-			'random_p'] = self._mrandomization.test_distributions(max_cpus=max_cpus, max_queue_size=max_queue_size)
+			'random_p'] = self.mrandomization.test_distributions(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process_clustering(self, max_cpus=-1, max_queue_size=-1) -> None:
 		"""
@@ -1148,7 +1148,7 @@ class Model(object):
 		"""
 		
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
-			self._data['cluster_opt_n'] = self._mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
+			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = -1,
 				save: bool = False) -> None:

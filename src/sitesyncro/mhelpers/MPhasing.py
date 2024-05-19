@@ -337,7 +337,9 @@ class MPhasing(object):
 		if by_dates and self.model.is_modeled:
 			earlier_than = self.update_earlier_than_by_dating(earlier_than, samples)
 		
-		groups_phases = get_groups_and_phases(earlier_than, samples)
+		ranges = [self.model.samples[name].get_range() for name in self.model.samples]		
+		groups_phases = get_groups_and_phases(earlier_than, samples, ranges)
+		
 		# groups_phases = {sample: [group, phase], ...}
 		for name in self.model.samples:
 			if name in groups_phases:

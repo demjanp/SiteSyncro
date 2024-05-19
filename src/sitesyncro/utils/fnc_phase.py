@@ -1,6 +1,7 @@
 from typing import List, Dict
 
 import matplotlib.pyplot as plt
+from itertools import product
 import networkx as nx
 import numpy as np
 
@@ -111,7 +112,22 @@ def eap_to_int(eap: str) -> float:
 	return eap
 
 
-def get_phases_gr(earlier_than: np.ndarray) -> np.ndarray:
+def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
+	
+	def _get_phasing_limits(idx, phasing):
+		
+		phase_max = phasing.max()
+		phase_min = 0
+		ph_later = phasing[uis_later[idx]]
+		ph_later = ph_later[~np.isnan(ph_later)]
+		if ph_later.size:
+			phase_max = int(ph_later.min()) - 1
+		ph_earlier = phasing[uis_earlier[idx]]
+		ph_earlier = ph_earlier[~np.isnan(ph_earlier)]
+		if ph_earlier.size:
+			phase_min = int(ph_earlier.max()) + 1
+		return phase_min, phase_max
+	
 	n_samples = earlier_than.shape[0]
 	phasing = np.full(n_samples, np.nan)  # phasing[si] = phase; lower = earlier
 	
@@ -145,16 +161,49 @@ def get_phases_gr(earlier_than: np.ndarray) -> np.ndarray:
 	if mask.any():
 		phasing[mask] = phasing[mask].max() - phasing[mask]
 	phasing[~mask] = -1
+	
+	idxs_later = [np.where(earlier_than[idx])[0] for idx in range(earlier_than.shape[0])]
+	idxs_earlier = [np.where(earlier_than[:,idx])[0] for idx in range(earlier_than.shape[0])]
+	
+	collect = []
+	for idx in range(len(phasing)):
+		phase_max = int(phasing.max())
+		phase_min = 0
+		ph_later = phasing[idxs_later[idx]]
+		ph_later = ph_later[~np.isnan(ph_later)]
+		if ph_later.size:
+			phase_max = int(ph_later.min()) - 1
+		ph_earlier = phasing[idxs_earlier[idx]]
+		ph_earlier = ph_earlier[~np.isnan(ph_earlier)]
+		if ph_earlier.size:
+			phase_min = int(ph_earlier.max()) + 1
+		collect.append([phase_min, phase_max])
+	
+	# Iterate over all possible combinations of phasing and find the one with the smallest combined dating range per phase
+	phasing_opt = None
+	rng_opt = np.inf
+	for phasing in product(*[list(range(phase_min, phase_max+1)) for phase_min, phase_max in collect]):
+		ranges_found = dict([(ph, [np.inf, -np.inf]) for ph in set(phasing)])
+		for i, ph in enumerate(phasing):
+			ranges_found[ph][0] = min(ranges_found[ph][0], ranges_gr[i][0])
+			ranges_found[ph][1] = max(ranges_found[ph][1], ranges_gr[i][1])
+		rng = sum((ranges_found[ph][1] - ranges_found[ph][0]) for ph in ranges_found)
+		if rng < rng_opt:
+			rng_opt = rng
+			phasing_opt = phasing
+	phasing = np.array(list(phasing_opt))
+	
 	return phasing
 
 
-def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str]) -> Dict[str, List[int or None]]:
+def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: List) -> Dict[str, List[int or None]]:
 	"""
 	Determines the groups and phases for each sample based on the "earlier than" matrix.
 
 	Parameters:
 	earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
-	samples: The list of sample names.
+	samples: A list of sample names.
+	ranges: A list of sample ranges ordered by samples
 
 	Returns:
 	groups_phases: {sample: [group, phase], ...}
@@ -172,7 +221,8 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str]) -> Dict[
 	for gi in groups:
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
-		phases_gr = get_phases_gr(earlier_than_gr)
+		ranges_gr = [ranges[i] for i in groups[gi]]
+		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr)
 		for i in range(len(groups[gi])):
 			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
 	

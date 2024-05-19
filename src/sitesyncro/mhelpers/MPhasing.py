@@ -7,9 +7,9 @@ import networkx as nx
 import numpy as np
 from tqdm import tqdm
 
-from sitesyncro.utils.fnc_stat import (samples_to_distributions)
+from sitesyncro.utils.fnc_stat import (samples_to_distributions, calc_range)
 from sitesyncro.utils.fnc_phase import (check_circular_relationships, visualize_earlier_than, extend_earlier_than,
-                                        eap_to_int, get_groups_and_phases, prob_earlier_than)
+                                        eap_to_int, get_groups_and_phases)
 
 class MPhasing(object):
 	"""
@@ -113,6 +113,7 @@ class MPhasing(object):
 		np.ndarray: The updated "earlier than" matrix.
 		"""
 		
+		earlier_than = earlier_than.copy()
 		distributions, names_dist, joined = samples_to_distributions(self.model.samples.values())
 		
 		# distributions = [[p, ...], ...]
@@ -135,6 +136,10 @@ class MPhasing(object):
 				if combined_name is not None:
 					idx_lookup[name] = names_dist.index(combined_name)
 		
+		ranges = {}
+		for i in range(len(distributions)):
+			ranges[i] = calc_range(self.model.years, distributions[i])
+		
 		# Update earlier_than based on probability distributions
 		for i, s1 in enumerate(samples):
 			d_i = idx_lookup[s1]
@@ -146,7 +151,7 @@ class MPhasing(object):
 				d_j = idx_lookup[s2]
 				if d_j is None:
 					continue
-				if prob_earlier_than(distributions[d_i], distributions[d_j]) >= (1 - self.model.p_value):
+				if ranges[d_i][1] > ranges[d_j][0]:
 					earlier_than[i][j] = True
 		
 		# Extend the earlier_than matrix to include computed relations
@@ -172,6 +177,7 @@ class MPhasing(object):
 		if self.model.cluster_opt_n is None:
 			raise Exception("No clustering found")
 		
+		earlier_than = earlier_than.copy()
 		clusters = self.model.clusters[self.model.cluster_opt_n]
 		means = self.model.cluster_means[self.model.cluster_opt_n]
 		

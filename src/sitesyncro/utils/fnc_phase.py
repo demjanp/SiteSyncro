@@ -178,12 +178,3 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str]) -> Dict[
 	
 	return groups_phases
 
-
-def prob_earlier_than(dist1: np.ndarray, dist2: np.ndarray) -> float:
-	# Calculate the probability that dist1 is earlier than dist2
-	#
-	# Returns p
-	
-	p = max(0, 1 - np.sum(np.cumsum(dist2[::-1])[::-1] * np.cumsum(dist1)))
-	return p
-

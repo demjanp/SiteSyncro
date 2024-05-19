@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SiteSyncro &#8212; SiteSyncro 0.9.4 documentation</title>
+    <title>SiteSyncro &#8212; SiteSyncro 0.9.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=61b282d3"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -23,7 +23,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">SiteSyncro 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">SiteSyncro 0.9.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">SiteSyncro</a></li> 
       </ul>
     </div>  
@@ -38,6 +38,7 @@
 <p>Site-specific chronological modeling and synchronization</p>
 <p>Created on 10.4.2024</p>
 <p>Project homepage: <a class="reference external" href="https://github.com/demjanp/SiteSyncro">https://github.com/demjanp/SiteSyncro</a></p>
+<p>Documentation: <a class="reference external" href="https://sitesyncro.readthedocs.io">https://sitesyncro.readthedocs.io</a></p>
 <summary>Table of Contents</summary>
 <ol class="arabic simple">
 <li><p><a class="reference internal" href="#about"><span class="xref myst">About SiteSyncro</span></a></p></li>
@@ -126,7 +127,7 @@
 <li><p>Excavation Area: Excavation area ID (required)</p></li>
 <li><p>C-14 Age: Radiocarbon age in years BP (required)</p></li>
 <li><p>Uncertainty: Uncertainty of the radiocarbon age in C-14 years (required)</p></li>
-<li><p>Phase: Phase of the sample (lower = older) (optional)</p></li>
+<li><p>Excavation Area Phase: Phase of the sample (format: ‘1’ or ‘1a’ or ‘1-2’ or ‘1a-b’ or ‘1a-2b’, higher = earlier (older) phase) (optional)</p></li>
 <li><p>Earlier-Than: List of contexts that the sample is earlier (older) than (optional)</p></li>
 <li><p>Long-Lived: Flag indicating whether the sample is long-lived (e.g. old wood)(required, 1 or 0)</p></li>
 <li><p>Redeposited: Flag indicating whether the sample could be redeposited from a different context (required, 1 or 0)</p></li>
@@ -177,7 +178,7 @@
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
 
         <span class="c1"># Initialize the Sample object</span>
-        <span class="n">sample</span> <span class="o">=</span> <span class="n">Sample</span><span class="p">(</span><span class="s1">&#39;Sample1&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">phase</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">earlier_than</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Sample2&#39;</span><span class="p">],</span> <span class="n">long_lived</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="n">Sample</span><span class="p">(</span><span class="s1">&#39;Sample1&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">excavation_area_phase</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">earlier_than</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Sample2&#39;</span><span class="p">],</span> <span class="n">long_lived</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Print the sample data</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
@@ -325,7 +326,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">SiteSyncro 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">SiteSyncro 0.9.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">SiteSyncro</a></li> 
       </ul>
     </div>

@@ -5,10 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Sample Class &#8212; SiteSyncro 0.9.4 documentation</title>
+    <title>Sample Class &#8212; SiteSyncro 0.9.5 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css?v=0f882399" />
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=61b282d3"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -23,7 +23,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Sample Class</a></li> 
       </ul>
     </div>  
@@ -54,8 +54,8 @@
 <li><p><strong>outlier</strong> (<em>bool</em><em>, </em><em>optional</em>) – True if sample is an outlier and should not be used for modeling</p></li>
 <li><p><strong>context</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the context where sample was found</p></li>
 <li><p><strong>area</strong> (<em>str</em><em>, </em><em>optional</em>) – Excavation area</p></li>
-<li><p><strong>excavation_area_phase</strong> (<em>float</em><em>, </em><em>optional</em>) – Chronological phase of the context within the excavation area (integer, lower = earlier (older) phase)</p></li>
-<li><p><strong>earlier_than</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of names of samples which are stratigraphically later (younger) than this sample</p></li>
+<li><p><strong>excavation_area_phase</strong> (<em>str</em><em>, </em><em>optional</em>) – Chronological phase of the context within the excavation area (format: “1” or “1a” or “1-2” or “1a-b” or “1a-2b”, higher = earlier (older) phase)</p></li>
+<li><p><strong>earlier_than</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of names of samples which are stratigraphically earlier (older) than this sample</p></li>
 <li><p><strong>curve</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Radiocarbon calibration curve in format <cite>np.array([[calendar year BP, C-14 year, uncertainty], …])</cite></p></li>
 </ul>
 </dd>
@@ -147,10 +147,10 @@
 <dl class="py property">
 <dt class="sig sig-object py" id="sitesyncro.Sample.Sample.earlier_than">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">earlier_than</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.earlier_than" title="Link to this definition">¶</a></dt>
-<dd><p>List of names of samples which are stratigraphically later (younger) than this sample.</p>
+<dd><p>List of names of samples which are stratigraphically earlier (older) than this sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List of names of samples which are stratigraphically later (younger) than this sample or None if it’s not set.</p>
+<dd class="field-odd"><p>List of names of samples which are stratigraphically earlier (older) than this sample or None if it’s not set.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>List[str] or None</p>
@@ -160,14 +160,14 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="sitesyncro.Sample.Sample.excavation_area_phase">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">excavation_area_phase</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.excavation_area_phase" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">excavation_area_phase</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#sitesyncro.Sample.Sample.excavation_area_phase" title="Link to this definition">¶</a></dt>
 <dd><p>The chronological phase of the context within the excavation area.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The chronological phase of the context within the excavation area (integer, lower = earlier (older) phase) or None if it’s not set.</p>
+<dd class="field-odd"><p>The chronological phase of the context within the excavation area (format: “1” or “1a” or “1-2” or “1a-b” or “1a-2b”, higher = earlier (older) phase) or None if it’s not set.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float or None</p>
+<dd class="field-even"><p>str or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -623,7 +623,7 @@ Otherwise, it returns the likelihood range.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">SiteSyncro 0.9.5 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Sample Class</a></li> 
       </ul>
     </div>

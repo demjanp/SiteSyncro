@@ -78,7 +78,7 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 		params_mp.put(to_add)
 		return n_added
 	
-	if isinstance(params_list, list):
+	if isinstance(params_list, list) or isinstance(params_list, range):
 		params_list = fnc_generator(params_list)
 	
 	params_mp = mp.Queue()

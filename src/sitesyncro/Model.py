@@ -1066,7 +1066,7 @@ class Model(object):
 			print()
 		return reset_assigned, reset_calculated
 	
-	def process_phasing(self, by_clusters: bool = False, by_dates: bool = False) -> bool:
+	def process_phasing(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = 10000, batch_size: int = 10000) -> bool:
 		"""
 		Updates the phasing of samples based on stratigraphic relations.
 
@@ -1076,6 +1076,12 @@ class Model(object):
 		:type by_clusters: bool, optional
 		:param by_dates: If True, update the phasing by comparing sample dates. Defaults to False.
 		:type by_dates: bool, optional
+		:param max_cpus: The maximum number of CPUs to use for multiprocessing. Defaults to -1, which means all available CPUs will be used.
+		:type max_cpus: int, optional
+		:param max_queue_size: The maximum size of the queue for multiprocessing. -1 means the queue size is unlimited. Defaults to 10000.
+		:type max_queue_size: int, optional
+		:param batch_size: If set to >0, process data in batches. Higher values speed up processing but use more memory. Defaults to 10000.
+		:type batch_size: int, optional
 		:return: True if phasing has changed, False otherwise.
 		:rtype: bool
 		"""

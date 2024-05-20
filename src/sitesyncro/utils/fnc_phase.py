@@ -113,27 +113,42 @@ def eap_to_int(eap: str) -> float:
 
 def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 	
-	def _calc_rng(phasing, ranges_gr):
+	def _calc_dice(phasing, ranges_gr):
 		"""
-		Calculate the avg. span of the combined ranges for the given phasing.
+		Calculate the avg. dice coefficient of overlap between the sample dating ranges and combined ranges of their assigned phases
 		Args:
 			phasing: List of integers. The phasing values for each sample.
 			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the combined ranges for each sample.
 
 		Returns:
-			Float. The average span of the combined ranges.
+			Float. The average dice coefficient of all samples
 		"""
 		
-		ranges_found = dict([(ph, [-np.inf, np.inf]) for ph in set(phasing)])
+		def dice_coefficient(r1, r2, s1, s2):
+			L_r = r2 - r1
+			L_s = s2 - s1
+			intersection_length = max(0, min(r2, s2) - max(r1, s1))
+			dice_coef = (2 * intersection_length) / (L_r + L_s)
+			return dice_coef
+		
+		ranges_found = dict([(ph, [-np.inf, np.inf]) for ph in set(phasing) if ph > -1])
 		for i, ph in enumerate(phasing):
+			if ph == -1:
+				continue
 			ranges_found[ph][0] = max(ranges_found[ph][0], ranges_gr[i][0])
 			ranges_found[ph][1] = min(ranges_found[ph][1], ranges_gr[i][1])
-		rng = sum((ranges_found[ph][0] - ranges_found[ph][1]) for ph in ranges_found) / len(ranges_found)
-		return rng
+		d_sum = 0
+		for i, ph in enumerate(phasing):
+			if ph == -1:
+				continue
+			r2, r1 = ranges_gr[i]
+			s2, s1 = ranges_found[ph]
+			d_sum += dice_coefficient(r1, r2, s1, s2)
+		return d_sum / len(phasing)
 	
-	def _reduce_phasing(phasing_ranges, ranges_gr):
+	def _optimize_phasing(phasing_ranges, ranges_gr):
 		"""
-		Optimize phasing ranges to minimize the combined ranges for each phase.
+		Optimize phasing to maximize the overlap of dating ranges of individual samples with combined dating ranges of their phases
 		Args:
 			phasing_ranges: List of lists of integers. Each list contains the minimum and maximum phasing values for each sample.
 			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
@@ -150,27 +165,43 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 			if idx not in idxs_moving:
 				phasing_opt[idx] = phasing_ranges[idx][0]
 		while -1 in phasing_opt:
-			rngs0 = []
+			ds0 = []
 			res0 = []
 			for i0 in idxs_moving:
 				phasing0 = np.array(phasing_opt, dtype = int)
 				for ph0 in range(phasing_ranges[i0][0], phasing_ranges[i0][1]+1):
 					phasing0[i0] = ph0
 					while (phasing0 == -1).any():
-						rngs1 = []
+						ds1 = []
 						res1 = []
 						for i1 in np.where(phasing0 == -1)[0]:
 							phasing1 = phasing0.copy()
 							for ph1 in range(phasing_ranges[i1][0], phasing_ranges[i1][1]+1):
 								phasing1[i1] = ph1
-								rngs1.append(_calc_rng(phasing1, ranges_gr))
+								ds1.append(_calc_dice(phasing1, ranges_gr))
 								res1.append([i1, ph1])
-						i1, ph1 = res1[np.argmin(rngs1)]
+						i1, ph1 = res1[np.argmax(ds1)]
 						phasing0[i1] = ph1
-					rngs0.append(_calc_rng(phasing0, ranges_gr))
+					ds0.append(_calc_dice(phasing0, ranges_gr))
 					res0.append(phasing0.tolist())
-			if rngs0:
-				phasing_opt = res0[np.argmin(rngs0)]
+			if ds0:
+				phasing_opt = res0[np.argmax(ds0)]
+		d_opt = _calc_dice(phasing_opt, ranges_gr)
+		changed = True
+		while changed:
+			changed = False
+			for idx in idxs_moving:
+				phs = list(range(phasing_ranges[idx][0], phasing_ranges[idx][1]+1))
+				phasing = copy.copy(phasing_opt)
+				ds = []
+				for ph in phs:
+					phasing[idx] = ph
+					ds.append(_calc_dice(phasing, ranges_gr))
+				d_max = max(ds)
+				if d_max > d_opt:
+					phasing_opt[idx] = phs[np.argmax(ds)]
+					d_opt = d_max
+					changed = True
 		return phasing_opt
 	
 	n_samples = earlier_than.shape[0]
@@ -207,10 +238,9 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 		phasing[mask] = phasing[mask].max() - phasing[mask]
 	phasing[~mask] = -1
 	
+	phasing_ranges = []
 	idxs_later = [np.where(earlier_than[idx])[0] for idx in range(earlier_than.shape[0])]
 	idxs_earlier = [np.where(earlier_than[:,idx])[0] for idx in range(earlier_than.shape[0])]
-	
-	phasing_ranges = []
 	for idx in range(len(phasing)):
 		phase_max = int(phasing.max())
 		phase_min = 0
@@ -225,8 +255,7 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 		phase_max = max(phase_min, phase_max)
 		phasing_ranges.append([phase_min, phase_max])
 	
-	# Iterate over all possible combinations of phasing and find the one with the smallest combined dating range per phase
-	phasing = _reduce_phasing(phasing_ranges, ranges_gr)
+	phasing = _optimize_phasing(phasing_ranges, ranges_gr)
 	
 	return phasing
 

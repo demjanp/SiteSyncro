@@ -338,9 +338,15 @@ class MPhasing(object):
 			earlier_than = self.update_earlier_than_by_dating(earlier_than, samples)
 		
 		ranges = [self.model.samples[name].get_range() for name in self.model.samples]		
-		groups_phases = get_groups_and_phases(earlier_than, samples, ranges)
-		
+		groups_phases, phasing_multi = get_groups_and_phases(earlier_than, samples, ranges)
 		# groups_phases = {sample: [group, phase], ...}
+		# phasing_multi = {sample: [phase, ...], ...}
+		
+		if phasing_multi:
+			print("Warning! Some samples can be assigned to multiple phases:")
+			for name in phasing_multi:
+				print("%s: Phases %s" % (name, ", ".join([str(ph) for ph in phasing_multi[name]])))
+		
 		for name in self.model.samples:
 			if name in groups_phases:
 				group, phase = groups_phases[name]

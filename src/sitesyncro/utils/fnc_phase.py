@@ -3,7 +3,7 @@ from typing import List, Dict
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-
+import copy
 
 def check_circular_relationships(earlier_than: np.ndarray, samples: List[str]) -> bool:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
@@ -202,7 +202,20 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 					phasing_opt[idx] = phs[np.argmax(ds)]
 					d_opt = d_max
 					changed = True
-		return phasing_opt
+		phasing_multi = {}
+		for idx in idxs_moving:
+			ph_collect = [phasing_opt[idx]]
+			phasing = copy.copy(phasing_opt)
+			for ph in range(phasing_ranges[idx][0], phasing_ranges[idx][1]+1):
+				if ph in ph_collect:
+					continue
+				phasing[idx] = ph
+				d = _calc_dice(phasing, ranges_gr)
+				if d>=d_opt:
+					ph_collect.append(ph)
+			if len(ph_collect) > 1:
+				phasing_multi[idx] = ph_collect
+		return phasing_opt, phasing_multi
 	
 	n_samples = earlier_than.shape[0]
 	phasing = np.full(n_samples, np.nan)  # phasing[si] = phase; lower = earlier
@@ -255,9 +268,9 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 		phase_max = max(phase_min, phase_max)
 		phasing_ranges.append([phase_min, phase_max])
 	
-	phasing = _optimize_phasing(phasing_ranges, ranges_gr)
+	phasing, phasing_multi = _optimize_phasing(phasing_ranges, ranges_gr)
 	
-	return phasing
+	return phasing, phasing_multi
 
 
 def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: List) -> Dict[str, List[int or None]]:
@@ -270,7 +283,9 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 	ranges: A list of sample ranges ordered by samples
 	
 	Returns:
-	groups_phases: {sample: [group, phase], ...}
+	(groups_phases, phasing_multi)
+		groups_phases={sample: [group, phase], ...}
+		phasing_multi={sample: [phase, ...], ...}
 	"""
 	
 	groups = find_groups(earlier_than)
@@ -282,13 +297,16 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 			groups_phases[samples[i]][0] = gi
 	
 	# Calculate phasing for each group
+	phasing_multi = {}
 	for gi in groups:
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
 		ranges_gr = [ranges[i] for i in groups[gi]]
-		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr)
+		phases_gr, phasing_multi_gr = get_phases_gr(earlier_than_gr, ranges_gr)
 		for i in range(len(groups[gi])):
 			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
+		for i in phasing_multi_gr:
+			phasing_multi[samples_gr[i]] = phasing_multi_gr[i]
 	
-	return groups_phases
+	return groups_phases, phasing_multi
 

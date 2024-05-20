@@ -7,7 +7,7 @@ import time
 from typing import Union, Generator, Callable
 
 
-def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max_queue_size: int, batch_size: int, args: list) -> None:
+def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, start_flag: mp.Event, max_queue_size: int, batch_size: int, args: list) -> None:
 	while True:
 		try:
 			params = params_mp.get(timeout=10)
@@ -24,6 +24,7 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, max
 			collect_mp.put(worker_fnc(params, *args))
 		else:
 			collect_mp.put([worker_fnc(params_, *args) for params_ in params])
+		start_flag.clear()
 
 
 def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [],
@@ -110,9 +111,12 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 		max_queue_size = n_cpus * 10
 	call_progress(progress_fnc, done, todo, progress_args)
 	procs = []
+	start_flags = []
 	while len(procs) < n_cpus:
+		start_flags.append(mp.Event())
+		start_flags[-1].set()
 		procs.append(
-			mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, max_queue_size, batch_size, worker_args)))
+			mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
 		threading.Thread(target=start_process, args=(procs[-1],)).start()
 	while done < todo:
 		to_add = max_queue_size - params_mp.qsize()
@@ -122,6 +126,18 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 				break
 			todo += n_added
 			to_add -= n_added
+		found_terminated = []
+		for i in range(len(procs)):
+			if (not start_flags[i].is_set()) and (not procs[i].is_alive()):
+				found_terminated.append(i)
+		for i in sorted(found_terminated, reverse=True):
+			del procs[i]
+			del start_flags[i]
+		for i in range(len(found_terminated)):
+			start_flags.append(mp.Event())
+			procs.append(
+				mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
+			threading.Thread(target=start_process, args=(procs[-1],)).start()
 		if not collect_mp.empty():
 			data = collect_mp.get()
 			if batch_size < 1:

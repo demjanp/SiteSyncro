@@ -1,14 +1,9 @@
-from sitesyncro.utils.fnc_mp import (process_mp)
-
 from typing import List, Dict
 
 import matplotlib.pyplot as plt
-from itertools import product
-from functools import reduce
-from tqdm import tqdm
 import networkx as nx
 import numpy as np
-import operator
+
 
 def check_circular_relationships(earlier_than: np.ndarray, samples: List[str]) -> bool:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
@@ -116,65 +111,29 @@ def eap_to_int(eap: str) -> float:
 	return eap
 
 
-def calc_rng(phasing, ranges_gr):
-	"""
-	Calculate the range of the grouped ranges for the given phasing values.
-	Args:
-		phasing: List of integers. The phasing values for each sample.
-		ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
-
-	Returns:
-		Float. The range of the grouped ranges.
-	"""
+def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 	
-	ranges_found = dict([(ph, [-np.inf, np.inf]) for ph in set(phasing)])
-	for i, ph in enumerate(phasing):
-		ranges_found[ph][0] = max(ranges_found[ph][0], ranges_gr[i][0])
-		ranges_found[ph][1] = min(ranges_found[ph][1], ranges_gr[i][1])
-	rng = sum((ranges_found[ph][0] - ranges_found[ph][1]) for ph in ranges_found) / len(ranges_found)
-	return rng
-
-
-def worker_fnc(phasing: List, ranges_gr: List):
-	
-	rng = calc_rng(phasing, ranges_gr)
-	return rng, phasing
-
-
-def collect_fnc(data: List, rng_opt: List, phasing_opt: List, pbar: tqdm):
-	pbar.update(len(data))
-	for rng, phasing in data:
-		if rng < rng_opt[0]:
-			rng_opt[0] = rng
-			phasing_opt[0] = phasing
-
-
-def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List, g_cnt: int, g_cmax: int, max_cpus: int = -1, max_queue_size: int = 10000, batch_size: int = 10000) -> np.ndarray:
-	
-	def _reduce_phasing_sp(values, ranges_gr):
+	def _calc_rng(phasing, ranges_gr):
 		"""
-		Optimize phasing ranges to minimize the range of the grouped ranges.
+		Calculate the avg. span of the combined ranges for the given phasing.
 		Args:
-			phasing_ranges: List of lists of integers. Each list contains the minimum and maximum phasing values for each sample.
-			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
-		
+			phasing: List of integers. The phasing values for each sample.
+			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the combined ranges for each sample.
+
 		Returns:
-			List of integers. The optimized phasing values for each sample.
+			Float. The average span of the combined ranges.
 		"""
 		
-		phasing_opt = None
-		rng_opt = np.inf
-		for phasing in product(*values):
-			rng = calc_rng(phasing, ranges_gr)
-			if rng < rng_opt:
-				rng_opt = rng
-				phasing_opt = phasing
-		phasing = np.array(list(phasing_opt))
-		return phasing
+		ranges_found = dict([(ph, [-np.inf, np.inf]) for ph in set(phasing)])
+		for i, ph in enumerate(phasing):
+			ranges_found[ph][0] = max(ranges_found[ph][0], ranges_gr[i][0])
+			ranges_found[ph][1] = min(ranges_found[ph][1], ranges_gr[i][1])
+		rng = sum((ranges_found[ph][0] - ranges_found[ph][1]) for ph in ranges_found) / len(ranges_found)
+		return rng
 	
-	def _reduce_phasing(phasing_ranges, ranges_gr, max_cpus, max_queue_size, batch_size):
+	def _reduce_phasing(phasing_ranges, ranges_gr):
 		"""
-		Optimize phasing ranges to minimize the range of the grouped ranges.
+		Optimize phasing ranges to minimize the combined ranges for each phase.
 		Args:
 			phasing_ranges: List of lists of integers. Each list contains the minimum and maximum phasing values for each sample.
 			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
@@ -183,20 +142,36 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List, g_cnt: int, g_cmax:
 			List of integers. The optimized phasing values for each sample.
 		"""
 		
-		batch_size = max(batch_size, 1)
-		phasing_opt = None
-		rng_opt = np.inf
-		values = [list(range(phase_min, phase_max+1)) for phase_min, phase_max in phasing_ranges]
-		rng_opt = [np.inf]
-		phasing_opt = [None]
-		cnt = [0]
-		cmax = reduce(operator.mul, (len(value) for value in values), 1)
-		if cmax < 100000:
-			return _reduce_phasing_sp(values, ranges_gr)
-		with tqdm(total=cmax) as pbar:
-			pbar.set_description("Optimizing phasing for group %d/%d" % (g_cnt, g_cmax))
-			process_mp(worker_fnc, product(*values), [ranges_gr], collect_fnc = collect_fnc, collect_args = [rng_opt, phasing_opt, pbar], max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size)
-		return np.array(list(phasing_opt[0]))
+		phase_max = max(rng[1] for rng in phasing_ranges)
+		idxs_all = list(range(len(phasing_ranges)))
+		idxs_moving = [i for i in idxs_all if phasing_ranges[i][0] != phasing_ranges[i][1]]
+		phasing_opt = [-1]*len(phasing_ranges)
+		for idx in idxs_all:
+			if idx not in idxs_moving:
+				phasing_opt[idx] = phasing_ranges[idx][0]
+		while -1 in phasing_opt:
+			rngs0 = []
+			res0 = []
+			for i0 in idxs_moving:
+				phasing0 = np.array(phasing_opt, dtype = int)
+				for ph0 in range(phasing_ranges[i0][0], phasing_ranges[i0][1]+1):
+					phasing0[i0] = ph0
+					while (phasing0 == -1).any():
+						rngs1 = []
+						res1 = []
+						for i1 in np.where(phasing0 == -1)[0]:
+							phasing1 = phasing0.copy()
+							for ph1 in range(phasing_ranges[i1][0], phasing_ranges[i1][1]+1):
+								phasing1[i1] = ph1
+								rngs1.append(_calc_rng(phasing1, ranges_gr))
+								res1.append([i1, ph1])
+						i1, ph1 = res1[np.argmin(rngs1)]
+						phasing0[i1] = ph1
+					rngs0.append(_calc_rng(phasing0, ranges_gr))
+					res0.append(phasing0.tolist())
+			if rngs0:
+				phasing_opt = res0[np.argmin(rngs0)]
+		return phasing_opt
 	
 	n_samples = earlier_than.shape[0]
 	phasing = np.full(n_samples, np.nan)  # phasing[si] = phase; lower = earlier
@@ -251,12 +226,12 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List, g_cnt: int, g_cmax:
 		phasing_ranges.append([phase_min, phase_max])
 	
 	# Iterate over all possible combinations of phasing and find the one with the smallest combined dating range per phase
-	phasing = _reduce_phasing(phasing_ranges, ranges_gr, max_cpus, max_queue_size, batch_size)
+	phasing = _reduce_phasing(phasing_ranges, ranges_gr)
 	
 	return phasing
 
 
-def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: List, max_cpus: int = -1, max_queue_size: int = 10000, batch_size: int = 10000) -> Dict[str, List[int or None]]:
+def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: List) -> Dict[str, List[int or None]]:
 	"""
 	Determines the groups and phases for each sample based on the "earlier than" matrix.
 
@@ -264,9 +239,6 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 	earlier_than: matrix[n_samples x n_samples] = [True/False, ...]; sample in row is earlier than sample in column based on stratigraphy
 	samples: A list of sample names.
 	ranges: A list of sample ranges ordered by samples
-	max_cpus (int, optional): The maximum number of CPUs to use for multiprocessing. Default is -1, which means all available CPUs will be used.
-	max_queue_size (int, optional): The maximum size of the queue for multiprocessing. -1 means the queue size is unlimited. Default is 10000.
-	batch_size (int, optional): If set to >0, process data in batches. Higher values speed up processing but use more memory. Default is 10000.
 	
 	Returns:
 	groups_phases: {sample: [group, phase], ...}
@@ -281,16 +253,13 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 			groups_phases[samples[i]][0] = gi
 	
 	# Calculate phasing for each group
-	cnt = 1
-	cmax = len(groups)
 	for gi in groups:
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
 		ranges_gr = [ranges[i] for i in groups[gi]]
-		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr, cnt, cmax, max_cpus, max_queue_size, batch_size)
+		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr)
 		for i in range(len(groups[gi])):
 			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
-		cnt += 1
 	
 	return groups_phases
 

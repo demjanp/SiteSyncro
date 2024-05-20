@@ -1066,7 +1066,7 @@ class Model(object):
 			print()
 		return reset_assigned, reset_calculated
 	
-	def process_phasing(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = 10000, batch_size: int = 10000) -> bool:
+	def process_phasing(self, by_clusters: bool = False, by_dates: bool = False) -> bool:
 		"""
 		Updates the phasing of samples based on stratigraphic relations.
 
@@ -1076,17 +1076,11 @@ class Model(object):
 		:type by_clusters: bool, optional
 		:param by_dates: If True, update the phasing by comparing sample dates. Defaults to False.
 		:type by_dates: bool, optional
-		:param max_cpus: The maximum number of CPUs to use for multiprocessing. Defaults to -1, which means all available CPUs will be used.
-		:type max_cpus: int, optional
-		:param max_queue_size: The maximum size of the queue for multiprocessing. -1 means the queue size is unlimited. Defaults to 10000.
-		:type max_queue_size: int, optional
-		:param batch_size: If set to >0, process data in batches. Higher values speed up processing but use more memory. Defaults to 10000.
-		:type batch_size: int, optional
 		:return: True if phasing has changed, False otherwise.
 		:rtype: bool
 		"""
 		
-		return self.mphasing.process(by_clusters, by_dates, max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size)
+		return self.mphasing.process(by_clusters, by_dates)
 	
 	def process_outliers(self) -> None:
 		"""
@@ -1157,7 +1151,7 @@ class Model(object):
 			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, 
-				max_cpus: int = -1, max_queue_size: int = -1, batch_size: int = 10000, 
+				max_cpus: int = -1, max_queue_size: int = -1, 
 				save: bool = False) -> None:
 		"""
 		Processes the complete model.
@@ -1177,14 +1171,12 @@ class Model(object):
 		:type max_cpus: int, optional
 		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
 		:type max_queue_size: int, optional
-		:param batch_size: If set to >0, process data in batches. Higher values speed up processing but use more memory. Defaults to 10000.
-		:type batch_size: int, optional
 		:return: None
 		"""
 		
 		if not self.is_modeled:
 			print("\nModeling stratigraphy\n")
-			self.process_phasing(max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size)
+			self.process_phasing()
 			print("\nFinding outliers\n")
 			self.process_outliers()
 			print("\nModeling C-14 dates\n")
@@ -1192,7 +1184,7 @@ class Model(object):
 			if save:
 				self.save(zipped=True)
 		if by_dates:
-			if self.process_phasing(by_dates=True, max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size):
+			if self.process_phasing(by_dates=True):
 				print("\nUpdating phasing by comparing sample dates\n")
 				self.process_dates()
 				if save:

@@ -7,7 +7,8 @@ import time
 from typing import Union, Generator, Callable
 
 
-def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, start_flag: mp.Event, max_queue_size: int, batch_size: int, args: list) -> None:
+def _worker(worker_id: int, worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, start_flag: mp.Event, max_queue_size: int, batch_size: int, args: list) -> None:
+	cnt = 0
 	while True:
 		try:
 			params = params_mp.get(timeout=10)
@@ -25,6 +26,9 @@ def _worker(worker_fnc: Callable, params_mp: mp.Queue, collect_mp: mp.Queue, sta
 		else:
 			collect_mp.put([worker_fnc(params_, *args) for params_ in params])
 		start_flag.clear()
+		cnt += 1
+		print("Worker %d: %d tasks done" % (worker_id, cnt))
+		
 
 
 def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker_args: list = [],
@@ -115,8 +119,9 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 	while len(procs) < n_cpus:
 		start_flags.append(mp.Event())
 		start_flags[-1].set()
+		worker_id = len(procs) + 1
 		procs.append(
-			mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
+			mp.Process(target=_worker, args=(worker_id, worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
 		threading.Thread(target=start_process, args=(procs[-1],)).start()
 	while done < todo:
 		to_add = max_queue_size - params_mp.qsize()
@@ -135,8 +140,10 @@ def process_mp(worker_fnc: Callable, params_list: Union[list, Generator], worker
 			del start_flags[i]
 		for i in range(len(found_terminated)):
 			start_flags.append(mp.Event())
+			start_flags[-1].set()
+			worker_id = len(procs) + 1
 			procs.append(
-				mp.Process(target=_worker, args=(worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
+				mp.Process(target=_worker, args=(worker_id, worker_fnc, params_mp, collect_mp, start_flags[-1], max_queue_size, batch_size, worker_args)))
 			threading.Thread(target=start_process, args=(procs[-1],)).start()
 		if not collect_mp.empty():
 			data = collect_mp.get()

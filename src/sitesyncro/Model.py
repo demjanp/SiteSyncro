@@ -1086,7 +1086,7 @@ class Model(object):
 		:rtype: bool
 		"""
 		
-		return self.mphasing.process(by_clusters, by_dates)
+		return self.mphasing.process(by_clusters, by_dates, max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size)
 	
 	def process_outliers(self) -> None:
 		"""
@@ -1156,11 +1156,9 @@ class Model(object):
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
 			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
-	def process(self, by_clusters: bool = False, by_dates: bool = False, max_cpus: int = -1, max_queue_size: int = -1,
+	def process(self, by_clusters: bool = False, by_dates: bool = False, 
+				max_cpus: int = -1, max_queue_size: int = -1, batch_size: int = 10000, 
 				save: bool = False) -> None:
-		# Process the complete model
-		# by_clusters: if True, update the phasing by clustering sample dates
-		# by_dates: if True, update the phasing by comparing sample dates
 		"""
 		Processes the complete model.
 
@@ -1179,12 +1177,14 @@ class Model(object):
 		:type max_cpus: int, optional
 		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
 		:type max_queue_size: int, optional
+		:param batch_size: If set to >0, process data in batches. Higher values speed up processing but use more memory. Defaults to 10000.
+		:type batch_size: int, optional
 		:return: None
 		"""
 		
 		if not self.is_modeled:
 			print("\nModeling stratigraphy\n")
-			self.process_phasing()
+			self.process_phasing(max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size)
 			print("\nFinding outliers\n")
 			self.process_outliers()
 			print("\nModeling C-14 dates\n")
@@ -1192,7 +1192,7 @@ class Model(object):
 			if save:
 				self.save(zipped=True)
 		if by_dates:
-			if self.process_phasing(by_dates=True):
+			if self.process_phasing(by_dates=True, max_cpus=max_cpus, max_queue_size=max_queue_size, batch_size=batch_size):
 				print("\nUpdating phasing by comparing sample dates\n")
 				self.process_dates()
 				if save:

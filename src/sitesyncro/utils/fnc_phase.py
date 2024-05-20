@@ -1,10 +1,14 @@
+from sitesyncro.utils.fnc_mp import (process_mp)
+
 from typing import List, Dict
 
 import matplotlib.pyplot as plt
 from itertools import product
+from functools import reduce
+from tqdm import tqdm
 import networkx as nx
 import numpy as np
-
+import operator
 
 def check_circular_relationships(earlier_than: np.ndarray, samples: List[str]) -> bool:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
@@ -112,21 +116,86 @@ def eap_to_int(eap: str) -> float:
 	return eap
 
 
-def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
+def calc_rng(phasing, ranges_gr):
+	"""
+	Calculate the range of the grouped ranges for the given phasing values.
+	Args:
+		phasing: List of integers. The phasing values for each sample.
+		ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
+
+	Returns:
+		Float. The range of the grouped ranges.
+	"""
 	
-	def _get_phasing_limits(idx, phasing):
+	ranges_found = dict([(ph, [-np.inf, np.inf]) for ph in set(phasing)])
+	for i, ph in enumerate(phasing):
+		ranges_found[ph][0] = max(ranges_found[ph][0], ranges_gr[i][0])
+		ranges_found[ph][1] = min(ranges_found[ph][1], ranges_gr[i][1])
+	rng = sum((ranges_found[ph][0] - ranges_found[ph][1]) for ph in ranges_found) / len(ranges_found)
+	return rng
+
+
+def worker_fnc(phasing: List, ranges_gr: List):
+	
+	rng = calc_rng(phasing, ranges_gr)
+	return rng, phasing
+
+
+def collect_fnc(data: List, rng_opt: List, phasing_opt: List, pbar: tqdm):
+	pbar.update(len(data))
+	for rng, phasing in data:
+		if rng < rng_opt[0]:
+			rng_opt[0] = rng
+			phasing_opt[0] = phasing
+
+
+def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List, g_cnt, g_cmax) -> np.ndarray:
+	
+	def _reduce_phasing_sp(values, ranges_gr):
+		"""
+		Optimize phasing ranges to minimize the range of the grouped ranges.
+		Args:
+			phasing_ranges: List of lists of integers. Each list contains the minimum and maximum phasing values for each sample.
+			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
+
+		Returns:
+			List of integers. The optimized phasing values for each sample.
+		"""
 		
-		phase_max = phasing.max()
-		phase_min = 0
-		ph_later = phasing[uis_later[idx]]
-		ph_later = ph_later[~np.isnan(ph_later)]
-		if ph_later.size:
-			phase_max = int(ph_later.min()) - 1
-		ph_earlier = phasing[uis_earlier[idx]]
-		ph_earlier = ph_earlier[~np.isnan(ph_earlier)]
-		if ph_earlier.size:
-			phase_min = int(ph_earlier.max()) + 1
-		return phase_min, phase_max
+		phasing_opt = None
+		rng_opt = np.inf
+		for phasing in product(*values):
+			rng = calc_rng(phasing, ranges_gr)
+			if rng < rng_opt:
+				rng_opt = rng
+				phasing_opt = phasing
+		phasing = np.array(list(phasing_opt))
+		return phasing
+	
+	def _reduce_phasing(phasing_ranges, ranges_gr):
+		"""
+		Optimize phasing ranges to minimize the range of the grouped ranges.
+		Args:
+			phasing_ranges: List of lists of integers. Each list contains the minimum and maximum phasing values for each sample.
+			ranges_gr: List of lists of floats. Each list contains the maximum and minimum values of the grouped ranges for each sample.
+
+		Returns:
+			List of integers. The optimized phasing values for each sample.
+		"""
+		
+		phasing_opt = None
+		rng_opt = np.inf
+		values = [list(range(phase_min, phase_max+1)) for phase_min, phase_max in phasing_ranges]
+		rng_opt = [np.inf]
+		phasing_opt = [None]
+		cnt = [0]
+		cmax = reduce(operator.mul, (len(value) for value in values), 1)
+		if cmax < 100000:
+			return _reduce_phasing_sp(values, ranges_gr)
+		with tqdm(total=cmax) as pbar:
+			pbar.set_description("Optimizing phasing for group %d/%d" % (g_cnt, g_cmax))
+			process_mp(worker_fnc, product(*values), [ranges_gr], collect_fnc = collect_fnc, collect_args = [rng_opt, phasing_opt, pbar], max_queue_size = 10000, batch_size = 10000)
+		return np.array(list(phasing_opt[0]))
 	
 	n_samples = earlier_than.shape[0]
 	phasing = np.full(n_samples, np.nan)  # phasing[si] = phase; lower = earlier
@@ -165,7 +234,7 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 	idxs_later = [np.where(earlier_than[idx])[0] for idx in range(earlier_than.shape[0])]
 	idxs_earlier = [np.where(earlier_than[:,idx])[0] for idx in range(earlier_than.shape[0])]
 	
-	collect = []
+	phasing_ranges = []
 	for idx in range(len(phasing)):
 		phase_max = int(phasing.max())
 		phase_min = 0
@@ -177,21 +246,11 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 		ph_earlier = ph_earlier[~np.isnan(ph_earlier)]
 		if ph_earlier.size:
 			phase_min = int(ph_earlier.max()) + 1
-		collect.append([phase_min, phase_max])
+		phase_max = max(phase_min, phase_max)
+		phasing_ranges.append([phase_min, phase_max])
 	
 	# Iterate over all possible combinations of phasing and find the one with the smallest combined dating range per phase
-	phasing_opt = None
-	rng_opt = np.inf
-	for phasing in product(*[list(range(phase_min, phase_max+1)) for phase_min, phase_max in collect]):
-		ranges_found = dict([(ph, [np.inf, -np.inf]) for ph in set(phasing)])
-		for i, ph in enumerate(phasing):
-			ranges_found[ph][0] = min(ranges_found[ph][0], ranges_gr[i][0])
-			ranges_found[ph][1] = max(ranges_found[ph][1], ranges_gr[i][1])
-		rng = sum((ranges_found[ph][1] - ranges_found[ph][0]) for ph in ranges_found)
-		if rng < rng_opt:
-			rng_opt = rng
-			phasing_opt = phasing
-	phasing = np.array(list(phasing_opt))
+	phasing = _reduce_phasing(phasing_ranges, ranges_gr)
 	
 	return phasing
 
@@ -218,13 +277,16 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 			groups_phases[samples[i]][0] = gi
 	
 	# Calculate phasing for each group
+	cnt = 1
+	cmax = len(groups)
 	for gi in groups:
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
 		ranges_gr = [ranges[i] for i in groups[gi]]
-		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr)
+		phases_gr = get_phases_gr(earlier_than_gr, ranges_gr, cnt, cmax)
 		for i in range(len(groups[gi])):
 			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
+		cnt += 1
 	
 	return groups_phases
 

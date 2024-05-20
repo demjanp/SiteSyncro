@@ -246,10 +246,10 @@ if __name__ == '__main__':
 	
 	if not os.path.isfile(fdata):
 		print("Loading data")
-		model0 = Model(directory="stage_0")
-		model1 = Model(directory="stage_1")
-		model2 = Model(directory="stage_2")
-		model3 = Model(directory="stage_3")
+		model0 = Model(directory="_non_reduced/stage_0")
+		model1 = Model(directory="_non_reduced/stage_1")
+		model2 = Model(directory="_non_reduced/stage_2")
+		model3 = Model(directory="_non_reduced/stage_3")
 		
 		samples = list(model0.samples.keys())
 		
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 	plot_graph("Outlier Detection", G1, pos, node_colors_outlier, 'k', dists0, dists0, samples, outliers, None, None, 'g1a')
 	plot_graph("Chronological Modeling 1", G1, pos, 'k', 'k', dists0, dists1, samples, outliers, None, None, 'g1b')
 	plot_graph("Inter-Group Chronological Relations", G2, pos, 'k', edge_colors2, dists0, dists1, samples, outliers, None, None, 'g2a')
-	plot_graph("Chronological Modeling 2", G2, pos, 'k', 'lightgrey', dists0, dists2, samples, outliers, phases2, 'Phase', 'g2b')
-	plot_graph("Chronological Clustering", G3, pos, 'k', 'k', dists0, dists2, samples, outliers, clusters, 'Cluster', 'g3a')
-	plot_graph("Chronological Modeling 3", G3, pos, 'k', 'k', dists0, dists3, samples, outliers, phases3, 'Phase', 'g3b')
+	plot_graph("Chronological Modeling 2", G2, pos, 'k', 'lightgrey', dists1, dists2, samples, outliers, phases2, 'Phase', 'g2b')
+	plot_graph("Chronological Clustering", G3, pos, 'k', 'k', dists1, dists2, samples, outliers, clusters, 'Cluster', 'g3a')
+	plot_graph("Chronological Modeling 3", G3, pos, 'k', 'k', dists2, dists3, samples, outliers, phases3, 'Phase', 'g3b')
 	

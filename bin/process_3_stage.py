@@ -24,7 +24,7 @@ import os
 if __name__ == '__main__':
 	
 	
-	finput = 'data_20240329.csv'
+	finput = 'data_sample.csv'
 	
 	model = Model(
 		directory = 'stage_0',
@@ -58,7 +58,6 @@ if __name__ == '__main__':
 	model = model.copy('stage_1')
 	model.process_phasing()
 	model.process_outliers()
-	model.to_oxcal("stage_1\kap_stage_1.oxcal")
 	model.process_dates()
 	model.save(zipped=True)
 	model.save_outliers()
@@ -76,7 +75,6 @@ if __name__ == '__main__':
 	print("\nModelling 2 - by dates\n")
 	model = model.copy('stage_2')
 	model.process_phasing(by_dates=True)
-	model.to_oxcal("stage_2\kap_stage_2.oxcal")
 	model.process_dates()
 	model.save(zipped=True)
 	print("\nClustering 2\n")
@@ -89,7 +87,6 @@ if __name__ == '__main__':
 	model = model.copy('stage_3')
 	print("\nModelling 3 - by clusters\n")
 	model.process_phasing(by_clusters=True)
-	model.to_oxcal("stage_3\kap_stage_3.oxcal")
 	model.process_dates()
 	model.save(zipped=True)
 	model.save_csv()

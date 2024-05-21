@@ -95,10 +95,6 @@ def calc_clusters_hca(D: np.ndarray, n: int, method: str = "average") -> Dict[in
 	Returns:
 		clusters = {label: [idx, ...], ...}; idx = index D
 	
-	Example:
-	If we have a distance matrix for three distributions and we want to cluster them into two groups, the function
-	might return {1: [0, 2], 2: [1]}. This means that distributions 0 and 2 are in one cluster and distribution 1 is
-	in another cluster.
 	"""
 	if D.ndim == 1:
 		D = squareform(D)

@@ -65,25 +65,11 @@ class MCluster(object):
 		
 		t_mean, t_std = get_params(distributions, self.model.curve, self.model.uniform)
 		
-		# Get dating range of all samples
-		rng_min, rng_max = np.inf, -np.inf
-		for name in self.model.samples:
-			rng = self.model.samples[name].get_range()
-			if None in rng:
-				continue
-			rng_min = min(rng_min, min(rng))
-			rng_max = max(rng_max, max(rng))
-		rng = (rng_max - rng_min)
-		if abs(rng) == np.inf:
-			raise Exception("Invalid dating range")
-		
-		clu_max = min(max(2, int(round(rng / self.model.min_years_per_cluster))), distributions_n - 1)
-		
 		clusters = {}  # {cluster_n: {label: [idx, ...], ...}, ...}; idx = index in samples
 		sils = {}  # {cluster_n: silhouette_score, ...}
 		means = {}  # {cluster_n: {label: mean, ...}, ...}
 		D = calc_distance_matrix(distributions)
-		for cluster_n in range(2, clu_max + 1):
+		for cluster_n in range(2, distributions_n):
 			clusters[cluster_n] = calc_clusters_hca(D, cluster_n)
 			sils[cluster_n] = calc_silhouette(D, clusters[cluster_n])
 			means[cluster_n] = {}

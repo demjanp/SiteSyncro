@@ -44,9 +44,6 @@ class Model(object):
 	:param cluster_selection: The method used to select the optimal number of clusters. Can be 'silhouette' or 'mcst' (default is 'silhouette').
 	:type cluster_selection: str
 	
-	:param min_years_per_cluster: The minimum number of years per cluster.
-	:type min_years_per_cluster: int
-
 	:param uniform: Flag indicating whether to use uniform randomization (default is False).
 	:type uniform: bool
 
@@ -78,7 +75,6 @@ class Model(object):
 			phase_model='sequence',
 			cluster_n=-1,
 			cluster_selection='silhouette',
-			min_years_per_cluster=25,
 			uniform=False,
 			p_value=0.05,
 			uncertainty_base=15,
@@ -142,7 +138,6 @@ class Model(object):
 			phase_model=None,
 			cluster_n=None,
 			cluster_selection=None,
-			min_years_per_cluster=None,
 			uniform=None,
 			p_value=None,
 			uncertainty_base=None,
@@ -264,16 +259,6 @@ class Model(object):
 		:rtype: str
 		"""
 		return self._data['cluster_selection']
-	
-	@property
-	def min_years_per_cluster(self) -> int:
-		"""
-		The minimum number of years per cluster.
-		
-		:return: The minimum number of years per cluster.
-		:rtype: int
-		"""
-		return self._data['min_years_per_cluster']
 	
 	@property
 	def uniform(self) -> bool:
@@ -724,7 +709,6 @@ class Model(object):
 			phase_model = self.phase_model,
 			cluster_n = self.cluster_n,
 			cluster_selection = self.cluster_selection,
-			min_years_per_cluster = self.min_years_per_cluster,
 			uniform = self.uniform,
 			p_value = self.p_value,
 			uncertainty_base = self.uncertainty_base,
@@ -1004,7 +988,7 @@ class Model(object):
 		
 		assigned_full = ['samples', 'curve_name', 'phase_model']
 		assigned_randomization = ['uniform', 'p_value', 'uncertainty_base', 'npass', 'convergence']
-		assigned_clustering = ['cluster_n', 'cluster_selection', 'min_years_per_cluster']
+		assigned_clustering = ['cluster_n', 'cluster_selection']
 		
 		def _get_n_samples(value):
 			if isinstance(value, dict):

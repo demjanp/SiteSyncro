@@ -89,10 +89,7 @@ class MPhasing(object):
 					earlier_than[i][j] = True
 		
 		# Check if earlier_than has circular relationships
-		if not check_circular_relationships(earlier_than, samples):
-			# Visualize earlier_than as a DAG
-			visualize_earlier_than(earlier_than, samples)
-			raise Exception("Circular relationships detected")
+		check_circular_relationships(earlier_than, samples)
 		
 		# Extend the earlier_than matrix to include computed relations
 		earlier_than = extend_earlier_than(earlier_than)
@@ -187,8 +184,8 @@ class MPhasing(object):
 		# Sort clusters from oldest to youngest
 		labels = sorted(clusters.keys(), key=lambda label: means[label], reverse=True)
 		
-		phases_clu = dict((label, idx + 1) for idx, label in enumerate(labels))
-		# phases_clu = {label: phase, ...}; lower phase = earlier
+		# Assign phase numbers to clusters
+		phases_clu = dict([(label, n+1) for n, label in enumerate(labels)])
 		
 		collect = {}
 		for label in phases_clu:
@@ -197,28 +194,34 @@ class MPhasing(object):
 		phases_clu = collect
 		# phases_clu = {sample: phase, ...}
 		
-		# Update earlier-than relationships based on phases derived from clustering
-		errors = []
+		# Eliminate cluster pairs which violate chronological relations given by stratigraphy
+		invalid = set()
 		for i, s1 in enumerate(samples):
+			if phases_clu[s1] is None:
+				continue
 			for j, s2 in enumerate(samples):
+				if phases_clu[s2] is None:
+					continue
+				if phases_clu[s1] < phases_clu[s2]:
+					if ((self.model.samples[s1].group == self.model.samples[s2].group) and (self.model.samples[s1].phase is not None) and (
+							self.model.samples[s2].phase is not None) and (self.model.samples[s1].phase > self.model.samples[s2].phase)):
+						invalid.add((phases_clu[s1], phases_clu[s2]))
+						invalid.add((phases_clu[s2], phases_clu[s1]))
+		
+		# Update earlier-than relationships based on phases derived from clustering
+		for i, s1 in enumerate(samples):
+			if phases_clu[s1] is None:
+				continue
+			for j, s2 in enumerate(samples):
+				if phases_clu[s2] is None:
+					continue
+				if (phases_clu[s1], phases_clu[s2]) in invalid:
+					continue
 				if phases_clu[s1] < phases_clu[s2]:
 					earlier_than[i][j] = True
-					if (self.model.samples[s1].group == self.model.samples[s2].group) and (self.model.samples[s1].phase is not None) and (
-							self.model.samples[s2].phase is not None) and (self.model.samples[s1].phase > self.model.samples[s2].phase):
-						errors.append(
-							[s1, s2, phases_clu[s1], phases_clu[s2], self.model.samples[s1].phase, self.model.samples[s2].phase])
-		if errors:
-			print("Warning, collisions detected between stratigraphic phasing and clustering:")
-			for s1, s2, clu1, clu2, ph1, ph2 in errors:
-				print("%s (Strat. phase %s, Clu. phase %s), %s (Strat. phase %s, Clu. phase %s)" % (
-					s1, ph1, clu1, s2, ph2, clu2))
-			print()
 		
 		# Check if earlier_than has circular relationships
-		if not check_circular_relationships(earlier_than, samples):
-			# Visualize earlier_than as a DAG
-			visualize_earlier_than(earlier_than, samples)
-			raise Exception("Circular relationships detected")
+		check_circular_relationships(earlier_than, samples)
 		
 		# Extend the earlier_than matrix to include computed relations
 		earlier_than = extend_earlier_than(earlier_than)
@@ -330,6 +333,8 @@ class MPhasing(object):
 		:rtype: bool
 		"""
 		
+		phasing0 = set([(name, self.model.samples[name].group, self.model.samples[name].phase) for name in self.model.samples])
+		
 		earlier_than, samples = self.create_earlier_than_matrix()
 		if by_clusters and self.model.is_clustered:
 			earlier_than = self.update_earlier_than_by_clustering(earlier_than, samples)
@@ -356,8 +361,8 @@ class MPhasing(object):
 				self.model.samples[name].set_group(None)
 				self.model.samples[name].set_phase(None)
 		
-		earlier_than_1, samples_1 = self.create_earlier_than_matrix()
-		if not ((earlier_than.shape == earlier_than.shape) and np.allclose(earlier_than, earlier_than_1) and (
-				samples == samples_1)):
+		phasing1 = set([(name, self.model.samples[name].group, self.model.samples[name].phase) for name in self.model.samples])
+		
+		if phasing0 != phasing1:
 			return True
 		return False

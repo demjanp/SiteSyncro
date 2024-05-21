@@ -1,28 +1,34 @@
+from sitesyncro.utils.fnc_visualize import (pygraphviz_layout)
+
 from typing import List, Dict
 
-import matplotlib.pyplot as plt
+from matplotlib import pyplot
 import networkx as nx
 import numpy as np
 import copy
+
 
 def check_circular_relationships(earlier_than: np.ndarray, samples: List[str]) -> bool:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	cycles = list(nx.simple_cycles(G))
 	if cycles:
 		print("Circular relationships detected:")
+		idxs = set()
 		for cycle in cycles:
-			cycle_samples = [samples[i] for i in cycle]
-			print(" -> ".join(cycle_samples))
-		return False
-	return True
+			idxs.update(cycle)
+		idxs = sorted(list(idxs))
+		samples = [samples[idx] for idx in idxs]
+		earlier_than = earlier_than[np.ix_(idxs, idxs)]
+		visualize_earlier_than(earlier_than, samples)
+		raise Exception("Circular relationships detected")
 
 
 def visualize_earlier_than(earlier_than: np.ndarray, samples: List[str]) -> None:
 	G = nx.convert_matrix.from_numpy_array(earlier_than, create_using=nx.DiGraph)
 	labels = {i: sample for i, sample in enumerate(samples)}
-	pos = nx.spring_layout(G)
+	pos = pygraphviz_layout(G)
 	nx.draw(G, pos, labels=labels, with_labels=True)
-	plt.show()
+	pyplot.show()
 
 
 def extend_earlier_than(earlier_than: np.ndarray) -> np.ndarray:

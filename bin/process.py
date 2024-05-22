@@ -40,8 +40,6 @@ def parse_arguments(args):
 		help="Number of clusters to form (-1 = automatic)")
 	parser.add_argument('-cluster_selection', type=str, default="silhouette", required=False,
 		help="Cluster selection method ('silhouette' or 'mcst')")
-	parser.add_argument('-min_years_per_cluster', type=int, default=25, required=False,
-		help="Minimum number of years per cluster.")
 	parser.add_argument('-by_clusters', type=int, default=0, required=False,
 		help="Flag indicating whether to update the phasing by clustering sample dates")
 	parser.add_argument('-by_dates', type=int, default=0, required=False,
@@ -104,7 +102,6 @@ if __name__ == '__main__':
 	print("   Phase model:            %s" % model.phase_model)
 	print("   Number of clusters:     %s" % ("all possible" if model.cluster_n == -1 else model.cluster_n))
 	print("   Cluster selection:      %s" % model.cluster_selection)
-	print("   Min. years per cluster: %s" % model.min_years_per_cluster)
 	print("   Uniform distribution:   %s" % model.uniform)
 	print("   P-value threshold:      %s" % model.p_value)
 	print("   Base uncertainty:       %s" % model.uncertainty_base)

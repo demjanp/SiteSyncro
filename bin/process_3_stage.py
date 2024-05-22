@@ -45,7 +45,6 @@ if __name__ == '__main__':
 	print("   Calibration curve:      %s" % model.curve_name)
 	print("   Phase model:            %s" % model.phase_model)
 	print("   Number of clusters:     %s" % ("all possible" if model.cluster_n == -1 else model.cluster_n))
-	print("   Min. years per cluster: %s" % model.min_years_per_cluster)
 	print("   Uniform distribution:   %s" % model.uniform)
 	print("   P-value threshold:      %s" % model.p_value)
 	print("   Base uncertainty:       %s" % model.uncertainty_base)

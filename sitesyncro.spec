@@ -3,17 +3,18 @@
 block_cipher = None
 
 a = Analysis(['bin\\process.py'],
-             pathex=['.venv\\Lib\\site-packages'],
-             binaries=[],
-             datas=[],
-             hiddenimports=['sitesyncro', 'matplotlib', 'matplotlib.backends.backend_pdf'],
-             hookspath=[],
-             runtime_hooks=[],
-             excludes=[],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
-             noarchive=False)
+			pathex=['.venv\\Lib\\site-packages'],
+			binaries=[],
+			datas=[('src\\sitesyncro\\graphviz', 'sitesyncro\\graphviz'),
+				('src\\sitesyncro\\pygraphviz', 'sitesyncro\\pygraphviz')],
+			hiddenimports=['sitesyncro', 'matplotlib', 'matplotlib.backends.backend_pdf'],
+			hookspath=[],
+			runtime_hooks=[],
+			excludes=[],
+			win_no_prefer_redirects=False,
+			win_private_assemblies=False,
+			cipher=block_cipher,
+			noarchive=False)
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,

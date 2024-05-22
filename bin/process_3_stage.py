@@ -34,7 +34,7 @@ if __name__ == '__main__':
 	
 	model.import_csv(finput)	
 	model.save(zipped=True)
-	model.save_csv()
+	model.save_csv_samples()
 	
 	print()
 	print("   Total unique samples:     %s" % len(model.samples))
@@ -68,7 +68,8 @@ if __name__ == '__main__':
 	print("\nClustering 1\n")
 	model.process_clustering()
 	model.save(zipped=True)
-	model.save_csv()
+	model.save_csv_samples()
+	model.save_csv_phases()
 	model.plot_clusters()
 	
 	print("\nStage 2\n")
@@ -81,7 +82,8 @@ if __name__ == '__main__':
 	model.process_clustering()
 	model.save(zipped=True)
 	model.plot_clusters()
-	model.save_csv()
+	model.save_csv_samples()
+	model.save_csv_phases()
 	
 	print("\nStage 3\n")
 	model = model.copy('stage_3')
@@ -89,5 +91,6 @@ if __name__ == '__main__':
 	model.process_phasing(by_clusters=True)
 	model.process_dates()
 	model.save(zipped=True)
-	model.save_csv()
+	model.save_csv_samples()
+	model.save_csv_phases()
 

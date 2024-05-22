@@ -116,5 +116,6 @@ if __name__ == '__main__':
 	model.plot_randomized()
 	model.plot_clusters()
 	model.save_outliers()
-	model.save_csv()
+	model.save_csv_samples()
+	model.save_csv_phases()
 	

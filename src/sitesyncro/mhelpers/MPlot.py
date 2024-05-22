@@ -13,6 +13,19 @@ class MPlot(object):
 		
 		self.model = model
 	
+	@staticmethod
+	def _format_year(value):
+		
+		if value is None:
+			return "None"
+		return "%0.2f" % (-(value - 1950))
+	
+	@staticmethod
+	def _sum_range(rng):
+		if None in rng:
+			return -1
+		return sum(rng)
+	
 	def plot_randomized(self, fname: str, show: bool = False) -> None:
 		"""
 		Plots the randomization test results.
@@ -135,9 +148,9 @@ class MPlot(object):
 		with open(fname, "w", encoding="utf-8") as file:
 			file.write(txt)
 	
-	def save_results_csv(self, fcsv: str) -> None:
+	def save_results_samples_csv(self, fcsv: str) -> None:
 		"""
-		Saves the results to a CSV file.
+		Saves the results for samples to a CSV file.
 
 		Parameters:
 		fcsv (str): The filename where the results will be saved.
@@ -145,24 +158,11 @@ class MPlot(object):
 		Returns:
 		None
 		"""
-		
-		def _format_year(value):
-			
-			if value is None:
-				return "None"
-			return "%0.2f" % (-(value - 1950))
-		
 		samples = list(self.model.samples.keys())
-		
-		def _sum_range(rng):
-			if None in rng:
-				return -1
-			return sum(rng)
-		
 		samples = sorted(samples, key=lambda name: [
 			self.model.samples[name].group,
 			self.model.samples[name].phase,
-			_sum_range(self.model.samples[name].likelihood_range)
+			self._sum_range(self.model.samples[name].likelihood_range)
 		])
 		
 		cluster = dict([(name, None) for name in samples])
@@ -184,7 +184,31 @@ class MPlot(object):
 					int(self.model.samples[name].long_lived), int(self.model.samples[name].redeposited),
 					int(self.model.samples[name].outlier), self.model.samples[name].excavation_area_phase,
 					self.model.samples[name].group, self.model.samples[name].phase, cluster[name],
-					_format_year(likelihood_min), _format_year(likelihood_max),
-					_format_year(posterior_min), _format_year(posterior_max)
+					self._format_year(likelihood_min), self._format_year(likelihood_max),
+					self._format_year(posterior_min), self._format_year(posterior_max)
 				))
 
+	def save_results_phases_csv(self, fcsv: str) -> None:
+		"""
+		Saves the results for phases to a CSV file.
+
+		Parameters:
+		fcsv (str): The filename where the results will be saved.
+
+		Returns:
+		None
+		"""
+		phases = sorted(list(self.model.phases.keys()))
+		
+		with codecs.open(fcsv, "w", encoding="utf-8-sig") as file:
+			file.write(
+				"Group;Phase;Start From (CE);Start To (CE);End From (CE);End To (CE)\n")
+			for key in phases:
+				group, phase = key
+				start_from, start_to = self.model.phases[key].start_range
+				end_from, end_to = self.model.phases[key].end_range
+				file.write('''%d;%d;%s;%s;%s;%s\n''' % (
+					group, phase, 
+					self._format_year(start_from), self._format_year(start_to), 
+					self._format_year(end_from), self._format_year(end_to)
+				))

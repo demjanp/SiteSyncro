@@ -15,6 +15,7 @@ Documentation: [https://sitesyncro.readthedocs.io](https://sitesyncro.readthedoc
    * [Input File Format](#input_file)
    * [Model Class](#model_class)
    * [Sample Class](#sample_class)
+   * [Phase Class](#phase_class)
 4. [Developer Notes](#developer)
 	* [Preparing the Virtual Environment](#venv)
 	* [Building a Windows Executable](#build)
@@ -63,12 +64,12 @@ sitesyncro.exe -input data_sample.csv
 ```
 `process.py` & `sitesyncro.exe` accepts the following command-line arguments:
 - `-h`, `--help`: Show help message and exit.
-- `-directory`: Working directory for model data (default is "model").
+- `-directory`: Working directory for model data (default is 'model').
 - `-input`: The path to the input file in semicolon-separated CSV format.
-- `-curve_name`: File name of the radiocarbon age calibration curve (default is "intcal20.14c").
-- `-phase_model`: OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none'; default is "sequence").
+- `-curve_name`: File name of the radiocarbon age calibration curve (default is 'intcal20.14c').
+- `-phase_model`: OxCal phase model type (can be 'sequence', 'contiguous', 'overlapping', or 'none'; default is 'sequence').
 - `-cluster_n`: Number of clusters to form (-1 = automatic; default is -1).
-- `-min_years_per_cluster`: Minimum number of years per cluster. (default is 25).
+- `-cluster_selection`: Cluster selection method ('silhouette' or 'mcst'; default is 'silhouette').
 - `-by_clusters`: Flag indicating whether to update the phasing by clustering sample dates (default is 0).
 - `-by_dates`: Flag indicating whether to update the phasing by comparing sample dates (default is 0).
 - `-uniform`: Flag indicating whether to use a uniform distribution for the calendar ages (default is 0).
@@ -125,8 +126,9 @@ if __name__ == '__main__':
     # Plot the clustering result
     model.plot_clusters()
     
-    # Save the results to a CSV file
-    model.save_csv()
+    # Save the results to a CSV files
+    model.save_csv_samples()
+    model.save_csv_phases()
 ```
 This will create the default directory `model` and generate the following files:
 `model.json.gz`
@@ -134,7 +136,8 @@ This will create the default directory `model` and generate the following files:
 `model.js`, `model.log`, `model.txt`
 `randomized.pdf`
 `silhouette.pdf`
-`results.csv`
+`results_samples.csv`
+`results_phases.csv`
 
 See [Model Class](https://sitesyncro.readthedocs.io/en/latest/model.html) documentation for more information.
 
@@ -154,6 +157,29 @@ if __name__ == '__main__':
 ```
 
 See [Sample Class](https://sitesyncro.readthedocs.io/en/latest/sample.html) documentation for more information.
+
+### Phase Class <a name="phase_class"></a>
+The `Phase` class represents a modeled chronological phase. Here is a basic example of how to use it:
+
+```python
+from sitesyncro import Model
+
+if __name__ == '__main__':
+    
+    # Initialize the Model object and load data from the directory 'model'
+    model = Model(directory='model')
+    
+    # Print information on phasing (if model has been processed)
+    for group, phase in model.phases:
+        phase = model.phases[(group, phase)]
+        start_from, start_to = phase.start_range
+        end_from, end_to = phase.end_range
+        
+        # Print the group, phase, and start and end ranges
+        print(f'Group: {group}, Phase: {phase}, Start: {start_from}-{start_to}, End: {end_from}-{end_to}')
+```
+
+See [Phase Class](https://sitesyncro.readthedocs.io/en/latest/phase.html) documentation for more information.
 
 ## Developer Notes <a name="developer"></a>
 ### Preparing the Virtual Environment <a name="venv"></a>

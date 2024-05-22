@@ -3,6 +3,8 @@ from sitesyncro import Model
 from sitesyncro.utils.fnc_visualize import (pygraphviz_layout)
 from sitesyncro.utils.fnc_phase import (reduce_earlier_than)
 
+import os
+import shutil
 import copy
 import io
 from collections import defaultdict
@@ -14,9 +16,10 @@ import matplotlib.animation as animation
 from matplotlib.animation import PillowWriter
 from matplotlib.lines import Line2D
 from natsort import natsorted
-from PIL import Image
+from PIL import Image, ImageSequence
 from pptx import Presentation
 from pptx.util import Inches
+
 
 def convert(old_filename, new_filename, duration):
 	images = []
@@ -260,7 +263,7 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	handles_edges = []
 	if len(G.edges()) > 0:
 		if isinstance(edge_color, list):
-			colors = list(set(edge_color))
+			colors = sorted(list(set(edge_color)), key = lambda color: ['k','r','lightgrey'].index(color))
 		else:
 			colors = [edge_color]
 		if colors:
@@ -289,20 +292,20 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	pyplot.subplots_adjust(left=0.03, right=0.96)
 
 
-def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, name, t_min=None, t_max=None, t_step=100, prev_posteriors=None, total_frames=30):
+def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, directory, name, t_min=None, t_max=None, t_step=100, prev_posteriors=None, total_frames=30):
 	
 	print("Plotting", name, title)
 	if prev_posteriors is not None:
 		fig, ax = pyplot.subplots(figsize=(20, 10))
 		ani = animation.FuncAnimation(fig, update_graph, frames=total_frames, fargs=(ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames), repeat=False)
 		writer = PillowWriter(fps=25)
-		fname = "%s.gif" % name
+		fname = os.path.join(directory, "%s.gif" % name)
 		ani.save(fname, writer=writer)
 		convert(fname, fname, 120)
 	else:
 		fig, ax = pyplot.subplots(figsize=(20, 10))
 		update_graph(0, ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames)
-		fname = "%s.png" % name
+		fname = os.path.join(directory, "%s.png" % name)
 		pyplot.savefig(fname)
 		pyplot.close()
 	return fname
@@ -312,6 +315,8 @@ def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, s
 T_MIN = None
 #T_MAX = -2200
 T_MAX = None
+
+DIRECTORY = "vis_stages"
 
 if __name__ == '__main__':
 	
@@ -372,25 +377,33 @@ if __name__ == '__main__':
 	G1 = get_G(earlier_than1)
 	G3 = get_G(np.zeros(earlier_than0.shape, dtype = bool))
 	
-	et_by_dating = np.zeros(earlier_than0.shape, dtype = bool)
-	for i, j in zip(*np.where(earlier_than2)):
-		if (not earlier_than1[i, j]) and (groups[i] != groups[j]):
-			et_by_dating[i,j] = True
-	G_by_dating = get_G(et_by_dating)
-	G2 = get_G(earlier_than1)
-	for i, j in G_by_dating.edges():
-		G2.add_edge(i, j)
-	
 	node_colors0 = 'k'
-	node_colors_outlier = [('r' if i in outliers else 'k') for i in range(len(samples))]
+	node_colors_o = [('r' if i in outliers else 'k') for i in range(len(samples))]
 	
-	edge_colors2 = []
-	for i, j in G2.edges():
-		if et_by_dating[i, j]:
-			color = 'r'
-		else:
-			color = 'k'
-		edge_colors2.append(color)
+	by_dating = []
+	et_by_dating = np.zeros(earlier_than0.shape, dtype = bool)
+	G2 = get_G(et_by_dating)
+	for n in sorted(pos.keys(), key = lambda n: pos[n][0]):
+		et_by_dating_s = np.zeros(earlier_than0.shape, dtype = bool)
+		for i, j in zip(*np.where(earlier_than2)):
+			if i != n:
+				continue
+			if (not earlier_than1[i, j]) and (groups[i] != groups[j]):
+				et_by_dating_s[i,j] = True
+		if not et_by_dating_s.any():
+			continue
+		G_by_dating = get_G(et_by_dating_s)
+		for i, j in G_by_dating.edges():
+			G2.add_edge(i, j)
+		edge_colors_s = []
+		for i, j in G2.edges():
+			if et_by_dating_s[i, j]:
+				color = 'r'
+			elif et_by_dating[i, j]:
+				color = 'lightgrey'
+			edge_colors_s.append(color)
+		by_dating.append([samples[n].split("_")[0], G2.copy(), edge_colors_s])
+		et_by_dating = et_by_dating | et_by_dating_s
 	
 	t_min, t_max = np.inf, -np.inf
 	for dists in [dists0, dists1, dists2, dists3]:
@@ -403,15 +416,34 @@ if __name__ == '__main__':
 	if T_MAX is not None:
 		t_max = min(t_max, 1950 - T_MAX)
 	
+	DIRECTORY
+	if os.path.isdir(DIRECTORY):
+		shutil.rmtree(DIRECTORY)
+	os.makedirs(DIRECTORY)
+	
 	img_paths = [
-		plot_graph(	"Stage 1 - Stratigraphic Phasing", 				G0, pos, 'k', 					'k', 			{}, 	{}, 	samples, [], 		None, 		None, 		'01-stage1a'),
-		plot_graph(	"Stage 1 - Outlier Detection", 					G1, pos, 'k', 					'k', 			dists0, dists0, samples, [], 		None, 		None, 		'02-stage1b', t_min, t_max),
-		plot_graph(	"Stage 1 - Outlier Detection", 					G1, pos, node_colors_outlier, 	'k', 			dists0, dists0, samples, outliers, 	None, 		None, 		'03-stage1c', t_min, t_max),
-		plot_graph(	"Stage 1 - Chronological Modeling 1", 			G1, pos, 'k', 					'k', 			dists0, dists1, samples, outliers, 	None,		None, 		'04-stage1d', t_min, t_max, prev_posteriors=dists0),
-		plot_graph(	"Stage 2 - Inter-Group Chronological Relations",G2, pos, 'k', 					edge_colors2, 	dists0, dists1, samples, outliers, 	None, 		None, 		'05-stage2a', t_min, t_max),
-		plot_graph(	"Stage 2 - Chronological Modeling 2", 			G2, pos, 'k', 					'lightgrey', 	dists0, dists2, samples, outliers, 	phases2, 	None,		'06-stage2b', t_min, t_max, prev_posteriors=dists1),
-		plot_graph(	"Stage 3 - Chronological Clustering", 			G3, pos, 'k', 					'k', 			dists0, dists2, samples, outliers, 	phases2, 	clusters, 	'07-stage3a', t_min, t_max),
-		plot_graph(	"Stage 3 - Chronological Modeling 3", 			G3, pos, 'k', 					'k', 			dists0, dists3, samples, outliers, 	phases3, 	clusters, 	'08-stage3b', t_min, t_max, prev_posteriors=dists2),
+		plot_graph(	"Stage 1 - Stratigraphic Phasing",
+			G0, pos, 'k', 			'k', {}, 	  {},	  samples, [], 		 None, None, DIRECTORY, '01-stage1a'),
+		plot_graph(	"Stage 1 - Outlier Detection",
+			G1, pos, 'k', 			'k',  dists0, dists0, samples, [], 		 None, None, DIRECTORY, '02-stage1b', t_min, t_max),
+		plot_graph(	"Stage 1 - Outlier Detection",
+			G1, pos, node_colors_o,	'k', dists0,  dists0, samples, outliers, None, None, DIRECTORY, '03-stage1c', t_min, t_max),
+		plot_graph(	"Stage 1 - Chronological Modeling 1",
+			G1, pos, 'k', 			'k', dists0,  dists1, samples, outliers, None, None, DIRECTORY, '04-stage1d', t_min, t_max, prev_posteriors=dists0),
 	]
-	save_as_ppt("model.pptx", img_paths)
+	for i, (name, G2_g, edge_colors_g) in enumerate(by_dating):
+		img_paths.append(
+			plot_graph(	"Stage 2 - Inter-Group Chronological Relations - %s" % (name),
+				G2_g, pos, 'k', edge_colors_g, dists0, dists1, samples, outliers, None, None, DIRECTORY, '05-stage2a-%03d' % (i+1), t_min, t_max
+			)
+		)
+	img_paths += [	
+		plot_graph(	"Stage 2 - Chronological Modeling 2",
+		 	G2, pos, 'k', 'lightgrey',	 dists0, dists2, samples, outliers, phases2, None,	   DIRECTORY, '07-stage2c', t_min, t_max, prev_posteriors=dists1),
+		plot_graph(	"Stage 3 - Chronological Clustering",
+		 	G3, pos, 'k', 'k', 			 dists0, dists2, samples, outliers, phases2, clusters, DIRECTORY, '08-stage3a', t_min, t_max),
+		plot_graph(	"Stage 3 - Chronological Modeling 3",
+		 	G3, pos, 'k', 'k', 			 dists0, dists3, samples, outliers, phases3, clusters, DIRECTORY, '09-stage3b', t_min, t_max, prev_posteriors=dists2),
+	]
+	save_as_ppt(os.path.join(DIRECTORY, "model.pptx"), img_paths)
 	

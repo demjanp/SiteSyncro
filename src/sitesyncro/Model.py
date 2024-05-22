@@ -9,6 +9,7 @@ from typing import List, Dict, Any
 import numpy as np
 
 from sitesyncro.Sample import Sample
+from sitesyncro.Phase import Phase
 
 from sitesyncro.mhelpers.MPhasing import MPhasing
 from sitesyncro.mhelpers.MOxCal import MOxCal
@@ -154,6 +155,8 @@ class Model(object):
 			
 			outlier_candidates=None,
 			
+			phases=None,
+			
 			summed=None,
 			random_p=None,
 			random_lower=None,
@@ -195,6 +198,17 @@ class Model(object):
 			directory = os.path.join(parent_dir, os.path.basename(directory) + "_" + str(n))
 		os.makedirs(directory)
 		return directory
+	
+	def _populate_phases(self):
+		keys = set()
+		for name in self.samples:
+			keys.add((self.samples[name].group, self.samples[name].phase))
+		self._data['phases'] = {}
+		for key in keys:
+			group, phase = key
+			phase = Phase(group, phase)
+			if phase.populate(self):
+				self._data['phases'][key] = phase
 	
 	# Assigned properties
 	
@@ -497,6 +511,16 @@ class Model(object):
 		return dict(groups)
 	
 	@property
+	def phases(self) -> List[Phase]:
+		"""
+		:return: A dictionary where the keys are (group, phase) and the values are Phase objects.
+		:rtype: Dict[tuple, Phase]
+		"""
+		if self._data['phases'] is None:
+			self._populate_phases()
+		return self._data['phases']
+	
+	@property
 	def clusters(self) -> Dict[int, Dict[int, List[str]]]:
 		"""
 		Clusters of samples based on the similarity of their probability distributions.
@@ -677,7 +701,9 @@ class Model(object):
 		"""
 		
 		fname = os.path.join(self.directory, 'model.json.gz' if zipped else 'model.json')
-		data = dict_np_to_list(copy.deepcopy(self._data))
+		data = copy.deepcopy(self._data)
+		data['phases'] = None
+		data = dict_np_to_list(data)
 		for name in self.samples:
 			data['samples'][name] = self.samples[name].to_dict()
 		
@@ -865,9 +891,9 @@ class Model(object):
 		self.mplot.plot_clusters(fname, show)
 		return fname
 	
-	def save_csv(self, fcsv: str = None) -> str:
+	def save_csv_samples(self, fcsv: str = None) -> str:
 		"""
-		Saves the results to a CSV file.
+		Saves the results for samples to a CSV file.
 
 		:param fcsv: The file path for the CSV file. If None, a default file name and path are used. Defaults to None.
 		:type fcsv: str, optional
@@ -882,10 +908,32 @@ class Model(object):
 		
 		# Determine the file path for the CSV file
 		if fcsv is None:
-			fcsv = os.path.join(self.directory, "results.csv")
+			fcsv = os.path.join(self.directory, "results_samples.csv")
 		
 		# Save the results to the CSV file
-		self.mplot.save_results_csv(fcsv)
+		self.mplot.save_results_samples_csv(fcsv)
+		return fcsv
+	
+	def save_csv_phases(self, fcsv: str = None) -> str:
+		"""
+		Saves the results for phases to a CSV file.
+
+		:param fcsv: The file path for the CSV file. If None, a default file name and path are used. Defaults to None.
+		:type fcsv: str, optional
+		:return: The file path the results were saved to.
+		:rtype: str
+		"""
+		# Check if there are any results
+		if not self.is_modeled:
+			print("\nNo data available")
+			return None
+		
+		# Determine the file path for the CSV file
+		if fcsv is None:
+			fcsv = os.path.join(self.directory, "results_phases.csv")
+		
+		# Save the results to the CSV file
+		self.mplot.save_results_phases_csv(fcsv)
 		return fcsv
 	
 	def save_outliers(self, fname: str = None) -> str:

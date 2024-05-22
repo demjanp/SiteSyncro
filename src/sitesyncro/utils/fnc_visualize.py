@@ -1,6 +1,8 @@
-from sitesyncro import pygraphviz
 import networkx as nx
+import sys
 
+if sys.platform == "win32":
+	from sitesyncro import pygraphviz
 
 def to_agraph(N):
 	directed = N.is_directed()
@@ -44,6 +46,8 @@ def to_agraph(N):
 
 
 def pygraphviz_layout(G, prog="dot", root=None, args=""):
+	if sys.platform != "win32":
+		return {}
 	if root is not None:
 		args += f"-Groot={root}"
 	A = to_agraph(G)

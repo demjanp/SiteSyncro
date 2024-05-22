@@ -3,22 +3,18 @@ from sitesyncro import Model
 from sitesyncro.utils.fnc_visualize import (pygraphviz_layout)
 from sitesyncro.utils.fnc_phase import (reduce_earlier_than)
 
-from collections import defaultdict
-from natsort import natsorted
-import networkx as nx
-import numpy as np
-import os
-import pickle
 import copy
+import io
+from collections import defaultdict
 
-from matplotlib import pyplot
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as pyplot
 import matplotlib.animation as animation
 from matplotlib.animation import PillowWriter
-from collections import defaultdict
-
+from matplotlib.lines import Line2D
+from natsort import natsorted
 from PIL import Image
-import io
-
 from pptx import Presentation
 from pptx.util import Inches
 
@@ -138,6 +134,8 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	else:
 		pos_final = pos
 	
+	handles_clusters = []
+	handles_dates = []
 	ax.clear()
 	ax.set_title(title)
 	x_values = [pos[i][0] for i in range(len(samples))]
@@ -149,18 +147,27 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 		whisker_length = graph_width * 0.005
 		for i, s in enumerate(samples):
 			x = pos[i][0]
-
+			
+			lbl_posterior, lbl_likelihood = None, None
+			if i == len(samples) - 1:
+				lbl_posterior = "Modelled"
+				lbl_likelihood = "Unmodelled"
+			
 			color = "k"
 			if i in outliers:
 				color = "r"
 			m, r1, r2 = likelihoods[s]
-			ax.errorbar(x, m, yerr=[[m-r2],[r1-m]], fmt='.', color=color, markersize=5, linewidth=2, zorder=1, alpha=0.25)
-			ax.hlines([r1, r2], x - whisker_length, x + whisker_length, color=color, linewidth=2, zorder=1, alpha=0.25)
-
+			handle = ax.errorbar(x, m, yerr=[[m-r2],[r1-m]], fmt='.', color=color, markersize=5, linewidth=2, zorder=1, alpha=0.15, label=lbl_likelihood)
+			if color == 'k':
+				handle_likelihood = handle
+			ax.hlines([r1, r2], x - whisker_length, x + whisker_length, color=color, linewidth=2, zorder=1, alpha=0.15)
+			
 			m, r1, r2 = posteriors[s]
-			ax.errorbar(x, m, yerr=[[m-r2],[r1-m]], fmt='.', color='k', markersize=5, linewidth=.5, zorder=2)
+			handle_posterior = ax.errorbar(x, m, yerr=[[m-r2],[r1-m]], fmt='.', color='k', markersize=5, linewidth=.5, zorder=2, label=lbl_posterior)
 			ax.hlines([r1, r2], x - whisker_length, x + whisker_length, color='k', linewidth=.5, zorder=2)
-
+		handles_dates.append(handle_likelihood)
+		handles_dates.append(handle_posterior)
+		
 		t0 = np.floor((1950 - t_max) / t_step) * t_step
 		t1 = np.ceil((1950 - t_min) / t_step) * t_step
 		yticks = np.arange(t0, t1 + t_step, t_step)
@@ -201,7 +208,6 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	
 	for i, s in enumerate(samples):
 		ax.text(pos[i][0], y_max + gap, s.split("_")[0], rotation=90, verticalalignment='top', horizontalalignment='center', fontsize=10)
-#	ax.set_xlabel("Sample", labelpad=65)
 	
 	for y, label in yticks:
 		ax.text(step / 2, y, str(label), verticalalignment='top', horizontalalignment='right', fontsize=8)
@@ -238,14 +244,45 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 			collect[clusters[n]].append(n)
 			means[clusters[n]].append(pos_final[n][1])
 		means = dict([(label, np.median(means[label])) for label in means])
-		labels = sorted(means.keys(), key = lambda label: means[label], reverse = True)
+		labels = sorted(means.keys(), key = lambda label: means[label], reverse=True)
 		clusters = dict([(n+1, collect[label]) for n, label in enumerate(labels)])
 		means = dict([(n+1, means[label]) for n, label in enumerate(labels)])
 		for label in clusters:
 			xy = np.array([pos[n] for n in clusters[label]])
-			ax.plot(xy[:,0], xy[:,1], "o", label = str(label), zorder = 3)
-		ax.legend(title='Cluster', loc='upper right')
-
+			handle, = ax.plot(xy[:,0], xy[:,1], "o", label=str(label), zorder = 3)
+			handles_clusters.append(handle)
+	
+	
+	legend1 = None
+	if handles_clusters:
+		legend1 = ax.legend(title='Cluster', handles=handles_clusters, loc='upper right')
+	
+	handles_edges = []
+	if len(G.edges()) > 0:
+		if isinstance(edge_color, list):
+			colors = list(set(edge_color))
+		else:
+			colors = [edge_color]
+		if colors:
+			handles_edges.append(Line2D([], [], linestyle='None', label='Chronological Relations', color='k'))
+		for color in colors:
+			label = 'Earlier-than by stratigraphy' if color == 'k' else 'Earlier-than by dating'
+			handle = Line2D([0], [0], color=color, lw=1, linestyle='-', marker='>', markersize=5, label=label)
+			handles_edges.append(handle)
+	
+	if handles_dates:
+		handles_edges.append(Line2D([], [], linestyle='None', label='Dating ranges (95.45%)', color='k'))
+		handles_edges += handles_dates
+	
+	legend2 = ax.legend(handles=handles_edges, loc='lower left')
+	for text in legend2.get_texts():
+		if text.get_text() in ['Chronological Relations', 'Dating ranges (95.45%)']:
+			text.set_position((-40, 0))
+	
+	if legend1:
+		ax.add_artist(legend1)
+	ax.add_artist(legend2)
+	
 	ax.set_xlim(x_min - step/2, x_max + step/2)
 	ax.invert_yaxis()
 	pyplot.tight_layout()
@@ -271,78 +308,65 @@ def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, s
 	return fname
 
 
-T_MIN = -1400
-T_MAX = -2200
-
-fdata = "vis_model_data.pickle"
+#T_MIN = -1400
+T_MIN = None
+#T_MAX = -2200
+T_MAX = None
 
 if __name__ == '__main__':
 	
-	if not os.path.isfile(fdata):
-		print("Loading data")
-		model0 = Model(directory="stage_0")
-		model1 = Model(directory="stage_1")
-		model2 = Model(directory="stage_2")
-		model3 = Model(directory="stage_3")
-		
-		samples = list(model0.samples.keys())
-		
-		eaps = dict([(i, model0.samples[s].excavation_area_phase) for i, s in enumerate(samples)])
-		phases1 = dict([(i, model1.samples[s].phase) for i, s in enumerate(samples)])
-		phases2 = dict([(i, model2.samples[s].phase) for i, s in enumerate(samples)])
-		phases3 = dict([(i, model3.samples[s].phase) for i, s in enumerate(samples)])
-		
-		outliers = [samples.index(s) for s in model1.outliers]
-		data = model2.clusters[model2.cluster_opt_n]
-		clusters = {}
-		for label in data:
-			for s in data[label]:
-				clusters[samples.index(s)] = label
-		
-		print("Getting ranges")
-		dists0 = {}
-		for name in samples:
-			m = model0.samples[name].likelihood_mean
-			r1, r2 = model0.samples[name].likelihood_range
-			dists0[name] = [m, r1, r2]
-		dists1 = {}
-		for name in samples:
-			m = model1.samples[name].posterior_mean
-			r1, r2 = model1.samples[name].posterior_range
-			dists1[name] = [m, r1, r2]
-		dists2 = {}
-		for name in samples:
-			m = model2.samples[name].posterior_mean
-			r1, r2 = model2.samples[name].posterior_range
-			dists2[name] = [m, r1, r2]
-		dists3 = {}
-		for name in samples:
-			m = model3.samples[name].posterior_mean
-			r1, r2 = model3.samples[name].posterior_range
-			dists3[name] = [m, r1, r2]
-		
-		print("Populating graph")
-		earlier_than0, samples0 = model0.mphasing.create_earlier_than_matrix()
-		assert(samples == samples0)
-		
-		earlier_than1, samples1 = model1.mphasing.create_earlier_than_matrix()
-		assert(samples == samples1)
-		
-		earlier_than2 = model1.mphasing.update_earlier_than_by_dating(earlier_than1, samples)
-		
-		earlier_than3, samples3 = model3.mphasing.create_earlier_than_matrix()
-		assert(samples == samples3)
-		
-		with open(fdata, "wb") as f:
-			pickle.dump([
-				samples, eaps, outliers, clusters,
-				phases1, phases2, phases3,
-				dists0, dists1, dists2, dists3, 
-				earlier_than0, earlier_than1, earlier_than2, earlier_than3
-			], f, pickle.HIGHEST_PROTOCOL, fix_imports = False)
-	else:
-		with open(fdata, "rb") as f:
-			samples, eaps, outliers, clusters, phases1, phases2, phases3, dists0, dists1, dists2, dists3, earlier_than0, earlier_than1, earlier_than2, earlier_than3 = pickle.load(f, fix_imports = False)
+	print("Loading data")
+	model0 = Model(directory="stage_0")
+	model1 = Model(directory="stage_1")
+	model2 = Model(directory="stage_2")
+	model3 = Model(directory="stage_3")
+	
+	samples = list(model0.samples.keys())
+	
+	eaps = dict([(i, model0.samples[s].excavation_area_phase) for i, s in enumerate(samples)])
+	phases2 = dict([(i, model2.samples[s].phase) for i, s in enumerate(samples)])
+	phases3 = dict([(i, model3.samples[s].phase) for i, s in enumerate(samples)])
+	
+	outliers = [samples.index(s) for s in model1.outliers]
+	data = model2.clusters[model2.cluster_opt_n]
+	clusters = {}
+	for label in data:
+		for s in data[label]:
+			clusters[samples.index(s)] = label
+	
+	print("Getting ranges")
+	dists0 = {}
+	for name in samples:
+		m = model0.samples[name].likelihood_mean
+		r1, r2 = model0.samples[name].likelihood_range
+		dists0[name] = [m, r1, r2]
+	dists1 = {}
+	for name in samples:
+		m = model1.samples[name].posterior_mean
+		r1, r2 = model1.samples[name].posterior_range
+		dists1[name] = [m, r1, r2]
+	dists2 = {}
+	for name in samples:
+		m = model2.samples[name].posterior_mean
+		r1, r2 = model2.samples[name].posterior_range
+		dists2[name] = [m, r1, r2]
+	dists3 = {}
+	for name in samples:
+		m = model3.samples[name].posterior_mean
+		r1, r2 = model3.samples[name].posterior_range
+		dists3[name] = [m, r1, r2]
+	
+	print("Populating graph")
+	earlier_than0, samples0 = model0.mphasing.create_earlier_than_matrix()
+	assert(samples == samples0)
+	
+	earlier_than1, samples1 = model1.mphasing.create_earlier_than_matrix()
+	assert(samples == samples1)
+	
+	earlier_than2 = model1.mphasing.update_earlier_than_by_dating(earlier_than1, samples)
+	
+	earlier_than3, samples3 = model3.mphasing.create_earlier_than_matrix()
+	assert(samples == samples3)
 	
 	G0, pos, groups, gap = get_graph(earlier_than0, samples)
 	G1 = get_G(earlier_than1)

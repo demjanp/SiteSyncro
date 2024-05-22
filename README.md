@@ -234,9 +234,14 @@ Development of this software was supported by project OP JAC "Ready for the futu
 This software requires the [OxCal](https://c14.arch.ox.ac.uk/oxcal.html) program for bayesian modeling of the radiocarbon dates.
 
 This software uses the following open source packages:
+* [Graphviz](https://www.graphviz.org/)
 * [Matplotlib](https://matplotlib.org/)
+* [natsort](https://github.com/SethMMorton/natsort)
 * [NetworkX](https://networkx.org/)
 * [NumPy](https://www.numpy.org/)
+* [Pillow](https://python-pillow.org/)
+* [PyGraphviz](https://pygraphviz.github.io/)
+* [python-pptx](https://github.com/scanny/python-pptx)
 * [Requests](https://requests.readthedocs.io/)
 * [Scikit-learn](https://scikit-learn.org/)
 * [SciPy](https://scipy.org/)

@@ -63,6 +63,9 @@ setup(
 		'networkx>=2.8.0, <4',
 		'sphinx>=7.3.7, <7.4',
 		'myst-parser>=3.0.1, <3.1',
+		'Pillow>=9.5.0, <10',
+		'python-pptx>=0.6.23, <1',
+		'natsort>=8.4.0, <9',
 	],
 	cmdclass={'bdist_wheel': bdist_wheel},
 )

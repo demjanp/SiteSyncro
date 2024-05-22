@@ -1,12 +1,10 @@
 import os
 import re
 import zipfile
-from collections import defaultdict
 from typing import Dict, Any
 
 import numpy as np
 import requests
-import unicodedata
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 

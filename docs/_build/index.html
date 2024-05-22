@@ -48,6 +48,7 @@
 <li><p><a class="reference internal" href="#input_file"><span class="xref myst">Input File Format</span></a></p></li>
 <li><p><a class="reference internal" href="#model_class"><span class="xref myst">Model Class</span></a></p></li>
 <li><p><a class="reference internal" href="#sample_class"><span class="xref myst">Sample Class</span></a></p></li>
+<li><p><a class="reference internal" href="#phase_class"><span class="xref myst">Phase Class</span></a></p></li>
 </ul>
 </li>
 <li><p><a class="reference internal" href="#developer"><span class="xref myst">Developer Notes</span></a>
@@ -96,12 +97,12 @@
 <p><code class="docutils literal notranslate"><span class="pre">process.py</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">sitesyncro.exe</span></code> accepts the following command-line arguments:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code>: Show help message and exit.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-directory</span></code>: Working directory for model data (default is “model”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-directory</span></code>: Working directory for model data (default is ‘model’).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-input</span></code>: The path to the input file in semicolon-separated CSV format.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-curve_name</span></code>: File name of the radiocarbon age calibration curve (default is “intcal20.14c”).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-phase_model</span></code>: OxCal phase model type (can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’; default is “sequence”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-curve_name</span></code>: File name of the radiocarbon age calibration curve (default is ‘intcal20.14c’).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-phase_model</span></code>: OxCal phase model type (can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’; default is ‘sequence’).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-cluster_n</span></code>: Number of clusters to form (-1 = automatic; default is -1).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-min_years_per_cluster</span></code>: Minimum number of years per cluster. (default is 25).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-cluster_selection</span></code>: Cluster selection method (‘silhouette’ or ‘mcst’; default is ‘silhouette’).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-by_clusters</span></code>: Flag indicating whether to update the phasing by clustering sample dates (default is 0).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-by_dates</span></code>: Flag indicating whether to update the phasing by comparing sample dates (default is 0).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-uniform</span></code>: Flag indicating whether to use a uniform distribution for the calendar ages (default is 0).</p></li>
@@ -157,8 +158,9 @@
     <span class="c1"># Plot the clustering result</span>
     <span class="n">model</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">()</span>
 
-    <span class="c1"># Save the results to a CSV file</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">save_csv</span><span class="p">()</span>
+    <span class="c1"># Save the results to a CSV files</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">save_csv_samples</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">save_csv_phases</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This will create the default directory <code class="docutils literal notranslate"><span class="pre">model</span></code> and generate the following files:
@@ -167,7 +169,8 @@
 <code class="docutils literal notranslate"><span class="pre">model.js</span></code>, <code class="docutils literal notranslate"><span class="pre">model.log</span></code>, <code class="docutils literal notranslate"><span class="pre">model.txt</span></code>
 <code class="docutils literal notranslate"><span class="pre">randomized.pdf</span></code>
 <code class="docutils literal notranslate"><span class="pre">silhouette.pdf</span></code>
-<code class="docutils literal notranslate"><span class="pre">results.csv</span></code></p>
+<code class="docutils literal notranslate"><span class="pre">results_samples.csv</span></code>
+<code class="docutils literal notranslate"><span class="pre">results_phases.csv</span></code></p>
 <p>See <a class="reference external" href="https://sitesyncro.readthedocs.io/en/latest/model.html">Model Class</a> documentation for more information.</p>
 </section>
 <section id="sample-class">
@@ -185,6 +188,28 @@
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://sitesyncro.readthedocs.io/en/latest/sample.html">Sample Class</a> documentation for more information.</p>
+</section>
+<section id="phase-class">
+<h3>Phase Class <a name="phase_class"></a><a class="headerlink" href="#phase-class" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Phase</span></code> class represents a modeled chronological phase. Here is a basic example of how to use it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sitesyncro</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="c1"># Initialize the Model object and load data from the directory &#39;model&#39;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="s1">&#39;model&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Print information on phasing (if model has been processed)</span>
+    <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">phase</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">phases</span><span class="p">:</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">phases</span><span class="p">[(</span><span class="n">group</span><span class="p">,</span> <span class="n">phase</span><span class="p">)]</span>
+        <span class="n">start_from</span><span class="p">,</span> <span class="n">start_to</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">start_range</span>
+        <span class="n">end_from</span><span class="p">,</span> <span class="n">end_to</span> <span class="o">=</span> <span class="n">phase</span><span class="o">.</span><span class="n">end_range</span>
+
+        <span class="c1"># Print the group, phase, and start and end ranges</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Group: </span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s1">, Phase: </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s1">, Start: </span><span class="si">{</span><span class="n">start_from</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">start_to</span><span class="si">}</span><span class="s1">, End: </span><span class="si">{</span><span class="n">end_from</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">end_to</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://sitesyncro.readthedocs.io/en/latest/phase.html">Phase Class</a> documentation for more information.</p>
 </section>
 </section>
 <section id="developer-notes">
@@ -281,6 +306,7 @@
 <li><a class="reference internal" href="#input-file-format">Input File Format <a name="input_file"></a></a></li>
 <li><a class="reference internal" href="#model-class">Model Class <a name="model_class"></a></a></li>
 <li><a class="reference internal" href="#sample-class">Sample Class <a name="sample_class"></a></a></li>
+<li><a class="reference internal" href="#phase-class">Phase Class <a name="phase_class"></a></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#developer-notes">Developer Notes <a name="developer"></a></a><ul>

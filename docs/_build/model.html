@@ -48,7 +48,6 @@
 <li><p><strong>phase_model</strong> (<em>str</em>) – OxCal phase model type. Can be ‘sequence’, ‘contiguous’, ‘overlapping’, or ‘none’ (default is “sequence”).</p></li>
 <li><p><strong>cluster_n</strong> (<em>int</em>) – Number of clusters to form (-1 = automatic; default is -1).</p></li>
 <li><p><strong>cluster_selection</strong> (<em>str</em>) – The method used to select the optimal number of clusters. Can be ‘silhouette’ or ‘mcst’ (default is ‘silhouette’).</p></li>
-<li><p><strong>min_years_per_cluster</strong> (<em>int</em>) – The minimum number of years per cluster.</p></li>
 <li><p><strong>uniform</strong> (<em>bool</em>) – Flag indicating whether to use uniform randomization (default is False).</p></li>
 <li><p><strong>p_value</strong> (<em>float</em>) – The P-value for statistical tests (default is 0.05).</p></li>
 <li><p><strong>uncertainty_base</strong> (<em>float</em>) – The base uncertainty for randomization (default is 15).</p></li>
@@ -425,20 +424,6 @@ The loaded data is then stored in the model’s ‘oxcal_data’ attribute.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="sitesyncro.Model.Model.min_years_per_cluster">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min_years_per_cluster</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.min_years_per_cluster" title="Link to this definition">¶</a></dt>
-<dd><p>The minimum number of years per cluster.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The minimum number of years per cluster.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
 <dt class="sig sig-object py" id="sitesyncro.Model.Model.npass">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">npass</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#sitesyncro.Model.Model.npass" title="Link to this definition">¶</a></dt>
 <dd><p>The minimum number of passes for the randomization test.</p>
@@ -533,6 +518,19 @@ These samples have conflicts between dating ranges and stratigraphic relationshi
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.phases">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">phases</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="phase.html#sitesyncro.Phase.Phase" title="sitesyncro.Phase.Phase"><span class="pre">Phase</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sitesyncro.Model.Model.phases" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary where the keys are (group, phase) and the values are Phase objects.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[tuple, <a class="reference internal" href="phase.html#sitesyncro.Phase.Phase" title="sitesyncro.Phase.Phase">Phase</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -782,9 +780,26 @@ It also sets the posterior distribution of each sample in the model to None.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sitesyncro.Model.Model.save_csv">
-<span class="sig-name descname"><span class="pre">save_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcsv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save_csv" title="Link to this definition">¶</a></dt>
-<dd><p>Saves the results to a CSV file.</p>
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.save_csv_phases">
+<span class="sig-name descname"><span class="pre">save_csv_phases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcsv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save_csv_phases" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the results for phases to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fcsv</strong> (<em>str</em><em>, </em><em>optional</em>) – The file path for the CSV file. If None, a default file name and path are used. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The file path the results were saved to.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sitesyncro.Model.Model.save_csv_samples">
+<span class="sig-name descname"><span class="pre">save_csv_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcsv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sitesyncro.Model.Model.save_csv_samples" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the results for samples to a CSV file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fcsv</strong> (<em>str</em><em>, </em><em>optional</em>) – The file path for the CSV file. If None, a default file name and path are used. Defaults to None.</p>
@@ -966,7 +981,6 @@ reset_calculated: {attribute, …}; calculated attributes that have been reset</
 <li><a class="reference internal" href="#sitesyncro.Model.Model.is_randomized"><code class="docutils literal notranslate"><span class="pre">Model.is_randomized</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.load"><code class="docutils literal notranslate"><span class="pre">Model.load()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.load_oxcal_data"><code class="docutils literal notranslate"><span class="pre">Model.load_oxcal_data()</span></code></a></li>
-<li><a class="reference internal" href="#sitesyncro.Model.Model.min_years_per_cluster"><code class="docutils literal notranslate"><span class="pre">Model.min_years_per_cluster</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.npass"><code class="docutils literal notranslate"><span class="pre">Model.npass</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.outlier_candidates"><code class="docutils literal notranslate"><span class="pre">Model.outlier_candidates</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.outliers"><code class="docutils literal notranslate"><span class="pre">Model.outliers</span></code></a></li>
@@ -974,6 +988,7 @@ reset_calculated: {attribute, …}; calculated attributes that have been reset</
 <li><a class="reference internal" href="#sitesyncro.Model.Model.oxcal_url"><code class="docutils literal notranslate"><span class="pre">Model.oxcal_url</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.p_value"><code class="docutils literal notranslate"><span class="pre">Model.p_value</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.phase_model"><code class="docutils literal notranslate"><span class="pre">Model.phase_model</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.phases"><code class="docutils literal notranslate"><span class="pre">Model.phases</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.plot_clusters"><code class="docutils literal notranslate"><span class="pre">Model.plot_clusters()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.plot_randomized"><code class="docutils literal notranslate"><span class="pre">Model.plot_randomized()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.process"><code class="docutils literal notranslate"><span class="pre">Model.process()</span></code></a></li>
@@ -988,7 +1003,8 @@ reset_calculated: {attribute, …}; calculated attributes that have been reset</
 <li><a class="reference internal" href="#sitesyncro.Model.Model.reset_model"><code class="docutils literal notranslate"><span class="pre">Model.reset_model()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.samples"><code class="docutils literal notranslate"><span class="pre">Model.samples</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.save"><code class="docutils literal notranslate"><span class="pre">Model.save()</span></code></a></li>
-<li><a class="reference internal" href="#sitesyncro.Model.Model.save_csv"><code class="docutils literal notranslate"><span class="pre">Model.save_csv()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.save_csv_phases"><code class="docutils literal notranslate"><span class="pre">Model.save_csv_phases()</span></code></a></li>
+<li><a class="reference internal" href="#sitesyncro.Model.Model.save_csv_samples"><code class="docutils literal notranslate"><span class="pre">Model.save_csv_samples()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.save_outliers"><code class="docutils literal notranslate"><span class="pre">Model.save_outliers()</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.summed"><code class="docutils literal notranslate"><span class="pre">Model.summed</span></code></a></li>
 <li><a class="reference internal" href="#sitesyncro.Model.Model.to_oxcal"><code class="docutils literal notranslate"><span class="pre">Model.to_oxcal()</span></code></a></li>

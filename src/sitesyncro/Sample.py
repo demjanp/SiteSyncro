@@ -15,7 +15,6 @@ class Sample(object):
 	
 	The constructor accepts a single dictionary argument or multiple arguments to initialize the object with the provided data.
 	
-	Parameters:
 	:param name: Sample ID (required, unique identifier)
 	:type name: str
 	

@@ -8,11 +8,9 @@ import copy
 class Phase(object):
 	"""
 	A class representing a chronological phase.
-
-	Parameters:
+	
 	:param group: Stratigraphic group number.
 	:type group: int
-	
 	:param phase: Phase number.
 	:type phase: int
 	"""

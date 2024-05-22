@@ -40,12 +40,10 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sitesyncro.Sample.</span></span><span class="sig-name descname"><span class="pre">Sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sitesyncro.Sample.Sample" title="Link to this definition">¶</a></dt>
 <dd><p>A class representing a single radiocarbon sample.</p>
 <p>The constructor accepts a single dictionary argument or multiple arguments to initialize the object with the provided data.</p>
-<p>Parameters:
-:param name: Sample ID (required, unique identifier)
-:type name: str</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Sample ID (required, unique identifier)</p></li>
 <li><p><strong>age</strong> (<em>float</em>) – C-14 age (years BP) for date_type ‘R’; mean calendar age (years BP) for date_type ‘U’ (required)</p></li>
 <li><p><strong>uncertainty</strong> (<em>float</em>) – Uncertainty (years BP) for date_type ‘R’; 1/2 range (years BP) for date_type ‘U’ (required)</p></li>
 <li><p><strong>date_type</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘R’ for radiocarbon date; ‘U’ for calendar date as a uniform distribution</p></li>

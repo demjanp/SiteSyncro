@@ -8,13 +8,12 @@ import copy
 class Phase(object):
 	"""
 	A class representing a chronological phase.
+
 	Parameters:
 	:param group: Stratigraphic group number.
 	:type group: int
-	:param phase: Phase number.
-	:type phase: int
 	
-	:param phase: Phase nr. (higher = later/younger)
+	:param phase: Phase number.
 	:type phase: int
 	"""
 	
@@ -42,6 +41,7 @@ class Phase(object):
 		
 		:param model: Model object
 		:type model: Model
+		
 		:return: True if successfully populated
 		:rtype: bool
 		"""
@@ -85,6 +85,7 @@ class Phase(object):
 	def group(self) -> int:
 		"""
 		The stratigraphic group the phase belongs to
+		
 		:return: The number of the group
 		:rtype: int
 		"""
@@ -94,6 +95,7 @@ class Phase(object):
 	def phase(self) -> int:
 		"""
 		The phase number.
+		
 		:return: The number of the phase
 		:rtype: int
 		"""
@@ -103,20 +105,29 @@ class Phase(object):
 	def start(self) -> np.ndarray | None:
 		"""
 		The probability distribution of the dating of the start of the phase.
+		
+		:return: An array representing the probability distribution of the dating of the start of the phase, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		return self._data['start']
 	
 	@property
 	def start_mean(self) -> float | None:
 		"""
-		The mean of the probability distribution of the dating of the start of the phase.
+		The mean calendar age of the start of the phase in calendar years BP.
+		
+		:return: The mean calendar age of start of the phase or None if it's not set.
+		:rtype: float or None
 		"""
 		return self._data['start_mean']
 	
 	@property
 	def start_range(self) -> float | None:
 		"""
-		The range of the probability distribution of the dating of the start of the phase.
+		The 2-sigma (95.45%) range of the dating of the start of the phase in calendar years BP.
+		
+		:return: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:rtype: list
 		"""
 		return self._data['start_range']
 	
@@ -124,20 +135,29 @@ class Phase(object):
 	def end(self) -> np.ndarray | None:
 		"""
 		The probability distribution of the dating of the end of the phase.
+		
+		:return: An array representing the probability distribution of the dating of the end of the phase, where each element is the probability of the corresponding calendar year. Returns None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		return self._data['end']
 	
 	@property
 	def end_mean(self) -> float | None:
 		"""
-		The mean of the probability distribution of the dating of the end of the phase.
+		The mean calendar age of the end of the phase in calendar years BP.
+		
+		:return: The mean calendar age of end of the phase or None if it's not set.
+		:rtype: float or None
 		"""
 		return self._data['end_mean']
 	
 	@property
 	def end_range(self) -> float | None:
 		"""
-		The range of the probability distribution of the dating of the end of the phase.
+		The 2-sigma (95.45%) range of the dating of the end of the phase in calendar years BP.
+		
+		:return: A list containing the lower and upper bounds of the 2-sigma range, or [None, None] if it's not set.
+		:rtype: list
 		"""
 		return self._data['end_range']
 	
@@ -145,13 +165,19 @@ class Phase(object):
 	def samples(self) -> List[str]:
 		"""
 		The list of samples that belong to the phase.
+		
+		:return: A list of samples that belong to the phase.
+		:rtype: List[str]
 		"""
 		return copy.copy(self._data['samples'])
 	
 	@property
 	def years(self) -> np.ndarray | None:
 		"""
-		The years of the model.
+		Calendar years BP corresponding to the probability distributions.
+		
+		:return: An array of calendar years BP corresponding to the probability distributions or None if it's not set.
+		:rtype: np.ndarray or None
 		"""
 		return self._data['years']
 	

@@ -276,7 +276,7 @@ def get_phases_gr(earlier_than: np.ndarray, ranges_gr: List) -> np.ndarray:
 	
 	phasing, phasing_multi = _optimize_phasing(phasing_ranges, ranges_gr)
 	
-	return phasing, phasing_multi
+	return phasing, phasing_multi, phasing_ranges
 
 
 def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: List) -> Dict[str, List[int or None]]:
@@ -289,18 +289,21 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 	ranges: A list of sample ranges ordered by samples
 	
 	Returns:
-	(groups_phases, phasing_multi)
+	(groups_phases, phasing_multi, phasing_ranges)
 		groups_phases={sample: [group, phase], ...}
 		phasing_multi={sample: [phase, ...], ...}
+		phasing_ranges={sample: [group, phase_min, phase_max], ...}
 	"""
 	
 	groups = find_groups(earlier_than)
 	# groups = {group: [idx, ...], ...}; idx = index in earlier_than
 	
 	groups_phases = dict([(name, [None, None]) for name in samples])
+	phasing_ranges = dict([(name, [None, None, None]) for name in samples])
 	for gi in groups:
 		for i in groups[gi]:
 			groups_phases[samples[i]][0] = gi
+			phasing_ranges[samples[i]][0] = gi
 	
 	# Calculate phasing for each group
 	phasing_multi = {}
@@ -308,11 +311,13 @@ def get_groups_and_phases(earlier_than: np.ndarray, samples: List[str], ranges: 
 		earlier_than_gr = earlier_than[np.ix_(groups[gi], groups[gi])]
 		samples_gr = [samples[i] for i in groups[gi]]
 		ranges_gr = [ranges[i] for i in groups[gi]]
-		phases_gr, phasing_multi_gr = get_phases_gr(earlier_than_gr, ranges_gr)
+		phases_gr, phasing_multi_gr, phasing_ranges_gr = get_phases_gr(earlier_than_gr, ranges_gr)
 		for i in range(len(groups[gi])):
 			groups_phases[samples_gr[i]][1] = int(phases_gr[i]) + 1
+			phasing_ranges[samples_gr[i]][1] = int(phasing_ranges_gr[i][0]) + 1
+			phasing_ranges[samples_gr[i]][2] = int(phasing_ranges_gr[i][1]) + 1
 		for i in phasing_multi_gr:
 			phasing_multi[samples_gr[i]] = phasing_multi_gr[i]
 	
-	return groups_phases, phasing_multi
+	return groups_phases, phasing_multi, phasing_ranges
 

@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from sitesyncro.utils.fnc_oxcal import (gen_sequence, gen_contiguous, gen_overlapping, gen_none)
+from sitesyncro.utils.fnc_oxcal import (gen_sequence, gen_contiguous, gen_overlapping, gen_none, gen_multiphase)
 
 class MOxCal(object):
 	"""
@@ -37,14 +37,34 @@ class MOxCal(object):
 		txt = ''
 		groups = self.model.groups
 		for group in groups:
-			data = defaultdict(list)
+			data_phase = {}
+			data_multiphase = defaultdict(list)
 			for name in groups[group]:
-				data[self.model.samples[name].phase].append(self.model.samples[name])
-			data = dict(data)
-			for phase in data:
-				data_phase = sorted(data[phase], key=lambda sample: sum(sample.get_range()))
-				data[phase] = "\n".join([sample.to_oxcal() for sample in data_phase])
-			txt += model_fncs[self.model.phase_model]("Gr.%d" % (group), data)
+				phase_min, phase_max = self.model.samples[name].phasing_range
+				if phase_min not in data_phase:
+					data_phase[phase_min] = []
+				if phase_max not in data_phase:
+					data_phase[phase_max] = []
+				if phase_min == phase_max:
+					data_phase[phase_min].append(self.model.samples[name])
+				else:
+					data_multiphase[(phase_min, phase_max)].append(self.model.samples[name])
+			data_phase = dict(data_phase)
+			for phase in data_phase:
+				data_phase[phase] = sorted(data_phase[phase], key=lambda sample: sum(sample.get_range()))
+				if data_phase[phase]:
+					data_phase[phase] = "\n".join([sample.to_oxcal() for sample in data_phase[phase]])
+				else:
+					data_phase[phase] = ""
+			txt += model_fncs[self.model.phase_model]("Gr.%d" % (group), data_phase)
+			if data_multiphase:
+				for key in data_multiphase:
+					phase_min, phase_max = key
+					if data_multiphase[key]:
+						data_multiphase[key] = "\n".join([sample.to_oxcal() for sample in data_multiphase[key]])
+					else:
+						data_multiphase[key] = ""
+				txt += gen_multiphase("Gr.%d" % (group), data_multiphase)
 		
 		txt = '''
 Curve("%s","%s");

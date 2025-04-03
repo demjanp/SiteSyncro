@@ -174,17 +174,23 @@ class MPlot(object):
 		
 		with codecs.open(fcsv, "w", encoding="utf-8-sig") as file:
 			file.write(
-				"Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Redeposited;Outlier;EAP;Group;Phase;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
+				"Name;Context;Area;C-14 Date;C-14 Uncertainty;Long-Lived;Redeposited;Outlier;EAP;Site Phase;Group;Phase From;Phase To;Cluster;Unmodeled From (CE);Unmodeled To (CE);Modeled From (CE);Modeled To (CE)\n")
 			for name in samples:
 				likelihood_min, likelihood_max = self.model.samples[name].likelihood_range
 				posterior_min, posterior_max = self.model.samples[name].posterior_range
-				file.write('''"%s";"%s";"%s";%0.2f;%0.2f;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n''' % (
+				phase_min, phase_max = self.model.samples[name].phasing_range
+				age, uncertainty = self.model.samples[name].age, self.model.samples[name].uncertainty
+				if None in [age, uncertainty]:
+					age, uncertainty = "", ""
+				else:
+					age, uncertainty = str(age), str(uncertainty)
+				file.write('''"%s";"%s";"%s";%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n''' % (
 					name, self.model.samples[name].context, self.model.samples[name].area,
-					self.model.samples[name].age, self.model.samples[name].uncertainty,
+					age, uncertainty,
 					int(self.model.samples[name].long_lived), int(self.model.samples[name].redeposited),
 					int(self.model.samples[name].outlier), self.model.samples[name].excavation_area_phase,
-					self.model.samples[name].group, self.model.samples[name].phase, cluster[name],
-					self._format_year(likelihood_min), self._format_year(likelihood_max),
+					self.model.samples[name].site_phase, self.model.samples[name].group,
+					phase_min, phase_max, cluster[name], self._format_year(likelihood_min), self._format_year(likelihood_max),
 					self._format_year(posterior_min), self._format_year(posterior_max)
 				))
 

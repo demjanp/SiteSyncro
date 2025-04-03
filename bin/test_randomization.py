@@ -90,18 +90,19 @@ if __name__ == '__main__':
 					name = "%d_%d" % (phase, n)
 					n += 1
 					model.add_sample(name, age, uncert)
-				model.process_randomization()
-				model.plot_randomized(fname = os.path.join(DIRECTORY, "rnd_%d_%s_%03d.pdf" % (clusters_n, sample_size, i)))
+#				model.process_randomization()
+#				model.plot_randomized(fname = os.path.join(DIRECTORY, "rnd_%d_%s_%03d.pdf" % (clusters_n, sample_size, i)))
 				model.process_clustering()
 				model.plot_clusters(fname = os.path.join(DIRECTORY, "clu_%d_%s_%03d.pdf" % (clusters_n, sample_size, i)))
 				model.process_phasing(by_clusters = True)
-				distr_check = None
+#				distr_check = None
+				distr_check = 1   # DEBUG
 				clustering_check = None
 				phasing_check = None
 				
 				if clusters_n == 0:
 					# uniform distribution of events
-					distr_check = float(model.random_p >= model.p_value)
+#					distr_check = float(model.random_p >= model.p_value)
 					# no clustering of events
 					clustering_check = float(model.cluster_opt_n < 2)
 					# no phasing
@@ -109,7 +110,7 @@ if __name__ == '__main__':
 				
 				elif clusters_n == 1:
 					# normal distribution of events
-					distr_check = float(model.random_p >= model.p_value)
+#					distr_check = float(model.random_p >= model.p_value)
 					# no clustering of events
 					clustering_check = float(model.cluster_opt_n < 2)
 					# no phasing
@@ -117,7 +118,7 @@ if __name__ == '__main__':
 				
 				else:
 					# non-normal distribution of events
-					distr_check = float(model.random_p < model.p_value)
+#					distr_check = float(model.random_p < model.p_value)
 					# 4 clusters
 					if model.cluster_opt_n <= 0:
 						clustering_check = 0

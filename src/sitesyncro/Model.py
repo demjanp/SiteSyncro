@@ -118,6 +118,7 @@ class Model(object):
 			if self.load(kwargs['directory']):
 				del kwargs['directory']
 				self.update_params(**kwargs)
+				self.load_oxcal_data()
 				return
 		
 		# Update missing keys in kwargs with defaults
@@ -659,10 +660,11 @@ class Model(object):
 							area: str = None,
 							excavation_area_phase: str = None,
 							earlier_than: List[str] = [],
+							site_phase: str = None,
 							):
 			self._data['samples'][name] = Sample(
 				name, age, uncertainty, date_type, long_lived, redeposited, outlier,
-				context, area, excavation_area_phase, earlier_than, self.curve
+				context, area, excavation_area_phase, earlier_than, site_phase, self.curve
 			)
 			self._data['samples'][name].calibrate(self.curve)
 		
@@ -814,7 +816,7 @@ class Model(object):
 		- Each line represents a data record.
 		- Data fields are separated by semicolons.
 		- The first line is a header and is skipped.
-		- Each line should have 10 fields: Sample, Context, Area, C14 Age, Uncertainty, Excavation Area Phase, Earlier-Than, Long-Lived, Redeposited, Outlier.
+		- Each line should have 11 fields: Sample, Context, Area, C14 Age, Uncertainty, Excavation Area Phase, Earlier-Than, Site Phase, Long-Lived, Redeposited, Outlier.
 		
 		:param fname: The file path of the CSV file to be imported.
 		:type fname: str
@@ -826,15 +828,40 @@ class Model(object):
 		if not os.path.isfile(fname):
 			raise ValueError("Input file %s not found" % fname)
 		
-		samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_eap, earlier_than = load_data(
+		samples, contexts, context_area, long_lived, redeposited, outlier, r_dates, context_eap, context_site_phases, earlier_than = load_data(
 			fname)
 		self._data['samples'] = {}
+		
+		# Add samples with specified absolute dates
+		u_samples = []
 		for name in samples:
-			age, uncertainty = r_dates[name]
-			self.add_sample(
-				name, age, uncertainty, 'R', long_lived[name], redeposited[name], outlier[name], contexts[name],
-				context_area[contexts[name]], context_eap[contexts[name]], earlier_than[name]
-			)
+			if name in r_dates:
+				age, uncertainty = r_dates[name]
+				self.add_sample(
+					name, age, uncertainty, 'R', long_lived[name], redeposited[name], outlier[name], contexts[name],
+					context_area[contexts[name]], context_eap[contexts[name]], earlier_than[name], context_site_phases[contexts[name]]
+				)
+			else:
+				u_samples.append(name)
+		
+		# Add samples without specified absolute dates
+		if u_samples:
+			bp_max = -np.inf
+			bp_min = np.inf
+			for name in self.samples:
+				r_max, r_min = self.samples[name].likelihood_range
+				bp_max = max(bp_max, r_max)
+				bp_min = min(bp_min, r_min)
+			margin = (bp_max - bp_min)*0.15
+			bp_min -= margin
+			bp_max += margin
+			age = (bp_min + bp_max) / 2
+			uncertainty = (bp_max - bp_min) / 2
+			for name in u_samples:
+				self.add_sample(
+					name, age, uncertainty, 'U', long_lived[name], redeposited[name], outlier[name], contexts[name],
+					context_area[contexts[name]], context_eap[contexts[name]], earlier_than[name], context_site_phases[contexts[name]]
+				)
 	
 	def plot_randomized(self, fname: str = None, show: bool = False) -> str:
 		"""
@@ -989,6 +1016,8 @@ class Model(object):
 		"""
 		
 		fname = os.path.join(self.directory, "model.js")
+		if not os.path.isfile(fname):
+			return
 		data = load_oxcal_data(fname)
 		self._data['oxcal_data'] = data
 		

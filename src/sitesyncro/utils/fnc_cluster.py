@@ -4,6 +4,7 @@ from typing import List, Dict
 import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
+from scipy.stats import wasserstein_distance
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 
@@ -34,6 +35,40 @@ def calc_distance_matrix(distributions: List[np.ndarray]) -> np.ndarray:
 		k += 1
 	D = 1 - PS
 	D = D - D.min()
+	
+	return D
+
+def calc_distance_matrix_new(distributions: List[np.ndarray]) -> np.ndarray:
+	"""
+	Calculate a distance matrix of distributions of calibrated C-14 dates based on their Wasserstein distance
+	(Earth Mover's Distance).
+	
+	Parameters:
+	distributions (List[np.ndarray]): A list of distributions. Each distribution is represented
+	as a numpy array of probabilities.
+
+	Returns:
+	np.ndarray: A 1-d condensed distance matrix D. The value at index [i,j] in the squareform of D
+	represents the inverse probability that distributions i and j represent the same event.
+
+	Example:
+	If we have three distributions, the function will calculate the pairwise distances between
+	these distributions and return a 1-d condensed distance matrix. If we convert this matrix
+	back to a 2-d form using scipy's squareform function, we'll get a matrix where the value at
+	index [i,j] represents the inverse probability that distributions i and j represent the same event.
+	"""
+	dists_n = len(distributions)
+	D = np.zeros((dists_n * (dists_n - 1)) // 2, dtype=float)
+	
+	time_axis = np.arange(len(distributions[0]))
+	
+	k = 0
+	for d1, d2 in combinations(range(dists_n), 2):
+		D[k] = wasserstein_distance(time_axis, time_axis, distributions[d1], distributions[d2])
+		k += 1
+	
+	# Normalize distances between 0 and 1
+	D = (D - D.min()) / (D.max() - D.min()) if D.max() != D.min() else np.zeros_like(D)
 	
 	return D
 

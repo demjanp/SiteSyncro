@@ -124,7 +124,7 @@ def interpolate_dists(dists1, dists2, t):
 	return dists
 
 
-def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames):
+def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, sample_phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames):
 	
 	if posteriors:
 		if prev_posteriors is not None:
@@ -139,12 +139,23 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	
 	handles_clusters = []
 	handles_dates = []
+	handles_phases = []
 	ax.clear()
 	ax.set_title(title)
 	x_values = [pos[i][0] for i in range(len(samples))]
 	x_min = min(x_values)
 	x_max = max(x_values)
 	step = (x_max - x_min) / len(pos)
+	
+	if phases:
+		for i, s in enumerate(samples):
+			x = pos[i][0]
+			ph_min, ph_max = sample_phases[i]
+			ph_start, _ = phases[ph_min]
+			_, ph_end = phases[ph_max]
+			handle_phase = ax.plot([x, x], [ph_start, ph_end], color='blue', solid_capstyle='butt', linewidth=15, alpha=0.2, label="Phase range")
+		handles_phases.append(handle_phase[0])
+	
 	if posteriors:
 		graph_width = x_max - x_min
 		whisker_length = graph_width * 0.005
@@ -216,30 +227,13 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 		ax.text(step / 2, y, str(label), verticalalignment='top', horizontalalignment='right', fontsize=8)
 
 	if phases:
-		phase_lines = []
-		last_phase = None
-		last_y = 0
-		labels = []
-		for n in sorted(pos_final.keys(), key=lambda n: pos_final[n][1]):
-			if phases[n] != last_phase:
-				phase_lines.append((pos_final[n][1] + last_y)/2)
-				last_phase = phases[n]
-				labels.append(last_phase)
-			last_y = pos_final[n][1]
-		phase_lines.append((pos_final[n][1] + last_y)/2)
-		phase_lines = phase_lines[1:]
-		phase_lines[-1] += 2*step
-
-		phase_lines = [t for t in phase_lines if t > t_min]
-
-		for i, y in enumerate(phase_lines):
-			ax.axhline(y, color='grey', linewidth=1, linestyle='--')
-
-		last_y = y_min
-		for i, y in enumerate(phase_lines):
-			ax.text(x_max + 0.6*step, (last_y + y)/2, "Phase %d" % (labels[i]), verticalalignment='center', horizontalalignment='left', fontsize=10)
-			last_y = y
-
+		for ph in phases:
+			color = 'orange' if ph%2 == 0 else 'green'
+			ph_start, ph_end = phases[ph]
+			ax.axhline(ph_start, color=color, linewidth=1, linestyle='--', alpha=0.5)
+			ax.axhline(ph_end, color=color, linewidth=1, linestyle='--', alpha=0.5)
+			ax.text(x_max + 0.6*step, (ph_start + ph_end)/2, "Phase %d" % (ph), verticalalignment='center', horizontalalignment='left', fontsize=10, color=color)
+	
 	if clusters:
 		collect = defaultdict(list)
 		means = defaultdict(list)
@@ -277,9 +271,13 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 		handles_edges.append(Line2D([], [], linestyle='None', label='Dating ranges (95.45%)', color='k'))
 		handles_edges += handles_dates
 	
+	if handles_phases:
+		handles_edges.append(Line2D([], [], linestyle='None', label='Phase ranges', color='k'))
+		handles_edges += handles_phases
+	
 	legend2 = ax.legend(handles=handles_edges, loc='lower left')
 	for text in legend2.get_texts():
-		if text.get_text() in ['Chronological Relations', 'Dating ranges (95.45%)']:
+		if text.get_text() in ['Chronological Relations', 'Dating ranges (95.45%)', 'Phase ranges']:
 			text.set_position((-40, 0))
 	
 	if legend1:
@@ -292,19 +290,19 @@ def update_graph(i, ax, title, G, pos, node_color, edge_color, likelihoods, post
 	pyplot.subplots_adjust(left=0.03, right=0.96)
 
 
-def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, directory, name, t_min=None, t_max=None, t_step=100, prev_posteriors=None, total_frames=30):
+def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, sample_phases, clusters, directory, name, t_min=None, t_max=None, t_step=100, prev_posteriors=None, total_frames=30):
 	
 	print("Plotting", name, title)
 	if prev_posteriors is not None:
 		fig, ax = pyplot.subplots(figsize=(20, 10))
-		ani = animation.FuncAnimation(fig, update_graph, frames=total_frames, fargs=(ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames), repeat=False)
+		ani = animation.FuncAnimation(fig, update_graph, frames=total_frames, fargs=(ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, sample_phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames), repeat=False)
 		writer = PillowWriter(fps=25)
 		fname = os.path.join(directory, "%s.gif" % name)
 		ani.save(fname, writer=writer)
 		convert(fname, fname, 120)
 	else:
 		fig, ax = pyplot.subplots(figsize=(20, 10))
-		update_graph(0, ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames)
+		update_graph(0, ax, title, G, pos, node_color, edge_color, likelihoods, posteriors, samples, outliers, phases, sample_phases, clusters, t_min, t_max, t_step, prev_posteriors, total_frames)
 		fname = os.path.join(directory, "%s.png" % name)
 		pyplot.savefig(fname)
 		pyplot.close()
@@ -316,21 +314,24 @@ T_MIN = None
 #T_MAX = -2200
 T_MAX = None
 
-DIRECTORY = "vis_stages"
+DIRECTORY = "model_kap/vis_stages"
 
 if __name__ == '__main__':
 	
 	print("Loading data")
-	model0 = Model(directory="stage_0")
-	model1 = Model(directory="stage_1")
-	model2 = Model(directory="stage_2")
-	model3 = Model(directory="stage_3")
+	model0 = Model(directory="model_kap/stage_0")
+	model1 = Model(directory="model_kap/stage_1")
+	model2 = Model(directory="model_kap/stage_2")
+	model3 = Model(directory="model_kap/stage_3")
 	
 	samples = list(model0.samples.keys())
 	
 	eaps = dict([(i, model0.samples[s].excavation_area_phase) for i, s in enumerate(samples)])
-	phases2 = dict([(i, model2.samples[s].phase) for i, s in enumerate(samples)])
-	phases3 = dict([(i, model3.samples[s].phase) for i, s in enumerate(samples)])
+	phases2 = dict([(key[1], (model2.phases[key].start_mean, model2.phases[key].end_mean)) for key in model2.phases])
+	phases3 = dict([(key[1], (model3.phases[key].start_mean, model3.phases[key].end_mean)) for key in model3.phases])
+	
+	sample_phases2 = dict([(i, model2.samples[s].phasing_range) for i, s in enumerate(samples)])
+	sample_phases3 = dict([(i, model3.samples[s].phasing_range) for i, s in enumerate(samples)])
 	
 	outliers = [samples.index(s) for s in model1.outliers]
 	data = model2.clusters[model2.cluster_opt_n]
@@ -423,27 +424,27 @@ if __name__ == '__main__':
 	
 	img_paths = [
 		plot_graph(	"Stage 1 - Stratigraphic Phasing",
-			G0, pos, 'k', 			'k', {}, 	  {},	  samples, [], 		 None, None, DIRECTORY, '01-stage1a'),
+			G0, pos, 'k', 			'k', {}, 	  {},	  samples, [], 		 None, None, None, DIRECTORY, '01-stage1a'),
 		plot_graph(	"Stage 1 - Outlier Detection",
-			G1, pos, 'k', 			'k',  dists0, dists0, samples, [], 		 None, None, DIRECTORY, '02-stage1b', t_min, t_max),
+			G1, pos, 'k', 			'k',  dists0, dists0, samples, [], 		 None, None, None, DIRECTORY, '02-stage1b', t_min, t_max),
 		plot_graph(	"Stage 1 - Outlier Detection",
-			G1, pos, node_colors_o,	'k', dists0,  dists0, samples, outliers, None, None, DIRECTORY, '03-stage1c', t_min, t_max),
-		plot_graph(	"Stage 1 - Chronological Modeling 1",
-			G1, pos, 'k', 			'k', dists0,  dists1, samples, outliers, None, None, DIRECTORY, '04-stage1d', t_min, t_max, prev_posteriors=dists0),
+			G1, pos, node_colors_o,	'k', dists0,  dists0, samples, outliers, None, None, None, DIRECTORY, '03-stage1c', t_min, t_max),
+		plot_graph(	"Stage 1 - Chronological Modeling by Stratigraphy",
+			G1, pos, 'k', 			'k', dists0,  dists1, samples, outliers, None, None, None, DIRECTORY, '04-stage1d', t_min, t_max, prev_posteriors=dists0),
 	]
 	for i, (name, G2_g, edge_colors_g) in enumerate(by_dating):
 		img_paths.append(
 			plot_graph(	"Stage 2 - Inter-Group Chronological Relations - %s" % (name),
-				G2_g, pos, 'k', edge_colors_g, dists0, dists1, samples, outliers, None, None, DIRECTORY, '05-stage2a-%03d' % (i+1), t_min, t_max
+				G2_g, pos, 'k', edge_colors_g, dists0, dists1, samples, outliers, None, None, None, DIRECTORY, '05-stage2a-%03d' % (i+1), t_min, t_max
 			)
 		)
 	img_paths += [	
-		plot_graph(	"Stage 2 - Chronological Modeling 2",
-		 	G2, pos, 'k', 'lightgrey',	 dists0, dists2, samples, outliers, phases2, None,	   DIRECTORY, '07-stage2c', t_min, t_max, prev_posteriors=dists1),
+		plot_graph(	"Stage 2 - Chronological Modeling by Dating Ranges",
+		 	G2, pos, 'k', 'lightgrey',	 dists0, dists2, samples, outliers, phases2, sample_phases2, None,	   DIRECTORY, '07-stage2c', t_min, t_max, prev_posteriors=dists1),
 		plot_graph(	"Stage 3 - Chronological Clustering",
-		 	G3, pos, 'k', 'k', 			 dists0, dists2, samples, outliers, phases2, clusters, DIRECTORY, '08-stage3a', t_min, t_max),
-		plot_graph(	"Stage 3 - Chronological Modeling 3",
-		 	G3, pos, 'k', 'k', 			 dists0, dists3, samples, outliers, phases3, clusters, DIRECTORY, '09-stage3b', t_min, t_max, prev_posteriors=dists2),
+		 	G3, pos, 'k', 'k', 			 dists0, dists2, samples, outliers, phases2, sample_phases2, clusters, DIRECTORY, '08-stage3a', t_min, t_max),
+		plot_graph(	"Stage 3 - Chronological Modeling by Clusters",
+		 	G3, pos, 'k', 'k', 			 dists0, dists3, samples, outliers, phases3, sample_phases3, clusters, DIRECTORY, '09-stage3b', t_min, t_max, prev_posteriors=dists2),
 	]
 	save_as_ppt(os.path.join(DIRECTORY, "model.pptx"), img_paths)
 	

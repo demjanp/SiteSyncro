@@ -32,7 +32,7 @@ class MPhasing(object):
 			- samples: The list of sample names.
 		"""
 		
-		def _is_earlier(eap1: [[int, int], [int, int]], eap2: [[int, int], [int, int]]):
+		def _is_earlier_eap(eap1: [[int, int], [int, int]], eap2: [[int, int], [int, int]]):
 			# Check if eap1 is earlier than eap2
 			# eap = [[major from, minor from], [major to, minor to]]
 			
@@ -54,6 +54,28 @@ class MPhasing(object):
 				return (eap1[0][0] > eap2[1][0])
 			return (eap1[0] > eap2[1])
 		
+		def _is_earlier_site_phase(ph1: [[int, int], [int, int]], ph2: [[int, int], [int, int]]):
+			# Check if ph1 is earlier than ph2
+			# ph = [[major from, minor from], [major to, minor to]]
+			
+			if ph1 is None:
+				return False
+			if ph2 is None:
+				return False
+			
+			ph1 = eap_to_int(ph1)
+			ph2 = eap_to_int(ph2)
+			
+			for val in [ph1, ph2]:
+				if val is None:
+					return False
+				if val[0] is None:
+					return False
+			
+			if (ph1[0][1] is None) or (ph2[1][1] is None):
+				return (ph1[0][0] < ph2[1][0])
+			return (ph1[0] < ph2[1])
+		
 		samples = sorted(list(self.model.samples.keys()))
 		
 		# Create a matrix of earlier-than relationships
@@ -61,7 +83,50 @@ class MPhasing(object):
 		for i, s1 in enumerate(samples):
 			for s2 in self.model.samples[s1].earlier_than:
 				j = samples.index(s2)
-				earlier_than[j][i] = True
+#				earlier_than[i][j] = True
+				earlier_than[j][i] = True  # DEBUG temp. fix to accomodate incorectly used Earlier-than column in input data
+		
+		# Check earlier-than relationships based on excavation area phases for consistency with stratigraphic relationships
+		errors = []
+		earlier_than_tst = extend_earlier_than(earlier_than)
+		for i, s1 in enumerate(samples):
+			if self.model.samples[s1].excavation_area_phase is None:
+				continue
+			for j, s2 in enumerate(samples):
+				if s2 == s1:
+					continue
+				if self.model.samples[s1].area != self.model.samples[s2].area:
+					continue
+				is_e = _is_earlier_eap(self.model.samples[s1].excavation_area_phase, self.model.samples[s2].excavation_area_phase)
+				if (is_e and earlier_than_tst[j][i]):
+					errors.append((s1, s2))
+		if errors:
+			print()
+			print("Excavation Area Phases not consistent with stratigraphic relationships:")
+			for s1, s2 in errors:
+				print("%s (EAP: %s) strat. earlier than %s (EAP: %s)" % (s2, self.model.samples[s2].excavation_area_phase, s1, self.model.samples[s1].excavation_area_phase))
+			print()
+			raise Exception("Modeling aborted: Inconsistent stratigraphic relations detected.")
+		
+		# Check earlier-than relationships based on site phases for consistency with stratigraphic relationships
+		errors = []
+		earlier_than_tst = extend_earlier_than(earlier_than)
+		for i, s1 in enumerate(samples):
+			if self.model.samples[s1].site_phase is None:
+				continue
+			for j, s2 in enumerate(samples):
+				if s2 == s1:
+					continue
+				is_e = _is_earlier_site_phase(self.model.samples[s1].site_phase, self.model.samples[s2].site_phase)
+				if (is_e and earlier_than_tst[j][i]):
+					errors.append((s1, s2))
+		if errors:
+			print()
+			print("Site Phases not consistent with stratigraphic relationships:")
+			for s1, s2 in errors:
+				print("%s (Phase: %s) strat. earlier than %s (Phase: %s)" % (s2, self.model.samples[s2].site_phase, s1, self.model.samples[s1].site_phase))
+			print()
+			raise Exception("Modeling aborted: Inconsistent stratigraphic relations detected.")
 		
 		# Update earlier-than relationships based on excavation area phases
 		for i, s1 in enumerate(samples):
@@ -72,7 +137,7 @@ class MPhasing(object):
 					continue
 				if self.model.samples[s1].area != self.model.samples[s2].area:
 					continue
-				earlier_than[i][j] = _is_earlier(self.model.samples[s1].excavation_area_phase, self.model.samples[s2].excavation_area_phase)
+				earlier_than[i][j] = _is_earlier_eap(self.model.samples[s1].excavation_area_phase, self.model.samples[s2].excavation_area_phase)
 		
 		# Update earlier-than relationships based on groups and phases
 		for i, s1 in enumerate(samples):
@@ -87,6 +152,15 @@ class MPhasing(object):
 					continue
 				if self.model.samples[s1].phase < self.model.samples[s2].phase:
 					earlier_than[i][j] = True
+		
+		# Update earlier-than relationships based on site phases
+		for i, s1 in enumerate(samples):
+			if self.model.samples[s1].site_phase is None:
+				continue
+			for j, s2 in enumerate(samples):
+				if s2 == s1:
+					continue
+				earlier_than[i][j] = _is_earlier_site_phase(self.model.samples[s1].site_phase, self.model.samples[s2].site_phase)
 		
 		# Check if earlier_than has circular relationships
 		check_circular_relationships(earlier_than, samples)
@@ -244,6 +318,8 @@ class MPhasing(object):
 			found = set()
 			for i in idxs:
 				for j in np.where(earlier_than[i])[0]:
+					if (samples[i] not in ranges) or (samples[j] not in ranges): # already assigned as outliers
+						continue
 					if ranges[samples[i]][0] < ranges[samples[j]][1]:
 						if check_only:
 							return True
@@ -333,7 +409,7 @@ class MPhasing(object):
 		:rtype: bool
 		"""
 		
-		phasing0 = set([(name, self.model.samples[name].group, self.model.samples[name].phase) for name in self.model.samples])
+		phasing0 = set([(name, self.model.samples[name].group, self.model.samples[name].phasing_range[0], self.model.samples[name].phasing_range[1]) for name in self.model.samples])
 		
 		earlier_than, samples = self.create_earlier_than_matrix()
 		if by_clusters and self.model.is_clustered:
@@ -343,9 +419,18 @@ class MPhasing(object):
 			earlier_than = self.update_earlier_than_by_dating(earlier_than, samples)
 		
 		ranges = [self.model.samples[name].get_range() for name in self.model.samples]		
-		groups_phases, phasing_multi = get_groups_and_phases(earlier_than, samples, ranges)
+		groups_phases, phasing_multi, phasing_ranges = get_groups_and_phases(earlier_than, samples, ranges)
 		# groups_phases = {sample: [group, phase], ...}
 		# phasing_multi = {sample: [phase, ...], ...}
+		# phasing_ranges = {sample: [group, phase_min, phase_max], ...}
+		
+		print()  # DEBUG start
+		print("Samples with phasing ranges:")
+		for sample_id in phasing_ranges:
+			gr, ph_min, ph_max = phasing_ranges[sample_id]
+			if ph_min != ph_max:
+				print("%s gr:%d ph:%d-%d" % (sample_id, gr, ph_min, ph_max))
+		print()  # DEBUG end
 		
 		if phasing_multi:
 			print("Warning! Some samples can be assigned to multiple phases:")
@@ -355,13 +440,16 @@ class MPhasing(object):
 		for name in self.model.samples:
 			if name in groups_phases:
 				group, phase = groups_phases[name]
+				phasing_rng = phasing_ranges[name]
 				self.model.samples[name].set_group(group)
 				self.model.samples[name].set_phase(phase)
+				self.model.samples[name].set_phasing_range(phasing_rng[1:])
 			else:
 				self.model.samples[name].set_group(None)
 				self.model.samples[name].set_phase(None)
+				self.model.samples[name].set_phasing_range(None)
 		
-		phasing1 = set([(name, self.model.samples[name].group, self.model.samples[name].phase) for name in self.model.samples])
+		phasing1 = set([(name, self.model.samples[name].group, self.model.samples[name].phasing_range[0], self.model.samples[name].phasing_range[1]) for name in self.model.samples])
 		
 		if phasing0 != phasing1:
 			return True

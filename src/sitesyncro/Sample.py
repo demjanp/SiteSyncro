@@ -45,8 +45,11 @@ class Sample(object):
 	:param excavation_area_phase: Chronological phase of the context within the excavation area (format: "1" or "1a" or "1-2" or "1a-b" or "1a-2b", higher = earlier (older) phase)
 	:type excavation_area_phase: str, optional
 	
-	:param earlier_than: List of names of samples which are stratigraphically earlier (older) than this sample
+	:param earlier_than: List of names of samples which this sample is stratigraphically earlier (older) than
 	:type earlier_than: List[str], optional
+	
+	:param site_phase: Chronological phase of the context within the site (format: "1" or "1a" or "1-2" or "1a-b" or "1a-2b", lower = earlier (older) phase)
+	:type site_phase: str, optional
 	
 	:param curve: Radiocarbon calibration curve in format `np.array([[calendar year BP, C-14 year, uncertainty], ...])`
 	:type curve: np.ndarray, optional
@@ -65,6 +68,7 @@ class Sample(object):
 							area: str = None,
 							excavation_area_phase: str = None,
 							earlier_than: List[str] = [],
+							site_phase: str = None,
 							curve: np.ndarray = None,
 							) -> None:
 			
@@ -83,12 +87,14 @@ class Sample(object):
 				area=area,
 				excavation_area_phase=excavation_area_phase,
 				earlier_than=earlier_than,
+				site_phase=site_phase,
 				
 				group=None,
 				phase=None,
 				years=None,
 				likelihood=None,
 				posterior=None,
+				phasing_range=None,
 				likelihood_range=None,
 				likelihood_mean=None,
 				posterior_range=None,
@@ -236,15 +242,26 @@ class Sample(object):
 	@property
 	def earlier_than(self) -> List[str] or None:
 		"""
-		List of names of samples which are stratigraphically earlier (older) than this sample.
-
-		:return: List of names of samples which are stratigraphically earlier (older) than this sample or None if it's not set.
+		List of names of samples which this sample is stratigraphically earlier (older) than.
+		
+		:return: List of names of samples which this sample is stratigraphically earlier (older) than or None if it's not set.
 		:rtype: List[str] or None
 		"""
 		
 		if self._data['earlier_than'] is None:
 			return None
 		return copy.copy(self._data['earlier_than'])
+	
+	@property
+	def site_phase(self) -> str or None:
+		"""
+		The chronological phase of the context within the site.
+		
+		:return: The chronological phase of the context within the site (format: "1" or "1a" or "1-2" or "1a-b" or "1a-2b", lower = earlier (older) phase) or None if it's not set.
+		:rtype: str or None
+		"""
+		
+		return self._data['site_phase']
 	
 	# Calculated properties
 	
@@ -308,6 +325,19 @@ class Sample(object):
 		if self._data['posterior'] is None:
 			return None
 		return self._data['posterior'].copy()
+	
+	@property
+	def phasing_range(self) -> [float, float] or [None, None]:
+		"""
+		The range of possible stratigraphic phases of the sample within the group.
+		
+		:return: A list containing the lower and upper bounds of the possible phases, or [None, None] if they are not set.
+		:rtype: list
+		"""
+		
+		if self._data['phasing_range'] is None:
+			return [None, None]
+		return copy.copy(self._data['phasing_range'])
 	
 	@property
 	def likelihood_range(self) -> [float, float] or [None, None]:
@@ -448,6 +478,21 @@ class Sample(object):
 		
 		self._data['phase'] = phase
 	
+	def set_phasing_range(self, rng: List[float]) -> None:
+		"""
+		Sets the range of possible stratigraphic phases of the sample within the group.
+
+		:param rng: The range of possible stratigraphic phases of the sample within the group (lower = earlier (older) phase).
+		:type rng: List[float]
+		"""
+		
+		if rng is None:
+			self._data['phasing_range'] = None
+		elif not (isinstance(rng, list) and (len(rng) == 2)):
+			raise Exception("Phasing range value invalid: %s" % (str(rng)))
+		else:
+			self._data['phasing_range'] = copy.copy(rng)
+	
 	def set_likelihood(self, distribution: np.ndarray, mean: float = None, rng: List[float] = None) -> None:
 		"""
 		Sets the likelihood for the sample.
@@ -560,12 +605,14 @@ class Sample(object):
 			area=None,
 			excavation_area_phase=None,
 			earlier_than=[],
+			site_phase=None,
 			
 			group=None,
 			phase=None,
 			years=None,
 			likelihood=None,
 			posterior=None,
+			phasing_range=None,
 			likelihood_range=None,
 			likelihood_mean=None,
 			posterior_range=None,
@@ -588,7 +635,7 @@ class Sample(object):
 		return Sample(self.to_dict())
 	
 	def __repr__(self) -> str:
-		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, redeposited={self.redeposited}, outlier={self.outlier}, context={self.context}, area={self.area}, excavation_area_phase={self.excavation_area_phase}, earlier_than={self.earlier_than}, group={self.group}, phase={self.phase}"
+		repr_str = f"<Sample '{self.name}': age={self.age}, uncertainty={self.uncertainty}, date_type={self.date_type}, long_lived={self.long_lived}, redeposited={self.redeposited}, outlier={self.outlier}, context={self.context}, area={self.area}, excavation_area_phase={self.excavation_area_phase}, earlier_than={self.earlier_than}, site_phase={self.site_phase}, group={self.group}, phase={self.phase}"
 		
 		if self.is_calibrated:
 			repr_str += f", likelihood_range={self.likelihood_range}, likelihood_mean={self.likelihood_mean}"

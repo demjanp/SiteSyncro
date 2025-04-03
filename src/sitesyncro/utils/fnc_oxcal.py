@@ -180,6 +180,29 @@ def gen_none(name: str, data: Dict[int, str]) -> str:
 	return txt
 
 
+def gen_multiphase(name: str, data: Dict[tuple, str]) -> str:
+	txt = ""
+	for key in sorted(list(data.keys())):
+		phase_min, phase_max = key
+		txt += '''
+		Sequence()
+		{
+			Boundary("=Start %(name)s-%(phase_min)d");
+			Phase("%(name)s-%(phase_min)d-%(phase_max)d")
+			{
+				%(dates)s
+			};
+			Boundary("=End %(name)s-%(phase_max)d");
+		};
+		''' % dict(name=name, phase_min=phase_min, phase_max=phase_max, dates=data[key])
+	return '''
+	Phase(%s-Multiphase)
+	{
+		%s
+	};
+	''' % (name, txt)
+
+
 def load_oxcal_data(fname: str) -> Dict:
 	"""
 	Load OxCal data from a file.
@@ -329,6 +352,8 @@ def get_distributions(data: Dict, curve: np.ndarray) -> (Dict[str, Any], Dict[st
 	
 	def _load_likelihoods(data):
 		result = {}
+		if data is None:
+			return
 		if 'ocd' not in data:
 			return
 		for i in data['ocd']:
@@ -345,6 +370,8 @@ def get_distributions(data: Dict, curve: np.ndarray) -> (Dict[str, Any], Dict[st
 	
 	def _load_posteriors(data):
 		result = {}
+		if data is None:
+			return result
 		if 'ocd' not in data:
 			return result
 		for i in data['ocd']:

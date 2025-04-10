@@ -33,31 +33,6 @@ def convert(old_filename, new_filename, duration):
 	images[0].save(new_filename, save_all=True, append_images=images[1:], optimize=False, duration=duration)
 
 
-def save_as_ppt(fname, img_paths, slide_size = (13.33, 7.5)):
-	
-	prs = Presentation()
-	slide_layout = prs.slide_layouts[6]  # Using a blank layout
-	prs.slide_width = Inches(slide_size[0])
-	prs.slide_height = Inches(slide_size[1])
-	slide_width = prs.slide_width
-	slide_height = prs.slide_height
-	for img_path in img_paths:
-		img = Image.open(img_path)
-		img_width, img_height = img.size
-		width_ratio = slide_width / img_width
-		height_ratio = slide_height / img_height
-		fit_ratio = min(width_ratio, height_ratio)
-		new_width = int(img_width * fit_ratio)
-		new_height = int(img_height * fit_ratio)
-		left = (slide_width - new_width) / 2
-		top = (slide_height - new_height) / 2
-		slide = prs.slides.add_slide(slide_layout)
-		left = 0
-		top = 0
-		pic = slide.shapes.add_picture(img_path, left, top, new_width, new_height)
-	prs.save(fname)
-
-
 def get_graph(earlier_than, samples, gap = 0.05):
 	
 	def _update_pos_by_groups(pos, groups, gap = 0.05):
@@ -309,10 +284,10 @@ def plot_graph(title, G, pos, node_color, edge_color, likelihoods, posteriors, s
 	return fname
 
 
-T_MIN = -1400
-#T_MIN = None
-T_MAX = -2200
-#T_MAX = None
+#T_MIN = -1400
+T_MIN = None
+#T_MAX = -2200
+T_MAX = None
 
 DIRECTORY = "model_kap/vis_stages"
 
@@ -320,30 +295,10 @@ if __name__ == '__main__':
 	
 	print("Loading data")
 	model0 = Model(directory="model_kap/stage_0")
-	model1 = Model(directory="model_kap/stage_1")
-	model2 = Model(directory="model_kap/stage_2")
-	model3 = Model(directory="model_kap/stage_3")
 	
-	samples = list(model0.samples.keys())
+	samples = sorted(list(model0.samples.keys()))
 	
 	eaps = dict([(i, model0.samples[s].excavation_area_phase) for i, s in enumerate(samples)])
-	phases2 = dict([(key[1], (model2.phases[key].start_mean, model2.phases[key].end_mean)) for key in model2.phases])
-	phases3 = dict([(key[1], (model3.phases[key].start_mean, model3.phases[key].end_mean)) for key in model3.phases])
-	
-	def _get_phasing_range(model, s):
-		if s not in model.samples:
-			return (0, 0)
-		return model.samples[s].phasing_range
-	
-	sample_phases2 = dict([(i, _get_phasing_range(model2, s)) for i, s in enumerate(samples)])
-	sample_phases3 = dict([(i, _get_phasing_range(model3, s)) for i, s in enumerate(samples)])
-	
-	outliers = [samples.index(s) for s in model1.outliers]
-	data = model2.clusters[model2.cluster_opt_n]
-	clusters = {}
-	for label in data:
-		for s in data[label]:
-			clusters[samples.index(s)] = label
 	
 	print("Getting ranges")
 	dists0 = {}
@@ -351,68 +306,15 @@ if __name__ == '__main__':
 		m = model0.samples[name].likelihood_mean
 		r1, r2 = model0.samples[name].likelihood_range
 		dists0[name] = [m, r1, r2]
-	dists1 = {}
-	for name in samples:
-		m = model1.samples[name].posterior_mean
-		r1, r2 = model1.samples[name].posterior_range
-		dists1[name] = [m, r1, r2]
-	dists2 = {}
-	for name in samples:
-		m = model2.samples[name].posterior_mean
-		r1, r2 = model2.samples[name].posterior_range
-		dists2[name] = [m, r1, r2]
-	dists3 = {}
-	for name in samples:
-		m = model3.samples[name].posterior_mean
-		r1, r2 = model3.samples[name].posterior_range
-		dists3[name] = [m, r1, r2]
 	
 	print("Populating graph")
 	earlier_than0, samples0 = model0.mphasing.create_earlier_than_matrix()
 	assert(samples == samples0)
 	
-	earlier_than1, samples1 = model1.mphasing.create_earlier_than_matrix()
-	assert(samples == samples1)
-	
-	earlier_than2 = model1.mphasing.update_earlier_than_by_dating(earlier_than1, samples)
-	
-	earlier_than3, samples3 = model3.mphasing.create_earlier_than_matrix()
-	assert(samples == samples3)
-	
 	G0, pos, groups, gap = get_graph(earlier_than0, samples)
-	G1 = get_G(earlier_than1)
-	G3 = get_G(np.zeros(earlier_than0.shape, dtype = bool))
-	
-	node_colors0 = 'k'
-	node_colors_o = [('r' if i in outliers else 'k') for i in range(len(samples))]
-	
-	by_dating = []
-	et_by_dating = np.zeros(earlier_than0.shape, dtype = bool)
-	G2 = get_G(et_by_dating)
-	for n in sorted(pos.keys(), key = lambda n: pos[n][0]):
-		et_by_dating_s = np.zeros(earlier_than0.shape, dtype = bool)
-		for i, j in zip(*np.where(earlier_than2)):
-			if i != n:
-				continue
-			if (not earlier_than1[i, j]) and (groups[i] != groups[j]):
-				et_by_dating_s[i,j] = True
-		if not et_by_dating_s.any():
-			continue
-		G_by_dating = get_G(et_by_dating_s)
-		for i, j in G_by_dating.edges():
-			G2.add_edge(i, j)
-		edge_colors_s = []
-		for i, j in G2.edges():
-			if et_by_dating_s[i, j]:
-				color = 'r'
-			elif et_by_dating[i, j]:
-				color = 'lightgrey'
-			edge_colors_s.append(color)
-		by_dating.append([samples[n].split("_")[0], G2.copy(), edge_colors_s])
-		et_by_dating = et_by_dating | et_by_dating_s
 	
 	t_min, t_max = np.inf, -np.inf
-	for dists in [dists0, dists1, dists2, dists3]:
+	for dists in [dists0]:
 		for i, s in enumerate(samples):
 			m, r1, r2 = dists[s]
 			t_min = min(t_min, r2)
@@ -430,26 +332,5 @@ if __name__ == '__main__':
 	img_paths = [
 		plot_graph(	"Stage 1 - Stratigraphic Phasing",
 			G0, pos, 'k', 			'k', {}, 	  {},	  samples, [], 		 None, None, None, DIRECTORY, '01-stage1a'),
-		plot_graph(	"Stage 1 - Outlier Detection",
-			G1, pos, 'k', 			'k',  dists0, dists0, samples, [], 		 None, None, None, DIRECTORY, '02-stage1b', t_min, t_max),
-		plot_graph(	"Stage 1 - Outlier Detection",
-			G1, pos, node_colors_o,	'k', dists0,  dists0, samples, outliers, None, None, None, DIRECTORY, '03-stage1c', t_min, t_max),
-		plot_graph(	"Stage 1 - Chronological Modeling by Stratigraphy",
-			G1, pos, 'k', 			'k', dists0,  dists1, samples, outliers, None, None, None, DIRECTORY, '04-stage1d', t_min, t_max, prev_posteriors=dists0),
 	]
-	for i, (name, G2_g, edge_colors_g) in enumerate(by_dating):
-		img_paths.append(
-			plot_graph(	"Stage 2 - Inter-Group Chronological Relations - %s" % (name),
-				G2_g, pos, 'k', edge_colors_g, dists0, dists1, samples, outliers, None, None, None, DIRECTORY, '05-stage2a-%03d' % (i+1), t_min, t_max
-			)
-		)
-	img_paths += [	
-		plot_graph(	"Stage 2 - Chronological Modeling by Dating Ranges",
-		 	G2, pos, 'k', 'lightgrey',	 dists0, dists2, samples, outliers, phases2, sample_phases2, None,	   DIRECTORY, '07-stage2c', t_min, t_max, prev_posteriors=dists1),
-		plot_graph(	"Stage 3 - Chronological Clustering",
-		 	G3, pos, 'k', 'k', 			 dists0, dists2, samples, outliers, phases2, sample_phases2, clusters, DIRECTORY, '08-stage3a', t_min, t_max),
-		plot_graph(	"Stage 3 - Chronological Modeling by Clusters",
-		 	G3, pos, 'k', 'k', 			 dists0, dists3, samples, outliers, phases3, sample_phases3, clusters, DIRECTORY, '09-stage3b', t_min, t_max, prev_posteriors=dists2),
-	]
-	save_as_ppt(os.path.join(DIRECTORY, "model.pptx"), img_paths)
 	

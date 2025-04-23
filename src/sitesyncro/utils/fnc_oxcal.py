@@ -326,8 +326,10 @@ def get_distributions(data: Dict, curve: np.ndarray) -> (Dict[str, Any], Dict[st
 			L = np.inf
 			U = -np.inf
 			for key in params_data['range'][2]:
-				L = min(L, params_data['range'][2][key][0])
-				U = max(U, params_data['range'][2][key][1])
+				if not isinstance(params_data['range'][2][key][0], str):
+					L = min(L, params_data['range'][2][key][0])
+				if not isinstance(params_data['range'][2][key][1], str):
+					U = max(U, params_data['range'][2][key][1])
 			rng = (1950 - L, 1950 - U)
 		return mean, rng, prob, years
 	

@@ -289,12 +289,13 @@ T_MIN = None
 #T_MAX = -2200
 T_MAX = None
 
-DIRECTORY = "model_kap/vis_stages"
+ROOT = "model_kap_with_cer"
+DIRECTORY = "%s/vis_stages" % (ROOT)
 
 if __name__ == '__main__':
 	
 	print("Loading data")
-	model0 = Model(directory="model_kap/stage_0")
+	model0 = Model(directory="%s/stage_0" % (ROOT))
 	
 	samples = sorted(list(model0.samples.keys()))
 	

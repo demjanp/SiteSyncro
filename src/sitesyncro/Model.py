@@ -45,6 +45,9 @@ class Model(object):
 	:param cluster_selection: The method used to select the optimal number of clusters. Can be 'silhouette' or 'mcst' (default is 'silhouette').
 	:type cluster_selection: str
 	
+	:param use_wasserstein: Use Wasserstein distance to calculate the distance matrix for clustering.
+	:type use_wasserstein: bool
+	
 	:param uniform: Flag indicating whether to use uniform randomization (default is False).
 	:type uniform: bool
 
@@ -76,6 +79,7 @@ class Model(object):
 			phase_model='sequence',
 			cluster_n=-1,
 			cluster_selection='silhouette',
+			use_wasserstein=False,
 			uniform=False,
 			p_value=0.05,
 			uncertainty_base=15,
@@ -140,6 +144,7 @@ class Model(object):
 			phase_model=None,
 			cluster_n=None,
 			cluster_selection=None,
+			use_wasserstein=None,
 			uniform=None,
 			p_value=None,
 			uncertainty_base=None,
@@ -274,6 +279,16 @@ class Model(object):
 		:rtype: str
 		"""
 		return self._data['cluster_selection']
+	
+	@property
+	def use_wasserstein(self) -> bool:
+		"""
+		Flag indicating whether the model uses Wasserstein distance for the clustering distance matrix.
+
+		:return: True if Wasserstein distance is used, False otherwise.
+		:rtype: bool
+		"""
+		return self._data['use_wasserstein']
 	
 	@property
 	def uniform(self) -> bool:
@@ -737,6 +752,7 @@ class Model(object):
 			phase_model = self.phase_model,
 			cluster_n = self.cluster_n,
 			cluster_selection = self.cluster_selection,
+			use_wasserstein = self.use_wasserstein,
 			uniform = self.uniform,
 			p_value = self.p_value,
 			uncertainty_base = self.uncertainty_base,
@@ -1065,7 +1081,7 @@ class Model(object):
 		
 		assigned_full = ['samples', 'curve_name', 'phase_model']
 		assigned_randomization = ['uniform', 'p_value', 'uncertainty_base', 'npass', 'convergence']
-		assigned_clustering = ['cluster_n', 'cluster_selection']
+		assigned_clustering = ['cluster_n', 'cluster_selection', 'use_wasserstein']
 		
 		def _get_n_samples(value):
 			if isinstance(value, dict):
@@ -1195,7 +1211,7 @@ class Model(object):
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data[
 			'random_p'] = self.mrandomization.test_distributions(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
-	def process_clustering(self, max_cpus=-1, max_queue_size=-1) -> None:
+	def process_clustering(self, max_cpus=-1, max_queue_size=-1, max_clusters=-1) -> None:
 		"""
 		Performs clustering on the sample dates.
 
@@ -1209,10 +1225,10 @@ class Model(object):
 		"""
 		
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
-			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size)
+			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, 
-				max_cpus: int = -1, max_queue_size: int = -1, 
+				max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1,
 				save: bool = False) -> None:
 		"""
 		Processes the complete model.
@@ -1232,6 +1248,8 @@ class Model(object):
 		:type max_cpus: int, optional
 		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
 		:type max_queue_size: int, optional
+		:param max_clusters: Maximum number of clusters to create
+		:type max_clusters: int, optional
 		:return: None
 		"""
 		
@@ -1257,7 +1275,7 @@ class Model(object):
 				self.save(zipped=True)
 		if not self.is_clustered:
 			print("\nClustering temporal distributions\n")
-			self.process_clustering(max_cpus=max_cpus, max_queue_size=max_queue_size)
+			self.process_clustering(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters)
 			if save:
 				self.save(zipped=True)
 		if by_clusters:

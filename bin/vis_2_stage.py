@@ -314,21 +314,20 @@ T_MIN = -1400
 T_MAX = -2200
 #T_MAX = None
 
-DIRECTORY = "model_kap/vis_stages"
+ROOT = "model_kap_no_cer"
+DIRECTORY = "%s/vis_stages" % (ROOT)
 
 if __name__ == '__main__':
 	
 	print("Loading data")
-	model0 = Model(directory="model_kap/stage_0")
-	model1 = Model(directory="model_kap/stage_1")
-	model2 = Model(directory="model_kap/stage_2")
-	model3 = Model(directory="model_kap/stage_3")
+	model0 = Model(directory="%s/stage_0" % (ROOT))
+	model1 = Model(directory="%s/stage_1" % (ROOT))
+	model2 = Model(directory="%s/stage_2" % (ROOT))
 	
 	samples = sorted(list(model0.samples.keys()))
 	
 	eaps = dict([(i, model0.samples[s].excavation_area_phase) for i, s in enumerate(samples)])
 	phases2 = dict([(key[1], (model2.phases[key].start_mean, model2.phases[key].end_mean)) for key in model2.phases])
-	phases3 = dict([(key[1], (model3.phases[key].start_mean, model3.phases[key].end_mean)) for key in model3.phases])
 	
 	def _get_phasing_range(model, s):
 		if s not in model.samples:
@@ -336,7 +335,6 @@ if __name__ == '__main__':
 		return model.samples[s].phasing_range
 	
 	sample_phases2 = dict([(i, _get_phasing_range(model2, s)) for i, s in enumerate(samples)])
-	sample_phases3 = dict([(i, _get_phasing_range(model3, s)) for i, s in enumerate(samples)])
 	
 	outliers = [samples.index(s) for s in model1.outliers]
 	data = model2.clusters[model2.cluster_opt_n]
@@ -361,11 +359,6 @@ if __name__ == '__main__':
 		m = model2.samples[name].posterior_mean
 		r1, r2 = model2.samples[name].posterior_range
 		dists2[name] = [m, r1, r2]
-	dists3 = {}
-	for name in samples:
-		m = model3.samples[name].posterior_mean
-		r1, r2 = model3.samples[name].posterior_range
-		dists3[name] = [m, r1, r2]
 	
 	print("Populating graph")
 	earlier_than0, samples0 = model0.mphasing.create_earlier_than_matrix()
@@ -375,9 +368,6 @@ if __name__ == '__main__':
 	assert(samples == samples1)
 	
 	earlier_than2 = model1.mphasing.update_earlier_than_by_dating(earlier_than1, samples)
-	
-	earlier_than3, samples3 = model3.mphasing.create_earlier_than_matrix()
-	assert(samples == samples3)
 	
 	G0, pos, groups, gap = get_graph(earlier_than0, samples)
 	G1 = get_G(earlier_than1)
@@ -412,7 +402,7 @@ if __name__ == '__main__':
 		et_by_dating = et_by_dating | et_by_dating_s
 	
 	t_min, t_max = np.inf, -np.inf
-	for dists in [dists0, dists1, dists2, dists3]:
+	for dists in [dists0, dists1, dists2]:
 		for i, s in enumerate(samples):
 			m, r1, r2 = dists[s]
 			t_min = min(t_min, r2)
@@ -448,8 +438,6 @@ if __name__ == '__main__':
 		 	G2, pos, 'k', 'lightgrey',	 dists0, dists2, samples, outliers, phases2, sample_phases2, None,	   DIRECTORY, '07-stage2c', t_min, t_max, prev_posteriors=dists1),
 		plot_graph(	"Stage 3 - Chronological Clustering",
 		 	G3, pos, 'k', 'k', 			 dists0, dists2, samples, outliers, phases2, sample_phases2, clusters, DIRECTORY, '08-stage3a', t_min, t_max),
-		plot_graph(	"Stage 3 - Chronological Modeling by Clusters",
-		 	G3, pos, 'k', 'k', 			 dists0, dists3, samples, outliers, phases3, sample_phases3, clusters, DIRECTORY, '09-stage3b', t_min, t_max, prev_posteriors=dists2),
 	]
 	save_as_ppt(os.path.join(DIRECTORY, "model.pptx"), img_paths)
 	

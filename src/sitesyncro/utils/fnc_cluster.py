@@ -8,7 +8,7 @@ from scipy.stats import wasserstein_distance
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 
-def calc_distance_matrix(distributions: List[np.ndarray]) -> np.ndarray:
+def calc_distance_matrix_evt(distributions: List[np.ndarray]) -> np.ndarray:
 	"""
 	Calculate a distance matrix of distributions of calibrated C-14 dates based on probabilities
 	that they represent the same event.
@@ -38,7 +38,7 @@ def calc_distance_matrix(distributions: List[np.ndarray]) -> np.ndarray:
 	
 	return D
 
-def calc_distance_matrix_new(distributions: List[np.ndarray]) -> np.ndarray:
+def calc_distance_matrix_wd(distributions: List[np.ndarray]) -> np.ndarray:
 	"""
 	Calculate a distance matrix of distributions of calibrated C-14 dates based on their Wasserstein distance
 	(Earth Mover's Distance).

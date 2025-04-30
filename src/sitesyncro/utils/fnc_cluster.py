@@ -87,8 +87,15 @@ def calc_distance_matrix_js(distributions: List[np.ndarray]) -> np.ndarray:
 	dists_n = len(distributions)
 	D = np.zeros((dists_n * (dists_n - 1)) // 2, dtype=float)
 	k = 0
+	
+	distributions = [np.clip(dist / np.sum(dist), 1e-12, 1.0) for dist in distributions]
+	
 	for d1, d2 in combinations(range(dists_n), 2):
 		D[k] = jensenshannon(distributions[d1], distributions[d2])
+		if D[k] == np.inf:
+			raise Exception("Infinity detected")
+		elif np.isnan(D[k]):
+			raise Exception("NaN detected")
 		k += 1
 
 	return D

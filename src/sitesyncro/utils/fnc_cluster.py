@@ -3,15 +3,15 @@ from typing import List, Dict
 
 import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
-from scipy.spatial.distance import squareform
+from scipy.spatial.distance import squareform, jensenshannon
 from scipy.stats import wasserstein_distance
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 
-def calc_distance_matrix_evt(distributions: List[np.ndarray]) -> np.ndarray:
+def calc_distance_matrix_dot(distributions: List[np.ndarray]) -> np.ndarray:
 	"""
 	Calculate a distance matrix of distributions of calibrated C-14 dates based on probabilities
-	that they represent the same event.
+	that they represent the same event calculated as a dot product.
 
 	Parameters:
 	distributions (List[np.ndarray]): A list of distributions. Each distribution is represented
@@ -72,6 +72,26 @@ def calc_distance_matrix_wd(distributions: List[np.ndarray]) -> np.ndarray:
 	
 	return D
 
+def calc_distance_matrix_js(distributions: List[np.ndarray]) -> np.ndarray:
+	"""
+	Calculate a distance matrix of distributions of calibrated C-14 dates based on Jensen–Shannon distance.
+
+	Parameters:
+	distributions (List[np.ndarray]): A list of distributions. Each distribution is represented
+	as a numpy array of probabilities (must sum to 1).
+
+	Returns:
+	np.ndarray: A 1-D condensed distance matrix D. The value at index [i,j] in the squareform of D
+	represents the Jensen–Shannon distance between distributions i and j.
+	"""
+	dists_n = len(distributions)
+	D = np.zeros((dists_n * (dists_n - 1)) // 2, dtype=float)
+	k = 0
+	for d1, d2 in combinations(range(dists_n), 2):
+		D[k] = jensenshannon(distributions[d1], distributions[d2])
+		k += 1
+
+	return D
 
 def calc_distances_pca(D: np.ndarray, n_components: int = None) -> np.ndarray:
 	"""

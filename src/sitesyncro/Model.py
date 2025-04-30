@@ -38,6 +38,9 @@ class Model(object):
 
 	:param phase_model: OxCal phase model type. Can be 'sequence', 'contiguous', 'overlapping', or 'none' (default is "sequence").
 	:type phase_model: str
+	
+	:param sigma_boundaries: Use Sigma Boundaries for the phase model.
+	:type sigma_boundaries: bool
 
 	:param cluster_n: Number of clusters to form (-1 = automatic; default is -1).
 	:type cluster_n: int
@@ -45,8 +48,8 @@ class Model(object):
 	:param cluster_selection: The method used to select the optimal number of clusters. Can be 'silhouette' or 'mcst' (default is 'silhouette').
 	:type cluster_selection: str
 	
-	:param use_wasserstein: Use Wasserstein distance to calculate the distance matrix for clustering.
-	:type use_wasserstein: bool
+	:param distance_metric: The method used to calculate the distance matrix for clustering. Can be 'dot', 'wasserstein' or 'jensenshannon' (default is 'dot').
+	:type distance_metric: str
 	
 	:param uniform: Flag indicating whether to use uniform randomization (default is False).
 	:type uniform: bool
@@ -77,9 +80,10 @@ class Model(object):
 			samples=[],
 			curve_name='intcal20.14c',
 			phase_model='sequence',
+			sigma_boundaries=False,
 			cluster_n=-1,
 			cluster_selection='silhouette',
-			use_wasserstein=False,
+			distance_metric='dot',
 			uniform=False,
 			p_value=0.05,
 			uncertainty_base=15,
@@ -142,9 +146,10 @@ class Model(object):
 			samples=None,
 			curve_name=None,
 			phase_model=None,
+			sigma_boundaries=None,
 			cluster_n=None,
 			cluster_selection=None,
-			use_wasserstein=None,
+			distance_metric=None,
 			uniform=None,
 			p_value=None,
 			uncertainty_base=None,
@@ -261,6 +266,16 @@ class Model(object):
 		return self._data['phase_model']
 	
 	@property
+	def sigma_boundaries(self) -> bool:
+		"""
+		Flag indicating whether the model uses Sigma Boundaries for the phase model.
+
+		:return: True if Sigma Boundaries are used, False otherwise.
+		:rtype: bool
+		"""
+		return self._data['sigma_boundaries']
+	
+	@property
 	def cluster_n(self) -> int:
 		"""
 		Number of clusters to form (-1 = automatic).
@@ -281,14 +296,14 @@ class Model(object):
 		return self._data['cluster_selection']
 	
 	@property
-	def use_wasserstein(self) -> bool:
+	def distance_metric(self) -> str:
 		"""
-		Flag indicating whether the model uses Wasserstein distance for the clustering distance matrix.
+		The method used to calculate the distance matrix for clustering.
 
-		:return: True if Wasserstein distance is used, False otherwise.
-		:rtype: bool
+		:return: The method used to calculate the distance matrix for clustering. Can be 'dot', 'wasserstein' or 'jensenshannon' (default is 'dot').
+		:rtype: str
 		"""
-		return self._data['use_wasserstein']
+		return self._data['distance_metric']
 	
 	@property
 	def uniform(self) -> bool:
@@ -750,9 +765,10 @@ class Model(object):
 			samples = [self.samples[name].copy() for name in self.samples],
 			curve_name = self.curve_name,
 			phase_model = self.phase_model,
+			sigma_boundaries = self.sigma_boundaries,
 			cluster_n = self.cluster_n,
 			cluster_selection = self.cluster_selection,
-			use_wasserstein = self.use_wasserstein,
+			distance_metric = self.distance_metric,
 			uniform = self.uniform,
 			p_value = self.p_value,
 			uncertainty_base = self.uncertainty_base,
@@ -1079,9 +1095,9 @@ class Model(object):
 		:rtype: (Dict[str, List], set)
 		"""
 		
-		assigned_full = ['samples', 'curve_name', 'phase_model']
+		assigned_full = ['samples', 'curve_name', 'phase_model', 'sigma_boundaries']
 		assigned_randomization = ['uniform', 'p_value', 'uncertainty_base', 'npass', 'convergence']
-		assigned_clustering = ['cluster_n', 'cluster_selection', 'use_wasserstein']
+		assigned_clustering = ['cluster_n', 'cluster_selection', 'distance_metric']
 		
 		def _get_n_samples(value):
 			if isinstance(value, dict):
@@ -1211,7 +1227,7 @@ class Model(object):
 		self._data['summed'], self._data['random_lower'], self._data['random_upper'], self._data[
 			'random_p'] = self.mrandomization.test_distributions(max_cpus=max_cpus, max_queue_size=max_queue_size)
 	
-	def process_clustering(self, max_cpus=-1, max_queue_size=-1, max_clusters=-1) -> None:
+	def process_clustering(self, max_cpus=-1, max_queue_size=-1, max_clusters=-1, min_clusters=-1) -> None:
 		"""
 		Performs clustering on the sample dates.
 
@@ -1225,10 +1241,10 @@ class Model(object):
 		"""
 		
 		self._data['clusters'], self._data['cluster_means'], self._data['cluster_sils'], self._data['cluster_ps'], \
-			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters)
+			self._data['cluster_opt_n'] = self.mcluster.process(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters, min_clusters=min_clusters)
 	
 	def process(self, by_clusters: bool = False, by_dates: bool = False, 
-				max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1,
+				max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1, min_clusters: int = -1,
 				save: bool = False) -> None:
 		"""
 		Processes the complete model.
@@ -1248,8 +1264,10 @@ class Model(object):
 		:type max_cpus: int, optional
 		:param max_queue_size: Maximum queue size for parallel processing. If -1, the queue size is unlimited. Defaults to -1.
 		:type max_queue_size: int, optional
-		:param max_clusters: Maximum number of clusters to create
+		:param max_clusters: Maximum number of clusters to create. Defaults to -1.
 		:type max_clusters: int, optional
+		:param min_clusters: Minimum number of clusters to create. Defaults to -1.
+		:type min_clusters: int, optional
 		:return: None
 		"""
 		
@@ -1275,7 +1293,7 @@ class Model(object):
 				self.save(zipped=True)
 		if not self.is_clustered:
 			print("\nClustering temporal distributions\n")
-			self.process_clustering(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters)
+			self.process_clustering(max_cpus=max_cpus, max_queue_size=max_queue_size, max_clusters=max_clusters, min_clusters=min_clusters)
 			if save:
 				self.save(zipped=True)
 		if by_clusters:

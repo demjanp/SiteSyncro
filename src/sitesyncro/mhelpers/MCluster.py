@@ -8,17 +8,25 @@ from tqdm import tqdm
 from sitesyncro.utils.fnc_mp import (process_mp)
 from sitesyncro.utils.fnc_simulate import (get_params, generate_random_distributions)
 from sitesyncro.utils.fnc_stat import (calc_sum, samples_to_distributions)
-from sitesyncro.utils.fnc_cluster import (calc_distance_matrix_evt, calc_distance_matrix_wd, calc_clusters_hca, calc_silhouette)
+from sitesyncro.utils.fnc_cluster import (calc_distance_matrix_dot, calc_distance_matrix_wd, calc_distance_matrix_js, calc_clusters_hca, calc_silhouette)
+
+def calc_distance_matrix(distance_metric, distributions):
+	
+	d_funcs = {
+		'dot': calc_distance_matrix_dot,
+		'wasserstein': calc_distance_matrix_wd,
+		'jensenshannon': calc_distance_matrix_js,
+	}
+	if distance_metric not in d_funcs:
+		raise Exception("Invalid distance metric specified: %s" % (distance_metric))
+	return d_funcs[distance_metric](distributions)
+
 
 def worker_fnc(params: Any, dates_n: int, t_mean: float, t_std: float, uncertainties: List[float],
-				uncertainty_base: float, use_wd: bool, curve: np.ndarray, uniform: bool) -> np.ndarray:
+				uncertainty_base: float, distance_metric: str, curve: np.ndarray, uniform: bool) -> np.ndarray:
 	
 	distributions = generate_random_distributions(dates_n, t_mean, t_std, uncertainties, uncertainty_base, curve, uniform)
-	if use_wd:
-		D = calc_distance_matrix_wd(distributions)
-	else:
-		D = calc_distance_matrix_evt(distributions)
-	return D
+	return calc_distance_matrix(distance_metric, distributions)
 
 
 def collect_fnc(data: Any, D_pool: List[np.ndarray], pbar: tqdm) -> None:
@@ -39,7 +47,7 @@ class MCluster(object):
 		
 		self.model = model
 	
-	def get_clusterings(self, max_clusters: int = -1) -> (Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], Dict[int, float], int, float, float):
+	def get_clusterings(self, max_clusters: int = -1, min_clusters: int = -1) -> (Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], Dict[int, float], int, float, float):
 		"""
 		Cluster distributions using Hierarchical Cluster Analysis.
 		
@@ -71,16 +79,18 @@ class MCluster(object):
 		else:
 			max_clusters = distributions_n
 		
+		if min_clusters > 2:
+			min_clusters = max(2, min(min_clusters, max_clusters - 1))
+		else:
+			min_clusters = 2
+		
 		t_mean, t_std = get_params(distributions, self.model.curve, self.model.uniform)
 		
 		clusters = {}  # {cluster_n: {label: [idx, ...], ...}, ...}; idx = index in samples
 		sils = {}  # {cluster_n: silhouette_score, ...}
 		means = {}  # {cluster_n: {label: mean, ...}, ...}
-		if self.model.use_wasserstein:
-			D = calc_distance_matrix_wd(distributions)
-		else:
-			D = calc_distance_matrix_evt(distributions)
-		for cluster_n in range(2, max_clusters):
+		D = calc_distance_matrix(self.model.distance_metric, distributions)
+		for cluster_n in range(min_clusters, max_clusters):
 			clusters[cluster_n] = calc_clusters_hca(D, cluster_n)
 			sils[cluster_n] = calc_silhouette(D, clusters[cluster_n])
 			means[cluster_n] = {}
@@ -104,7 +114,7 @@ class MCluster(object):
 		
 		return clusters, means, sils, distributions_n, t_mean, t_std
 	
-	def find_opt_clusters_mcst(self, max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1) -> (
+	def find_opt_clusters_mcst(self, max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1, min_clusters: int = -1) -> (
 			Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], Dict[int, float], Dict[int, float]):
 		"""
 		Test the clustering of distributions for randomness.
@@ -138,7 +148,7 @@ class MCluster(object):
 			
 			return int(clu_ns[idxs[np.argmax(sils[idxs])]])
 		
-		clusters, means, sils, distributions_n, t_mean, t_std = self.get_clusterings(max_clusters)
+		clusters, means, sils, distributions_n, t_mean, t_std = self.get_clusterings(max_clusters, min_clusters)
 		
 		clu_max = max(clusters.keys())
 		
@@ -158,13 +168,13 @@ class MCluster(object):
 						n_dists = max(4, (todo - len(D_pool)) + 1)
 						if n_dists > 50:						
 							process_mp(worker_fnc, range(n_dists),
-									   [distributions_n, t_mean, t_std, self.model.uncertainties, self.model.uncertainty_base, self.model.use_wasserstein, self.model.curve,
+									   [distributions_n, t_mean, t_std, self.model.uncertainties, self.model.uncertainty_base, self.model.distance_metric, self.model.curve,
 										self.model.uniform],
 									   collect_fnc=collect_fnc, collect_args=[D_pool, pbar],
 									   max_cpus=max_cpus, max_queue_size=max_queue_size)
 						else:
 							for j in range(n_dists):
-								D_pool.append(worker_fnc(j, distributions_n, t_mean, t_std, self.model.uncertainties, self.model.uncertainty_base, self.model.use_wasserstein,
+								D_pool.append(worker_fnc(j, distributions_n, t_mean, t_std, self.model.uncertainties, self.model.uncertainty_base, self.model.distance_metric,
 														 self.model.curve, self.model.uniform))
 								pbar.n = len(D_pool)
 								pbar.refresh()
@@ -216,7 +226,7 @@ class MCluster(object):
 		
 		return clusters[self.model.cluster_n], means[self.model.cluster_n], sils[self.model.cluster_n]
 	
-	def find_opt_clusters_silhouette(self, max_clusters: int = -1) -> (
+	def find_opt_clusters_silhouette(self, max_clusters: int = -1, min_clusters: int = -1) -> (
 			Dict[int, Dict[int, List[str]]], Dict[int, Dict[int, float]], int):
 		"""
 		Find the optimal number of clusters using the Silhouette method.
@@ -233,14 +243,14 @@ class MCluster(object):
 		
 		"""
 		
-		clusters, means, sils, _, _, _ = self.get_clusterings(max_clusters)
+		clusters, means, sils, _, _, _ = self.get_clusterings(max_clusters, min_clusters)
 		
 		# Select cluster solution with highest Silhouette score
 		opt_n = max(sils, key=sils.get)
 		
 		return clusters, means, sils, opt_n
 	
-	def process(self, max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1) -> (
+	def process(self, max_cpus: int = -1, max_queue_size: int = -1, max_clusters: int = -1, min_clusters: int = -1) -> (
 			Dict[int, Dict[int, List[str]]], Dict[int, float], Dict[int, float], int):
 		"""
 		Process the clustering of distributions.
@@ -270,13 +280,13 @@ class MCluster(object):
 			opt_n = self.model.cluster_n
 		
 		elif self.model.cluster_selection == "silhouette":
-			clusters, means, sils, opt_n = self.find_opt_clusters_silhouette(max_clusters)
+			clusters, means, sils, opt_n = self.find_opt_clusters_silhouette(max_clusters, min_clusters)
 			ps = dict([(n, 1) for n in clusters])
 		
 		elif self.model.cluster_selection == "mcst":
 			clusters, means, sils, ps, opt_n = self.find_opt_clusters_mcst(max_cpus=max_cpus,
 																	 max_queue_size=max_queue_size, 
-																	 max_clusters=max_clusters)
+																	 max_clusters=max_clusters, min_clusters=min_clusters)
 		
 		else:
 			raise Exception("Invalid cluster selection method: %s" % self.model.cluster_selection)

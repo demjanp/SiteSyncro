@@ -415,7 +415,7 @@ class MPhasing(object):
 		if by_clusters and self.model.is_clustered:
 			earlier_than = self.update_earlier_than_by_clustering(earlier_than, samples)
 		
-		if by_dates and self.model.is_modeled:
+		if by_dates:
 			earlier_than = self.update_earlier_than_by_dating(earlier_than, samples)
 		
 		ranges = [self.model.samples[name].get_range() for name in self.model.samples]		

@@ -56,7 +56,7 @@ class MOxCal(object):
 					data_phase[phase] = "\n".join([sample.to_oxcal() for sample in data_phase[phase]])
 				else:
 					data_phase[phase] = ""
-			txt += model_fncs[self.model.phase_model]("Gr.%d" % (group), data_phase)
+			txt += model_fncs[self.model.phase_model]("Gr.%d" % (group), data_phase, self.model.sigma_boundaries)
 			if data_multiphase:
 				for key in data_multiphase:
 					phase_min, phase_max = key
@@ -64,7 +64,7 @@ class MOxCal(object):
 						data_multiphase[key] = "\n".join([sample.to_oxcal() for sample in data_multiphase[key]])
 					else:
 						data_multiphase[key] = ""
-				txt += gen_multiphase("Gr.%d" % (group), data_multiphase)
+				txt += gen_multiphase("Gr.%d" % (group), data_multiphase, self.model.sigma_boundaries)
 		
 		txt = '''
 Curve("%s","%s");

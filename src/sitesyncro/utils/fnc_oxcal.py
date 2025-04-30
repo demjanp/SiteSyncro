@@ -97,17 +97,18 @@ def oxcal_date(name: str, age: float, uncertainty: float, date_type: str, long_l
 	return txt
 
 
-def gen_sequence(name: str, data: Dict[int, str]) -> str:
+def gen_sequence(name: str, data: Dict[int, str], sigma: bool) -> str:
 	txt = ""
+	sigma = "Sigma_" if sigma else ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
-		Boundary("Start %(name)s-%(phase)d");
+		%(sigma)sBoundary("Start %(name)s-%(phase)d");
 		Phase("%(name)s-%(phase)d")
 		{
 			%(dates)s
 		};
-		Boundary("End %(name)s-%(phase)d");
-		''' % dict(name=name, phase=phase, dates=data[phase])
+		%(sigma)sBoundary("End %(name)s-%(phase)d");
+		''' % dict(name=name, phase=phase, dates=data[phase], sigma=sigma)
 	
 	return '''
 	Sequence(%s)
@@ -117,18 +118,19 @@ def gen_sequence(name: str, data: Dict[int, str]) -> str:
 	''' % (name, txt)
 
 
-def gen_contiguous(name: str, data: Dict[int, str]) -> str:
+def gen_contiguous(name: str, data: Dict[int, str], sigma: bool) -> str:
 	txt = ""
 	last_phase = None
+	sigma = "Sigma_" if sigma else ""
 	for phase in sorted(list(data.keys())):
 		if last_phase is None:
 			txt += '''
-		Boundary("Start %s-%d");
-			''' % (name, phase)
+		%sBoundary("Start %s-%d");
+			''' % (sigma, name, phase)
 		else:
 			txt += '''
-		Boundary("Transition %s-%d/%s-%d");
-			''' % (name, last_phase, name, phase)
+		%sBoundary("Transition %s-%d/%s-%d");
+			''' % (sigma, name, last_phase, name, phase)
 		txt += '''
 		Phase("%s-%d")
 		{
@@ -137,8 +139,8 @@ def gen_contiguous(name: str, data: Dict[int, str]) -> str:
 		''' % (name, phase, data[phase])
 		last_phase = phase
 	txt += '''
-		Boundary("End %s-%d");
-	''' % (name, last_phase)
+		%sBoundary("End %s-%d");
+	''' % (sigma, name, last_phase)
 	
 	return '''
 	Sequence(%s)
@@ -148,20 +150,21 @@ def gen_contiguous(name: str, data: Dict[int, str]) -> str:
 	''' % (name, txt)
 
 
-def gen_overlapping(name: str, data: Dict[int, str]) -> str:
+def gen_overlapping(name: str, data: Dict[int, str], sigma: bool) -> str:
 	txt = ""
+	sigma = "Sigma_" if sigma else ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
 		Sequence()
 		{
-			Boundary("Start %(name)s-%(phase)d");
+			%(sigma)sBoundary("Start %(name)s-%(phase)d");
 			Phase("%(name)s-%(phase)d")
 			{
 				%(dates)s
 			};
-			Boundary("End %(name)s-%(phase)d");
+			%(sigma)sBoundary("End %(name)s-%(phase)d");
 		};
-		''' % dict(name=name, phase=phase, dates=data[phase])
+		''' % dict(name=name, phase=phase, dates=data[phase], sigma=sigma)
 	return '''
 	Phase(%s)
 	{
@@ -170,7 +173,7 @@ def gen_overlapping(name: str, data: Dict[int, str]) -> str:
 	''' % (name, txt)
 
 
-def gen_none(name: str, data: Dict[int, str]) -> str:
+def gen_none(name: str, data: Dict[int, str], sigma: bool) -> str:
 	txt = ""
 	for phase in sorted(list(data.keys())):
 		txt += '''
@@ -180,21 +183,21 @@ def gen_none(name: str, data: Dict[int, str]) -> str:
 	return txt
 
 
-def gen_multiphase(name: str, data: Dict[tuple, str]) -> str:
+def gen_multiphase(name: str, data: Dict[tuple, str], sigma: bool) -> str:
 	txt = ""
 	for key in sorted(list(data.keys())):
 		phase_min, phase_max = key
 		txt += '''
 		Sequence()
 		{
-			Boundary("=Start %(name)s-%(phase_min)d");
+			%(sigma)sBoundary("=Start %(name)s-%(phase_min)d");
 			Phase("%(name)s-%(phase_min)d-%(phase_max)d")
 			{
 				%(dates)s
 			};
-			Boundary("=End %(name)s-%(phase_max)d");
+			%(sigma)sBoundary("=End %(name)s-%(phase_max)d");
 		};
-		''' % dict(name=name, phase_min=phase_min, phase_max=phase_max, dates=data[key])
+		''' % dict(name=name, phase_min=phase_min, phase_max=phase_max, dates=data[key], sigma=sigma)
 	return '''
 	Phase(%s-Multiphase)
 	{

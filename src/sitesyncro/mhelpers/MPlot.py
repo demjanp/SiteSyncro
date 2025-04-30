@@ -1,6 +1,7 @@
 import codecs
 import numpy as np
 from matplotlib import pyplot
+import matplotlib.ticker as ticker
 
 class MPlot(object):
 	"""
@@ -37,26 +38,39 @@ class MPlot(object):
 		Returns:
 		None
 		"""
-		
 		if self.model.random_p < self.model.p_value:
 			null_hypothesis_txt = "Dates are not %s distributed." % ("uniformly" if self.model.uniform else "normally")
 		else:
 			null_hypothesis_txt = "Dates are %s distributed." % ("uniformly" if self.model.uniform else "normally")
-		
+
 		perc_lower = (self.model.p_value * 100) / 2
 		perc_upper = 100 - perc_lower
-		
+
 		fig = pyplot.figure(figsize=(15, 4))
 		pyplot.fill_between(self.model.years - 1950, self.model.random_lower, self.model.random_upper, color="lightgrey",
 							label="%0.2f%% of randomized dates" % (perc_upper - perc_lower))
 		pyplot.plot(self.model.years - 1950, self.model.summed, color="k", label="Observed dates")
-		idxs = np.where(self.model.random_upper > 0)[0]
+		
+		idxs = np.where(self.model.random_upper > 0.00005)[0]
 		idx1, idx2 = idxs.min(), idxs.max()
-		pyplot.xlim(self.model.years[int(idx1)] - 1950, self.model.years[int(idx2)] - 1950)
+		xmin = self.model.years[int(idx1)] - 1950
+		xmax = self.model.years[int(idx2)] - 1950
+		t_step = 10
+		while abs((xmax - xmin) / t_step) > 20:
+			t_step *= 10
+		
+		pyplot.xlim(xmin, xmax)
+
+		# Set major and minor ticks
+		ax = pyplot.gca()
+		ax.xaxis.set_major_locator(ticker.MultipleLocator(t_step))
+		ax.xaxis.set_minor_locator(ticker.MultipleLocator(t_step / 5))
+
 		pyplot.gca().invert_xaxis()
 		pyplot.xlabel("Calendar age (yrs BC)")
 		pyplot.ylabel("Summed p")
-		pyplot.annotate("p: %0.5f\n%s" % (self.model.random_p, null_hypothesis_txt), xy=(0.05, 0.95), xycoords="axes fraction",
+		pyplot.annotate("p: %0.5f\n%s" % (self.model.random_p, null_hypothesis_txt),
+						xy=(0.05, 0.95), xycoords="axes fraction",
 						fontsize=12, horizontalalignment="left", verticalalignment="top")
 		pyplot.legend()
 		pyplot.tight_layout()

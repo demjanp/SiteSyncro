@@ -27,7 +27,7 @@ if __name__ == '__main__':
 	finput = 'data_d4_230425.csv'
 	
 	model = Model(
-		directory = 'stage_0',
+		directory = 'clu_stage_0',
 		uniform = True,
 		cluster_selection = 'silhouette',
 		use_wasserstein = False,
@@ -54,46 +54,23 @@ if __name__ == '__main__':
 	print("   Convergence threshold:  %s" % model.convergence)
 	print()
 	
-	print("Stage 1\n")
-	print("\nModelling 1\n")
+	print("\nStage 1\n")
+	print("\nModelling - by dates\n")
 	model = model.copy('stage_1')
-	model.process_phasing()
-	model.process_outliers()
-	model.process_dates()
-	model.save(zipped=True)
-	model.save_outliers()
-	print("\nRandomization\n")
-	model.process_randomization()
-	model.save(zipped=True)
-	model.plot_randomized()
-	print("\nClustering 1\n")
-	model.process_clustering()
-	model.save(zipped=True)
-	model.save_csv_samples()
-	model.save_csv_phases()
-	model.plot_clusters()
-	
-	'''
-	print("\nStage 2\n")
-	print("\nModelling 2 - by dates\n")
-	model = model.copy('stage_2')
 	model.process_phasing(by_dates=True)
 	model.process_dates()
 	model.save(zipped=True)
-	print("\nClustering 2\n")
-	model.process_clustering()
+	print("\nClustering\n")
+	model.process_clustering(max_clusters=20)
 	model.save(zipped=True)
 	model.plot_clusters()
 	model.save_csv_samples()
-	model.save_csv_phases()
 	
-	print("\nStage 3\n")
-	model = model.copy('stage_3')
-	print("\nModelling 3 - by clusters\n")
+	print("\nStage 2\n")
+	model = model.copy('stage_2')
+	print("\nModelling - by clusters\n")
 	model.process_phasing(by_clusters=True)
 	model.process_dates()
 	model.save(zipped=True)
 	model.save_csv_samples()
-	model.save_csv_phases()
-	'''
 
